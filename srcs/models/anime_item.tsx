@@ -1,48 +1,28 @@
-import { ImageSourcePropType } from "react-native";
-
 interface AnimeItemProps {
-  id: number;
-  title: string;
-  image: ImageSourcePropType;
-  category: string;
-  year?: string;
-  episodes?: string;
+	id: number;
+	title: String;
+	alternativeTitle?: String;
+	img: String;
+	url: String;
+	genres: String[];
 }
 
 class AnimeItem {
-  id: number;
-  title: string;
-  image: ImageSourcePropType;
-  category: string;
-  year?: string;
-  episodes?: string;
+	id: number;
+	title: String;
+	alternativeTitle?: String;
+	img: String;
+	url: String;
+	genres: String[];
 
-  constructor(
-	id: number,
-	title: string,
-	image: ImageSourcePropType,
-	category: string,
-	year?: string,
-	episodes?: string
-  ) {
-	this.id = id;
-	this.title = title;
-	this.image = image;
-	this.category = category;
-	this.year = year;
-	this.episodes = episodes;
-  }
-
-  constructorFromObject(obj: AnimeItemProps): AnimeItem {
-	return new AnimeItem(
-	  obj.id,
-	  obj.title,
-	  obj.image,
-	  obj.category,
-	  obj.year,
-	  obj.episodes
-	);
-  }
+	constructor({ id, title, alternativeTitle, img, url, genres }: AnimeItemProps) {
+		this.id = id;
+		this.title = title;
+		this.alternativeTitle = alternativeTitle;
+		this.img = img;
+		this.url = url;
+		this.genres = genres;
+	}
 }
 
 export default AnimeItem;

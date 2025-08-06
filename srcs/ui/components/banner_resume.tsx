@@ -7,9 +7,13 @@ export default function BannerResume({ featuredAnime }: { featuredAnime: AnimeIt
 	return (
 		<View style={styles.featuredOverlay}>
 			<View style={styles.featuredContent}>
-				<Text style={styles.featuredTitle}>{featuredAnime.title}</Text>
-				<Text style={styles.featuredCategory}>{featuredAnime.category}</Text>
-				<Text style={styles.featuredInfo}>VOSTFR</Text>
+				<Text
+					style={styles.featuredTitle}
+					numberOfLines={1}
+					ellipsizeMode="tail"
+				>
+					{featuredAnime.title}
+				</Text>
 
 				<View style={styles.actionButtons}>
 					<TouchableOpacity style={styles.playButton}>
@@ -29,13 +33,14 @@ const styles = StyleSheet.create({
 		padding: 48,
 	},
 	featuredContent: {
-		maxWidth: width * 0.5,
+		maxWidth: width * 0.8,
 	},
 	featuredTitle: {
 		fontSize: 48,
 		fontWeight: 'bold',
 		color: '#fff',
 		marginBottom: 12,
+		overflow: 'hidden',
 	},
 	featuredCategory: {
 		fontSize: 18,

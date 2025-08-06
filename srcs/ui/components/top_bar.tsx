@@ -1,21 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Keyboard } from "react-native";
 
 export default function TopBar(): React.JSX.Element {
 	const searchInputRef = React.useRef<TextInput>(null);
-	const searchBarRef = React.useRef<View>(null);
-	const [focused, setFocused] = useState<string | null>(null);
-	const [shouldRefocus, setShouldRefocus] = useState(false);
-
-	useEffect(() => {
-		const keyboardListener = Keyboard.addListener('keyboardDidHide', () => {
-			setShouldRefocus(true);
-			setFocused('search');
-		});
-		return () => keyboardListener.remove();
-	}, []);
 
 	return (
 		<View style={styles.header}>
@@ -24,12 +12,8 @@ export default function TopBar(): React.JSX.Element {
 			<View style={{ flex: 1 }} />
 
 			<TouchableOpacity
-				ref={searchBarRef}
-				style={[styles.searchContainer, focused === 'search' && styles.focusedSearchBar]}
-				onFocus={() => { setFocused('search'); setShouldRefocus(false); }}
-				onBlur={() => setFocused(null)}
+				style={styles.searchContainer}
 				onPress={() => openSearch(searchInputRef)}
-				hasTVPreferredFocus={shouldRefocus}
 			>
 				<View style={{ width: 180 }}>
 					<TextInput
@@ -42,16 +26,13 @@ export default function TopBar(): React.JSX.Element {
 			</TouchableOpacity>
 			<View style={styles.headerIcons}>
 				<TouchableOpacity
-					style={[styles.button, focused === 'play' && styles.focusedButton]}
-					onFocus={() => setFocused('play')}
-					onBlur={() => setFocused(null)}
+					style={styles.button}
 					onPress={() => console.log('Play pressed')}
 				>
 					<Icon name="play-arrow" size={24} color="#fff" />
 				</TouchableOpacity>
 				<TouchableOpacity
-					style={[styles.button, focused === 'settings' && styles.focusedButton]}
-					onFocus={() => setFocused('settings')}
+					style={styles.button}
 					onPress={() => console.log('Settings pressed')}
 				>
 					<Icon name="settings" size={24} color="#fff" />
@@ -89,9 +70,10 @@ const styles = StyleSheet.create({
 		padding: 3,
 		paddingHorizontal: 10,
 		borderRadius: 10,
+		backgroundColor: '#2e2e2e88',
 	},
 	searchPlaceholder: {
-		backgroundColor: '#2e2e2e88',
+		backgroundColor: 'transparent',
 		color: '#ccc',
 		padding: 10,
 		borderRadius: 10,
@@ -107,13 +89,6 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		padding: 3,
-	},
-	focusedButton: {
-		backgroundColor: '#00000072',
-		opacity: 1
-	},
-	focusedSearchBar: {
-		backgroundColor: '#00000072',
-		opacity: 1,
+		backgroundColor: '#2e2e2e88',
 	},
 });
