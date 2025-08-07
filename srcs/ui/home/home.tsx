@@ -4,12 +4,23 @@ import { featuredAnime } from "../../data/mockData";
 import TopBar from "../components/top_bar";
 import BannerResume from "../components/banner_resume";
 import LinearGradient from 'react-native-linear-gradient';
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ListAnime } from "./list_anime";
+import { DeviceEventEmitter } from 'react-native'
 
 const { width, height } = Dimensions.get('window');
 
 export default function Home(): React.JSX.Element {
+    useEffect(() => {
+        const subscription = DeviceEventEmitter.addListener('keyPressed', (keyCode) => {
+            console.log("Key pressed in Home:", keyCode);
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []); 
+
 	return (
 		<View style={styles.column}>
 			<HomeTop featuredAnime={featuredAnime} />
