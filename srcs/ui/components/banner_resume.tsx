@@ -1,9 +1,14 @@
 import { Dimensions, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AnimeItem from "../../models/anime_item";
+import { SelectedPart } from "../home/home";
 
 const { width, height } = Dimensions.get('window');
 
-export default function BannerResume({ featuredAnime }: { featuredAnime: AnimeItem }): React.JSX.Element {
+export default function BannerResume({ featuredAnime, selectedPart, index }: { featuredAnime: AnimeItem, selectedPart: SelectedPart, index: number }): React.JSX.Element {
+	const currentFocusedIndex = index;
+	const isSelected = selectedPart === SelectedPart.BANNER;
+	
+	
 	return (
 		<View style={styles.featuredOverlay}>
 			<View style={styles.featuredContent}>
@@ -16,10 +21,20 @@ export default function BannerResume({ featuredAnime }: { featuredAnime: AnimeIt
 				</Text>
 
 				<View style={styles.actionButtons}>
-					<TouchableOpacity style={styles.playButton}>
+					<TouchableOpacity 
+						style={[
+							styles.playButton, 
+							isSelected && currentFocusedIndex === 0 && styles.focusedButton
+						]}
+					>
 						<Text style={styles.playButtonText}>Reprendre</Text>
 					</TouchableOpacity>
-					<TouchableOpacity style={styles.infoButton}>
+					<TouchableOpacity 
+						style={[
+							styles.infoButton,
+							isSelected && currentFocusedIndex === 1 && styles.focusedButton
+						]}
+					>
 						<Text style={styles.infoButtonText}>Plus d'infos</Text>
 					</TouchableOpacity>
 				</View>
@@ -67,6 +82,7 @@ const styles = StyleSheet.create({
 		paddingVertical: 16,
 		borderRadius: 8,
 		flexDirection: 'row',
+		opacity: 0.5,
 		alignItems: 'center',
 	},
 	playButtonText: {
@@ -81,10 +97,15 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		flexDirection: 'row',
 		alignItems: 'center',
+		opacity: 0.5,
 	},
 	infoButtonText: {
 		color: '#fff',
 		fontSize: 18,
 		fontWeight: 'bold',
+	},
+	focusedButton: {
+		transform: [{ scale: 1.05 }],
+		opacity: 1,
 	},
 });

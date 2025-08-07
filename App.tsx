@@ -1,13 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
-  Pressable,
-  TouchableOpacity,
-  ScrollView,
-  FlatList,
   SafeAreaView,
   StyleSheet,
 } from 'react-native';
-import Home from './srcs/ui/home/home';
+import { Home } from './srcs/ui/home/home';
 
 
 function App(): React.JSX.Element {

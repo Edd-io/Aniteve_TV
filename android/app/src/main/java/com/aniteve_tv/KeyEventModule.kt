@@ -36,14 +36,9 @@ class KeyEventModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     override fun getName(): String = "KeyEventModule"
 
     private fun emitKeyEvent(keyCode: Int) {
-        val params = Arguments.createMap().apply {
-            putInt("keyCode", keyCode)
-            putDouble("timestamp", System.currentTimeMillis().toDouble())
-        }
-        
         reactApplicationContext
             .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            ?.emit("keyPressed", params)
+            ?.emit("keyPressed", keyCode)
     }
     
     @ReactMethod

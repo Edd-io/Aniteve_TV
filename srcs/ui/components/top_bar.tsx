@@ -1,19 +1,30 @@
 import React from "react";
 import { View, StyleSheet, Text, TextInput } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { SelectedPart } from "../home/home";
 
-export default function TopBar(): React.JSX.Element {
+export default function TopBar(
+	{ selectedPart, index }: { selectedPart: SelectedPart, index: number }
+): React.JSX.Element {
 	const searchInputRef = React.useRef<TextInput>(null);
+	const currentFocusedIndex = index;
+	const isSelected = selectedPart === SelectedPart.TOPBAR;
 
 	return (
 		<View style={styles.header}>
-			<Text style={styles.logo}>Aniteve</Text>
+			<Text style={[
+				styles.logo,
+			]}>
+				Aniteve
+			</Text>
 
 			<View style={{ flex: 1 }} />
 
 			<View
-				style={styles.searchContainer}
-				// onPress={() => openSearch(searchInputRef)}
+				style={[
+					styles.searchContainer,
+					isSelected && currentFocusedIndex === 0 && styles.focusedElement
+				]}
 				isTVSelectable={false}
 			>
 				<View style={{ width: 180 }}>
@@ -27,15 +38,19 @@ export default function TopBar(): React.JSX.Element {
 			</View>
 			<View style={styles.headerIcons}>
 				<View
-					style={styles.button}
-					// onPress={() => console.log('Play pressed')}
+					style={[
+						styles.button,
+						isSelected && currentFocusedIndex === 1 && styles.focusedElement
+					]}
 					isTVSelectable={false}
 				>
 					<Icon name="play-arrow" size={24} color="#fff" />
 				</View>
 				<View
-					style={styles.button}
-					// onPress={() => console.log('Settings pressed')}
+					style={[
+						styles.button,
+						isSelected && currentFocusedIndex === 2 && styles.focusedElement
+					]}
 					isTVSelectable={false}
 				>
 					<Icon name="settings" size={24} color="#fff" />
@@ -73,7 +88,8 @@ const styles = StyleSheet.create({
 		padding: 3,
 		paddingHorizontal: 10,
 		borderRadius: 10,
-		backgroundColor: '#2e2e2e88',
+		marginRight: 10,
+		backgroundColor: '#00000034',
 	},
 	searchPlaceholder: {
 		backgroundColor: 'transparent',
@@ -92,6 +108,9 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		padding: 3,
-		backgroundColor: '#2e2e2e88',
+	},
+	focusedElement: {
+		backgroundColor: '#17171788',
+		borderRadius: 10,
 	},
 });

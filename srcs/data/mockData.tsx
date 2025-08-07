@@ -17,7 +17,7 @@ const featuredAnime: AnimeItem = new AnimeItem({
 	img: "https://cdn.statically.io/gh/Anime-Sama/IMG/img/contenu/tis-time-for-torture-princess.jpg"
 });
 
-const allAnime: AnimeItem[] = Array.from({ length: 150 }, (_, i) => new AnimeItem({
+const allAnime: AnimeItem[] = Array.from({ length: 15 }, (_, i) => new AnimeItem({
     id: i + 1,
     title: `Anime Title ${i + 1}`,
     img: `https://cdn.statically.io/gh/Anime-Sama/IMG/img/contenu/tis-time-for-torture-princess.jpg`,

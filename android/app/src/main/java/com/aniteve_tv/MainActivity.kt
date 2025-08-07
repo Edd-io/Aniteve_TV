@@ -23,9 +23,12 @@ class MainActivity : ReactActivity() {
   override fun createReactActivityDelegate(): ReactActivityDelegate =
       DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
-  override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-    println("Key pressed: $keyCode")
-    KeyEventModule.sendKeyEvent(keyCode);
-    return true;
+  override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+      if (event.action == KeyEvent.ACTION_DOWN) {
+          println("Key dispatched: ${event.keyCode}");
+          KeyEventModule.sendKeyEvent(event.keyCode);
+          return true;
+      }
+      return super.dispatchKeyEvent(event)
   }
 }
