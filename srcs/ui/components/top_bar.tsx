@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { View, StyleSheet, Text, TextInput } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function TopBar(): React.JSX.Element {
@@ -11,9 +11,10 @@ export default function TopBar(): React.JSX.Element {
 
 			<View style={{ flex: 1 }} />
 
-			<TouchableOpacity
+			<View
 				style={styles.searchContainer}
-				onPress={() => openSearch(searchInputRef)}
+				// onPress={() => openSearch(searchInputRef)}
+				isTVSelectable={false}
 			>
 				<View style={{ width: 180 }}>
 					<TextInput
@@ -23,20 +24,22 @@ export default function TopBar(): React.JSX.Element {
 					/>
 				</View>
 				<Icon name="search" size={24} color="#fff" style={{ marginLeft: 10 }} />
-			</TouchableOpacity>
+			</View>
 			<View style={styles.headerIcons}>
-				<TouchableOpacity
+				<View
 					style={styles.button}
-					onPress={() => console.log('Play pressed')}
+					// onPress={() => console.log('Play pressed')}
+					isTVSelectable={false}
 				>
 					<Icon name="play-arrow" size={24} color="#fff" />
-				</TouchableOpacity>
-				<TouchableOpacity
+				</View>
+				<View
 					style={styles.button}
-					onPress={() => console.log('Settings pressed')}
+					// onPress={() => console.log('Settings pressed')}
+					isTVSelectable={false}
 				>
 					<Icon name="settings" size={24} color="#fff" />
-				</TouchableOpacity>
+				</View>
 			</View>
 		</View>
 	);

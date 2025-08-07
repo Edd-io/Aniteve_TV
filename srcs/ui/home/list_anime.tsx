@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity, TVEventHandler } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
 import AnimeItem from '../../models/anime_item';
 import { allAnime } from '../../data/mockData';
 
@@ -10,46 +10,64 @@ const itemMargin = 8;
 const itemWidth = (width - containerPadding * 2 - itemMargin * 2 * itemsPerRow) / itemsPerRow;
 
 export function ListAnime({ header }: { header?: React.JSX.Element }): React.JSX.Element {
-	const [focusedIndex, setFocusedIndex] = useState(0);
 	const flatListRef = useRef<FlatList>(null);
+	const [currentFocusedIndex, setCurrentFocusedIndex] = useState(0);
 
-	useEffect(() => {
-		const subscription = TVEventHandler.addListener((data: any) => {
-			if (data && data.eventType) {
-				switch (data.eventType) {
-					case 'right':
-						setFocusedIndex(prev => Math.min(prev + 1, allAnime.length - 1));
-						break;
-					case 'left':
-						setFocusedIndex(prev => Math.max(prev - 1, 0));
-						break;
-					case 'down':
-						setFocusedIndex(prev => Math.min(prev + itemsPerRow, allAnime.length - 1));
-						break;
-					case 'up':
-						setFocusedIndex(prev => Math.max(prev - itemsPerRow, 0));
-						break;
-				}
-			}
-		});
+	// useEffect(() => {
+	// 	const tvEventHandler = TVEventHandler.addListener((event) => {
+			
+	// 		if (!event || !flatListRef.current) return;
+	// 		if (event && event.eventType === 'down') {
+	// 			setCurrentFocusedIndex(prev => {
+	// 				const nextIndex = Math.min(prev + itemsPerRow, allAnime.length - 1);
+	// 				const nextRow = Math.floor(nextIndex / itemsPerRow);
+	// 				const currentRow = Math.floor(prev / itemsPerRow);
+					
+	// 				if (nextRow > currentRow) {
+	// 					setTimeout(() => {
+	// 						const itemHeight = (itemWidth * 0.6) + 16;
+	// 						const offset = nextRow * itemHeight - 100;
+	// 						flatListRef.current?.scrollToOffset({
+	// 							offset: Math.max(0, offset),
+	// 							animated: true
+	// 						});
+	// 					}, 10);
+	// 				}
+					
+	// 				return nextIndex;
+	// 			});
+	// 		} else if (event && event.eventType === 'up') {
+	// 			setCurrentFocusedIndex(prev => {
+	// 				const nextIndex = Math.max(prev - itemsPerRow, 0);
+	// 				const nextRow = Math.floor(nextIndex / itemsPerRow);
+	// 				const currentRow = Math.floor(prev / itemsPerRow);
+					
+	// 				if (nextRow < currentRow) {
+	// 					setTimeout(() => {
+	// 						const itemHeight = (itemWidth * 0.6) + 16;
+	// 						const offset = nextRow * itemHeight - 100;
+	// 						flatListRef.current?.scrollToOffset({
+	// 							offset: Math.max(0, offset),
+	// 							animated: true
+	// 						});
+	// 					}, 10);
+	// 				}
+					
+	// 				return nextIndex;
+	// 			});
+	// 		} else if (event && event.eventType === 'right') {
+	// 			setCurrentFocusedIndex(prev => Math.min(prev + 1, allAnime.length - 1));
+	// 		} else if (event && event.eventType === 'left') {
+	// 			setCurrentFocusedIndex(prev => Math.max(prev - 1, 0));
+	// 		}
+	// 	});
 
-		return () => {
-			subscription?.remove();
-		};
-	}, []);
-
-	useEffect(() => {
-		if (flatListRef.current) {
-			const row = Math.floor(focusedIndex / itemsPerRow);
-			const itemHeight = itemWidth * 0.6 + 16;
-			const targetOffset = row * itemHeight;
-
-			flatListRef.current.scrollToOffset({
-				offset: Math.max(0, targetOffset - 100),
-				animated: true,
-			});
-		}
-	}, [focusedIndex]);
+	// 	return () => {
+	// 		if (tvEventHandler && tvEventHandler.remove) {
+	// 			tvEventHandler.remove();
+	// 		}
+	// 	};
+	// }, []);
 
 	return (
 		<View style={styles.container}>
@@ -61,7 +79,8 @@ export function ListAnime({ header }: { header?: React.JSX.Element }): React.JSX
 					<AnimeItemComponent
 						item={item}
 						index={index}
-						isFocused={index === focusedIndex}
+						isFirst={index === 0}
+						isFocused={index === currentFocusedIndex}
 					/>
 				)}
 				keyExtractor={(item) => item.id.toString()}
@@ -69,8 +88,7 @@ export function ListAnime({ header }: { header?: React.JSX.Element }): React.JSX
 				showsVerticalScrollIndicator={false}
 				showsHorizontalScrollIndicator={false}
 				numColumns={4}
-				scrollEnabled={false}
-				pointerEvents="none"
+				scrollEnabled={true}
 			/>
 		</View>
 	);
@@ -79,11 +97,13 @@ export function ListAnime({ header }: { header?: React.JSX.Element }): React.JSX
 const AnimeItemComponent = React.memo(({
 	item,
 	index,
-	isFocused
+	isFirst,
+	isFocused = false
 }: {
 	item: AnimeItem,
 	index: number,
-	isFocused: boolean
+	isFirst?: boolean,
+	isFocused?: boolean
 }) => {
 	const scaleValue = useRef(new Animated.Value(1)).current;
 	const imageOpacity = useRef(new Animated.Value(0.7)).current;
@@ -121,24 +141,32 @@ const AnimeItemComponent = React.memo(({
 	}, [isFocused, scaleValue, imageOpacity]);
 
 	return (
-		<Animated.View
-			style={[
-				styles.animeItem,
-				{
-					transform: [{ scale: scaleValue }],
-				}
-			]}
+		<TouchableOpacity
+			style={{ margin: 0 }}
+			accessible={false}
+			focusable={false}
+			importantForAccessibility="no"
+			hasTVPreferredFocus={false}
 		>
-			<Animated.Image
-				source={{ uri: item.img.toString() }}
+			<Animated.View
 				style={[
-					styles.animeImage,
+					styles.animeItem,
 					{
-						opacity: imageOpacity,
+						transform: [{ scale: scaleValue }],
 					}
 				]}
-			/>
-		</Animated.View>
+			>
+				<Animated.Image
+					source={{ uri: item.img.toString() }}
+					style={[
+						styles.animeImage,
+						{
+							opacity: imageOpacity,
+						}
+					]}
+				/>
+			</Animated.View>
+		</TouchableOpacity>
 	);
 });
 
