@@ -32,8 +32,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 	const [listSize, setListSize] = useState<number>(0);
 	const [onPageSelector, setOnPageSelector] = useState(false);
 
-
-
 	const getCurrentPageEpisodes = () => {
 		if (!episodesData?.episodes) return [];
 		const episodes = Object.entries(episodesData.episodes);
@@ -47,7 +45,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 		const totalEpisodes = Object.keys(episodesData.episodes).length;
 		return Math.ceil(totalEpisodes / EPISODES_PER_PAGE);
 	};
-
 
 	useEffect(() => {
 		const currentEpisodes = getCurrentPageEpisodes();
