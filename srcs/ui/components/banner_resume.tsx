@@ -1,10 +1,16 @@
 import { Dimensions, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AnimeItem from "../../models/anime_item";
 import { SelectedPart } from "../home/home";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from "../../constants/routes";
 
 const { width, height } = Dimensions.get('window');
 
+type NavigationProp = StackNavigationProp<RootStackParamList>;
+
 export default function BannerResume({ featuredAnime, selectedPart, index, disableButtons }: { featuredAnime: AnimeItem, selectedPart: SelectedPart, index: number, disableButtons: boolean }): React.JSX.Element {
+	const navigation = useNavigation<NavigationProp>();
 	const currentFocusedIndex = index;
 	const isSelected = selectedPart === SelectedPart.BANNER;
 

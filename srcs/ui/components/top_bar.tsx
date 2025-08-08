@@ -31,6 +31,7 @@ export default function TopBar(
 					<TextInput
 						style={styles.searchPlaceholder}
 						ref={searchInputRef}
+						editable={isSelected && currentFocusedIndex === 0}
 						placeholder="Rechercher un anime..."
 					/>
 				</View>

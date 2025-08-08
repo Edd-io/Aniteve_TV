@@ -8,8 +8,13 @@ import { ListAnime } from "./list_anime";
 import { DeviceEventEmitter } from 'react-native'
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { featuredAnimeMock } from "../../data/mockData";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from "../../constants/routes";
 
 const { height } = Dimensions.get('window');
+
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
 export enum SelectedPart {
 	TOPBAR = -1,
@@ -18,6 +23,7 @@ export enum SelectedPart {
 }
 
 export function Home(): React.JSX.Element {
+	const navigation = useNavigation<HomeScreenNavigationProp>();
 	const [selectedPart, setSelectedPart] = useState<SelectedPart>(SelectedPart.BANNER);
 	const [indexTopBar, setIndexTopBar] = useState<number>(0);
 	const [indexBanner, setIndexBanner] = useState<number>(0);
@@ -96,13 +102,29 @@ export function Home(): React.JSX.Element {
 					}
 					return currentSelectedPart;
 				});
+			} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+				if (selectedPart === SelectedPart.ANIME_LIST) {
+					setIndexItem(currentIndex => {
+						const selectedAnime = animeList[currentIndex];
+						if (selectedAnime) {
+							navigation.navigate('Anime', { anime: selectedAnime });
+						}
+						return currentIndex;
+					});
+				} else if (selectedPart === SelectedPart.BANNER) {
+					if (indexBanner === 1) {
+						if (featuredAnime) {
+							navigation.navigate('Anime', { anime: featuredAnime });
+						}
+					}
+				}
 			}
 		});
 
 		return () => {
 			subscription.remove();
 		};
-	}, [animeList]);
+	}, [animeList, navigation, indexBanner, featuredAnime]);
 
 	useEffect(() => {
 		setFeaturedAnime(animeList[indexItem]);
@@ -122,7 +144,7 @@ function HomeTop({ featuredAnime, selectedPart, indexBanner, indexTopBar }: { fe
 
 	useEffect(() => {
 		const targetHeight = selectedPart === SelectedPart.ANIME_LIST ? height * 0.5 : height * 0.8;
-		
+
 		Animated.timing(heightAnimation, {
 			toValue: targetHeight,
 			duration: 300,
@@ -140,7 +162,7 @@ function HomeTop({ featuredAnime, selectedPart, indexBanner, indexTopBar }: { fe
 					resizeMode="cover"
 				>
 					<View style={{ zIndex: 1, flex: 1, flexDirection: 'column' }}>
-		
+
 						<TopBar selectedPart={selectedPart} index={indexTopBar} />
 						<View style={{ flex: 1 }} />
 						<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} index={indexBanner} disableButtons={false} />
@@ -157,16 +179,23 @@ function HomeTop({ featuredAnime, selectedPart, indexBanner, indexTopBar }: { fe
 	}
 	return (
 		<Animated.View style={{ height: heightAnimation }}>
-			<View style={styles.featuredBackgroundFull}>
-				<TopBar selectedPart={selectedPart} index={indexTopBar} />
-				<BannerResume featuredAnime={featuredAnimeMock} selectedPart={selectedPart} index={indexBanner} disableButtons={true} />
-				<LinearGradient
-					colors={["transparent", "#000"]}
-					style={styles.gradient}
-					start={{ x: 0.5, y: 0 }}
-					end={{ x: 0.5, y: 1 }}
-				/>
-			</View>
+			<ImageBackground
+				source={{ uri: String(featuredAnimeMock.img) }}
+				style={styles.featuredBackgroundFull}
+				imageStyle={styles.featuredBackgroundImage}
+				resizeMode="cover"
+			>
+				<View style={styles.featuredBackgroundFull}>
+					<TopBar selectedPart={selectedPart} index={indexTopBar} />
+					<BannerResume featuredAnime={featuredAnimeMock} selectedPart={selectedPart} index={indexBanner} disableButtons={true} />
+					<LinearGradient
+						colors={["transparent", "#000"]}
+						style={styles.gradient}
+						start={{ x: 0.5, y: 0 }}
+						end={{ x: 0.5, y: 1 }}
+					/>
+				</View>
+			</ImageBackground>
 		</Animated.View>
 	);
 }
