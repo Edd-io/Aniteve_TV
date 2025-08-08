@@ -4,11 +4,10 @@ import { SelectedPart } from "../home/home";
 
 const { width, height } = Dimensions.get('window');
 
-export default function BannerResume({ featuredAnime, selectedPart, index }: { featuredAnime: AnimeItem, selectedPart: SelectedPart, index: number }): React.JSX.Element {
+export default function BannerResume({ featuredAnime, selectedPart, index, disableButtons }: { featuredAnime: AnimeItem, selectedPart: SelectedPart, index: number, disableButtons: boolean }): React.JSX.Element {
 	const currentFocusedIndex = index;
 	const isSelected = selectedPart === SelectedPart.BANNER;
-	
-	
+
 	return (
 		<View style={styles.featuredOverlay}>
 			<View style={styles.featuredContent}>
@@ -20,24 +19,26 @@ export default function BannerResume({ featuredAnime, selectedPart, index }: { f
 					{featuredAnime.title}
 				</Text>
 
-				<View style={styles.actionButtons}>
-					<TouchableOpacity 
-						style={[
-							styles.playButton, 
-							isSelected && currentFocusedIndex === 0 && styles.focusedButton
-						]}
-					>
-						<Text style={styles.playButtonText}>Reprendre</Text>
-					</TouchableOpacity>
-					<TouchableOpacity 
-						style={[
-							styles.infoButton,
-							isSelected && currentFocusedIndex === 1 && styles.focusedButton
-						]}
-					>
-						<Text style={styles.infoButtonText}>Plus d'infos</Text>
-					</TouchableOpacity>
-				</View>
+				{!disableButtons ? null :
+					<View style={styles.actionButtons}>
+						<TouchableOpacity
+							style={[
+								styles.playButton,
+								isSelected && currentFocusedIndex === 0 && styles.focusedButton
+							]}
+						>
+							<Text style={styles.playButtonText}>Reprendre</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={[
+								styles.infoButton,
+								isSelected && currentFocusedIndex === 1 && styles.focusedButton
+							]}
+						>
+							<Text style={styles.infoButtonText}>Plus d'infos</Text>
+						</TouchableOpacity>
+					</View>
+				}
 			</View>
 		</View>
 	);
@@ -45,7 +46,10 @@ export default function BannerResume({ featuredAnime, selectedPart, index }: { f
 
 const styles = StyleSheet.create({
 	featuredOverlay: {
-		padding: 48,
+		padding: 24,
+		flex: 1,
+		justifyContent: 'flex-end',
+		zIndex: 1,
 	},
 	featuredContent: {
 		maxWidth: width * 0.8,
@@ -54,13 +58,7 @@ const styles = StyleSheet.create({
 		fontSize: 48,
 		fontWeight: 'bold',
 		color: '#fff',
-		marginBottom: 12,
 		overflow: 'hidden',
-	},
-	featuredCategory: {
-		fontSize: 18,
-		color: '#ccc',
-		marginBottom: 8,
 	},
 	featuredInfo: {
 		fontSize: 16,
@@ -75,6 +73,7 @@ const styles = StyleSheet.create({
 	actionButtons: {
 		flexDirection: 'row',
 		gap: 16,
+		marginTop: 16,
 	},
 	playButton: {
 		backgroundColor: '#e50914',

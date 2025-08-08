@@ -1,13 +1,13 @@
-import { Dimensions, ImageBackground, StyleSheet, Text, View } from "react-native";
+import { Dimensions, ImageBackground, StyleSheet, Text, View, Animated } from "react-native";
 import AnimeItem from "../../models/anime_item";
-import { allAnime, featuredAnime } from "../../data/mockData";
 import TopBar from "../components/top_bar";
 import BannerResume from "../components/banner_resume";
 import LinearGradient from 'react-native-linear-gradient';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ListAnime } from "./list_anime";
 import { DeviceEventEmitter } from 'react-native'
 import { RemoteControlKey } from "../../constants/remote_controller";
+import { featuredAnimeMock } from "../../data/mockData";
 
 const { height } = Dimensions.get('window');
 
@@ -22,10 +22,11 @@ export function Home(): React.JSX.Element {
 	const [indexTopBar, setIndexTopBar] = useState<number>(0);
 	const [indexBanner, setIndexBanner] = useState<number>(0);
 	const [indexItem, setIndexItem] = useState<number>(0);
+	const [animeList, setAnimeList] = useState<AnimeItem[]>([]);
+	const [featuredAnime, setFeaturedAnime] = useState<AnimeItem | null>(null);
 
 	useEffect(() => {
 		const subscription = DeviceEventEmitter.addListener('keyPressed', (keyCode: number) => {
-
 			if (keyCode === RemoteControlKey.DPAD_UP) {
 				setIndexItem(currentIndex => {
 					setSelectedPart(currentSelectedPart => {
@@ -47,7 +48,7 @@ export function Home(): React.JSX.Element {
 					setIndexItem(currentIndex => {
 						if (currentSelectedPart < SelectedPart.ANIME_LIST) {
 							return currentIndex;
-						} else if (currentIndex + 4 < allAnime.length) {
+						} else if (currentIndex + 4 < animeList.length) {
 							return currentIndex + 4;
 						}
 						return currentIndex;
@@ -79,7 +80,7 @@ export function Home(): React.JSX.Element {
 				setSelectedPart(currentSelectedPart => {
 					if (currentSelectedPart === SelectedPart.ANIME_LIST) {
 						setIndexItem(currentIndex => {
-							if (currentIndex + 1 >= allAnime.length) {
+							if (currentIndex + 1 >= animeList.length) {
 								return currentIndex;
 							}
 							return currentIndex + (currentIndex % 4 === 3 ? 0 : 1);
@@ -101,45 +102,85 @@ export function Home(): React.JSX.Element {
 		return () => {
 			subscription.remove();
 		};
-	}, []);
+	}, [animeList]);
+
+	useEffect(() => {
+		setFeaturedAnime(animeList[indexItem]);
+	}, [indexItem, animeList]);
 
 	return (
 		<View style={styles.column}>
 			<HomeTop featuredAnime={featuredAnime} selectedPart={selectedPart} indexBanner={indexBanner} indexTopBar={indexTopBar} />
-			<ListAnime selectedPart={selectedPart} indexItem={indexItem} />
+			<ListAnime selectedPart={selectedPart} indexItem={indexItem} animeList={animeList} setAnimeList={setAnimeList} />
 		</View>
 
 	);
 }
 
-function HomeTop({ featuredAnime, selectedPart, indexBanner, indexTopBar }: { featuredAnime: AnimeItem, selectedPart: SelectedPart, indexBanner: number, indexTopBar: number }): React.JSX.Element {
-	return (
-		<ImageBackground
-			source={{ uri: String(featuredAnime.img) }}
-			style={styles.featuredBackground}
-			imageStyle={styles.featuredBackgroundImage}
-			resizeMode="cover"
-		>
-			<View style={{ zIndex: 1, flex: 1, flexDirection: 'column' }}>
+function HomeTop({ featuredAnime, selectedPart, indexBanner, indexTopBar }: { featuredAnime: AnimeItem | null, selectedPart: SelectedPart, indexBanner: number, indexTopBar: number }): React.JSX.Element {
+	const heightAnimation = useRef(new Animated.Value(height * 0.5)).current;
 
+	useEffect(() => {
+		const targetHeight = selectedPart === SelectedPart.ANIME_LIST ? height * 0.5 : height * 0.8;
+		
+		Animated.timing(heightAnimation, {
+			toValue: targetHeight,
+			duration: 300,
+			useNativeDriver: false,
+		}).start();
+	}, [selectedPart, heightAnimation]);
+
+	if (selectedPart === SelectedPart.ANIME_LIST && featuredAnime != null) {
+		return (
+			<Animated.View style={{ height: heightAnimation }}>
+				<ImageBackground
+					source={{ uri: String(featuredAnime.img) }}
+					style={styles.featuredBackgroundFull}
+					imageStyle={styles.featuredBackgroundImage}
+					resizeMode="cover"
+				>
+					<View style={{ zIndex: 1, flex: 1, flexDirection: 'column' }}>
+		
+						<TopBar selectedPart={selectedPart} index={indexTopBar} />
+						<View style={{ flex: 1 }} />
+						<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} index={indexBanner} disableButtons={false} />
+					</View>
+					<LinearGradient
+						colors={["transparent", "#000"]}
+						style={styles.gradient}
+						start={{ x: 0.5, y: 0 }}
+						end={{ x: 0.5, y: 1 }}
+					/>
+				</ImageBackground>
+			</Animated.View>
+		);
+	}
+	return (
+		<Animated.View style={{ height: heightAnimation }}>
+			<View style={styles.featuredBackgroundFull}>
 				<TopBar selectedPart={selectedPart} index={indexTopBar} />
-				<View style={{ flex: 1 }} />
-				<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} index={indexBanner} />
+				<BannerResume featuredAnime={featuredAnimeMock} selectedPart={selectedPart} index={indexBanner} disableButtons={true} />
+				<LinearGradient
+					colors={["transparent", "#000"]}
+					style={styles.gradient}
+					start={{ x: 0.5, y: 0 }}
+					end={{ x: 0.5, y: 1 }}
+				/>
 			</View>
-			<LinearGradient
-				colors={["transparent", "#000"]}
-				style={styles.gradient}
-				start={{ x: 0.5, y: 0 }}
-				end={{ x: 0.5, y: 1 }}
-			/>
-		</ImageBackground>
+		</Animated.View>
 	);
 }
+
 
 const styles = StyleSheet.create({
 	featuredBackground: {
 		justifyContent: 'center',
 		height: height * 0.5,
+		position: 'relative',
+	},
+	featuredBackgroundFull: {
+		justifyContent: 'center',
+		flex: 1,
 		position: 'relative',
 	},
 	featuredBackgroundImage: {

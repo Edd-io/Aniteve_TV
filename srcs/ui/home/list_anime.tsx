@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
 import AnimeItem from '../../models/anime_item';
-import { allAnime } from '../../data/mockData';
+import Secrets from '../../constants/secrets';
 import { SelectedPart } from './home';
+import { fetchAllAnime } from '../../data/anime_api';
 
 const { width } = Dimensions.get('window');
 const itemsPerRow = 4;
@@ -10,12 +11,26 @@ const containerPadding = 16;
 const itemMargin = 8;
 const itemWidth = (width - containerPadding * 2 - itemMargin * 2 * itemsPerRow) / itemsPerRow;
 
-export function ListAnime({ selectedPart, indexItem }: { selectedPart: SelectedPart, indexItem: number }): React.JSX.Element {
+export function ListAnime({ selectedPart, indexItem, animeList, setAnimeList }: { selectedPart: SelectedPart, indexItem: number, animeList: AnimeItem[], setAnimeList: React.Dispatch<React.SetStateAction<AnimeItem[]>> }): React.JSX.Element {
 	const flatListRef = useRef<FlatList>(null);
 	
 	const currentFocusedIndex = indexItem;
 	
 	const isSelected = selectedPart === SelectedPart.ANIME_LIST;
+
+	useEffect(() => {
+		let isMounted = true;
+		const controller = new AbortController();
+
+		fetchAllAnime({ signal: controller.signal })
+			.then(list => { if (isMounted) setAnimeList(list); })
+			.catch(err => { if (isMounted) { console.warn('Failed to load anime list', err); setAnimeList([]); } });
+
+		return () => {
+			isMounted = false;
+			controller.abort();
+		};
+	}, []);
 
 	useEffect(() => {
 		if (isSelected && flatListRef.current) {
@@ -34,7 +49,7 @@ export function ListAnime({ selectedPart, indexItem }: { selectedPart: SelectedP
 		<View style={styles.container}>
 			<FlatList
 				ref={flatListRef}
-				data={allAnime}
+				data={animeList}
 				renderItem={({ item, index }) => (
 					<AnimeItemComponent
 						item={item}
@@ -72,14 +87,14 @@ const AnimeItemComponent = React.memo(({
 		if (isFocused) {
 			Animated.parallel([
 				Animated.spring(scaleValue, {
-					toValue: 1.05,
+					toValue: 1.07,
 					useNativeDriver: true,
-					tension: 100,
+					tension: 50,
 					friction: 8,
 				}),
 				Animated.timing(imageOpacity, {
 					toValue: 1,
-					duration: 150,
+					duration: 100,
 					useNativeDriver: true,
 				}),
 			]).start();
@@ -88,12 +103,12 @@ const AnimeItemComponent = React.memo(({
 				Animated.spring(scaleValue, {
 					toValue: 1,
 					useNativeDriver: true,
-					tension: 100,
+					tension: 50,
 					friction: 8,
 				}),
 				Animated.timing(imageOpacity, {
 					toValue: 0.7,
-					duration: 150,
+					duration: 100,
 					useNativeDriver: true,
 				}),
 			]).start();

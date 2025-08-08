@@ -1,6 +1,6 @@
 import AnimeItem from "../models/anime_item";
 
-const featuredAnime: AnimeItem = new AnimeItem({
+const featuredAnimeMock: AnimeItem = new AnimeItem({
 	id: 1,
 	title: "'Tis Time For \"Torture,\" Princess",
 	alternativeTitle: "Hime-Sama, \"Goumon\" No Jikan Desu",
@@ -17,7 +17,7 @@ const featuredAnime: AnimeItem = new AnimeItem({
 	img: "https://cdn.statically.io/gh/Anime-Sama/IMG/img/contenu/tis-time-for-torture-princess.jpg"
 });
 
-const allAnime: AnimeItem[] = Array.from({ length: 15 }, (_, i) => new AnimeItem({
+const allAnimeMock: AnimeItem[] = Array.from({ length: 15 }, (_, i) => new AnimeItem({
     id: i + 1,
     title: `Anime Title ${i + 1}`,
     img: `https://cdn.statically.io/gh/Anime-Sama/IMG/img/contenu/tis-time-for-torture-princess.jpg`,
@@ -26,4 +26,4 @@ const allAnime: AnimeItem[] = Array.from({ length: 15 }, (_, i) => new AnimeItem
 }));
 
 
-export { featuredAnime, allAnime };
+export { featuredAnimeMock, allAnimeMock };
