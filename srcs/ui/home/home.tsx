@@ -3,12 +3,12 @@ import AnimeItem from "../../models/anime_item";
 import TopBar from "../components/top_bar";
 import BannerResume from "../components/banner_resume";
 import LinearGradient from 'react-native-linear-gradient';
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { ListAnime } from "./list_anime";
 import { DeviceEventEmitter } from 'react-native'
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { featuredAnimeMock } from "../../data/mockData";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../../constants/routes";
 
@@ -24,6 +24,7 @@ export enum SelectedPart {
 
 export function Home(): React.JSX.Element {
 	const navigation = useNavigation<HomeScreenNavigationProp>();
+	const route = useRoute();
 	const [selectedPart, setSelectedPart] = useState<SelectedPart>(SelectedPart.BANNER);
 	const [indexTopBar, setIndexTopBar] = useState<number>(0);
 	const [indexBanner, setIndexBanner] = useState<number>(0);
@@ -31,100 +32,100 @@ export function Home(): React.JSX.Element {
 	const [animeList, setAnimeList] = useState<AnimeItem[]>([]);
 	const [featuredAnime, setFeaturedAnime] = useState<AnimeItem | null>(null);
 
-	useEffect(() => {
-		const subscription = DeviceEventEmitter.addListener('keyPressed', (keyCode: number) => {
-			if (keyCode === RemoteControlKey.DPAD_UP) {
-				setIndexItem(currentIndex => {
-					setSelectedPart(currentSelectedPart => {
-						if (currentIndex > 3) {
+	useFocusEffect(
+		useCallback(() => {
+			const subscription = DeviceEventEmitter.addListener('keyPressed', (keyCode: number) => {
+				if (keyCode === RemoteControlKey.DPAD_UP) {
+					setIndexItem(currentIndex => {
+						setSelectedPart(currentSelectedPart => {
+							if (currentIndex > 3) {
+								return currentSelectedPart;
+							} else if (currentSelectedPart > SelectedPart.TOPBAR) {
+								return currentSelectedPart - 1;
+							}
 							return currentSelectedPart;
-						} else if (currentSelectedPart > SelectedPart.TOPBAR) {
-							return currentSelectedPart - 1;
+						});
+
+						if (currentIndex > 3) {
+							return currentIndex - 4;
+						}
+						return currentIndex;
+					});
+				} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
+					setSelectedPart(currentSelectedPart => {
+						setIndexItem(currentIndex => {
+							if (currentSelectedPart < SelectedPart.ANIME_LIST) {
+								return currentIndex;
+							} else if (currentIndex + 4 < animeList.length) {
+								return currentIndex + 4;
+							}
+							return currentIndex;
+						});
+
+						if (currentSelectedPart < SelectedPart.ANIME_LIST) {
+							return currentSelectedPart + 1;
 						}
 						return currentSelectedPart;
 					});
-
-					if (currentIndex > 3) {
-						return currentIndex - 4;
-					}
-					return currentIndex;
-				});
-			} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
-				setSelectedPart(currentSelectedPart => {
-					setIndexItem(currentIndex => {
-						if (currentSelectedPart < SelectedPart.ANIME_LIST) {
-							return currentIndex;
-						} else if (currentIndex + 4 < animeList.length) {
-							return currentIndex + 4;
+				} else if (keyCode === RemoteControlKey.DPAD_LEFT) {
+					setSelectedPart(currentSelectedPart => {
+						if (currentSelectedPart === SelectedPart.ANIME_LIST) {
+							setIndexItem(currentIndex => {
+								return currentIndex - (currentIndex % 4 === 0 ? 0 : 1);
+							});
+						} else if (currentSelectedPart === SelectedPart.BANNER) {
+							setIndexBanner(currentIndex => {
+								return currentIndex - (currentIndex === 0 ? 0 : 1);
+							});
+						} else if (currentSelectedPart === SelectedPart.TOPBAR) {
+							setIndexTopBar(currentIndex => {
+								return currentIndex - (currentIndex === 0 ? 0 : 1);
+							});
 						}
-						return currentIndex;
+						return currentSelectedPart;
 					});
-
-					if (currentSelectedPart < SelectedPart.ANIME_LIST) {
-						return currentSelectedPart + 1;
-					}
-					return currentSelectedPart;
-				});
-			} else if (keyCode === RemoteControlKey.DPAD_LEFT) {
-				setSelectedPart(currentSelectedPart => {
-					if (currentSelectedPart === SelectedPart.ANIME_LIST) {
+				} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+					setSelectedPart(currentSelectedPart => {
+						if (currentSelectedPart === SelectedPart.ANIME_LIST) {
+							setIndexItem(currentIndex => {
+								if (currentIndex + 1 >= animeList.length) {
+									return currentIndex;
+								}
+								return currentIndex + (currentIndex % 4 === 3 ? 0 : 1);
+							});
+						} else if (currentSelectedPart === SelectedPart.BANNER) {
+							setIndexBanner(currentIndex => {
+								return currentIndex + (currentIndex === 1 ? 0 : 1);
+							});
+						} else if (currentSelectedPart === SelectedPart.TOPBAR) {
+							setIndexTopBar(currentIndex => {
+								return currentIndex + (currentIndex === 2 ? 0 : 1);
+							});
+						}
+						return currentSelectedPart;
+					});
+				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+					if (selectedPart === SelectedPart.ANIME_LIST) {
 						setIndexItem(currentIndex => {
-							return currentIndex - (currentIndex % 4 === 0 ? 0 : 1);
-						});
-					} else if (currentSelectedPart === SelectedPart.BANNER) {
-						setIndexBanner(currentIndex => {
-							return currentIndex - (currentIndex === 0 ? 0 : 1);
-						});
-					} else if (currentSelectedPart === SelectedPart.TOPBAR) {
-						setIndexTopBar(currentIndex => {
-							return currentIndex - (currentIndex === 0 ? 0 : 1);
-						});
-					}
-					return currentSelectedPart;
-				});
-			} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
-				setSelectedPart(currentSelectedPart => {
-					if (currentSelectedPart === SelectedPart.ANIME_LIST) {
-						setIndexItem(currentIndex => {
-							if (currentIndex + 1 >= animeList.length) {
-								return currentIndex;
+							const selectedAnime = animeList[currentIndex];
+							if (selectedAnime) {
+								navigation.navigate('Anime', { anime: selectedAnime });
 							}
-							return currentIndex + (currentIndex % 4 === 3 ? 0 : 1);
+							return currentIndex;
 						});
-					} else if (currentSelectedPart === SelectedPart.BANNER) {
-						setIndexBanner(currentIndex => {
-							return currentIndex + (currentIndex === 1 ? 0 : 1);
-						});
-					} else if (currentSelectedPart === SelectedPart.TOPBAR) {
-						setIndexTopBar(currentIndex => {
-							return currentIndex + (currentIndex === 2 ? 0 : 1);
-						});
-					}
-					return currentSelectedPart;
-				});
-			} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-				if (selectedPart === SelectedPart.ANIME_LIST) {
-					setIndexItem(currentIndex => {
-						const selectedAnime = animeList[currentIndex];
-						if (selectedAnime) {
-							navigation.navigate('Anime', { anime: selectedAnime });
-						}
-						return currentIndex;
-					});
-				} else if (selectedPart === SelectedPart.BANNER) {
-					if (indexBanner === 1) {
-						if (featuredAnime) {
-							navigation.navigate('Anime', { anime: featuredAnime });
+					} else if (selectedPart === SelectedPart.BANNER) {
+						if (indexBanner === 1) {
+							if (featuredAnime) {
+								navigation.navigate('Anime', { anime: featuredAnime });
+							}
 						}
 					}
 				}
-			}
-		});
+			});
 
-		return () => {
-			subscription.remove();
-		};
-	}, [animeList, navigation, indexBanner, featuredAnime]);
+			return () => subscription.remove();
+		}, [animeList, navigation, indexBanner, featuredAnime, selectedPart])
+	);
 
 	useEffect(() => {
 		setFeaturedAnime(animeList[indexItem]);

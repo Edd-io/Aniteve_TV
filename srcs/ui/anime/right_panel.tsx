@@ -1,33 +1,141 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { use, useEffect, useState } from "react";
+import { ActivityIndicator, DeviceEventEmitter, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Side } from "./anime";
+import { RemoteControlKey } from "../../constants/remote_controller";
+import { AnimeEpisodesData } from "../../data/anime_api_service";
+import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 const EPISODES_PER_PAGE = 5;
 
 interface RightPanelProps {
-	getTotalPages: () => number;
-	currentPage: number;
-	episodesData: any;
+	episodesData: AnimeEpisodesData | null;
 	loadingEpisodes: boolean;
-	getCurrentPageEpisodes: () => [string, string[]][];
-	handleEpisodePress: (episodeName: string, episodeUrls: string[]) => void;
-	setCurrentPage: (page: number) => void;
-	setSelectedEpisodeIndex: (index: number) => void;
 	selectedSeason: string | null;
+	averageColor: number[];
+	focusMenu: Side;
+	setFocusMenu?: (side: Side) => void;
 }
 
 export const RightPanel: React.FC<RightPanelProps> = ({
-	getTotalPages,
-	currentPage,
 	episodesData,
 	loadingEpisodes,
-	getCurrentPageEpisodes,
-	handleEpisodePress,
-	setCurrentPage,
-	setSelectedEpisodeIndex,
 	selectedSeason,
+	averageColor,
+	focusMenu,
+	setFocusMenu = () => { },
 }) => {
+	const isSelected = focusMenu === Side.RIGHT;
+
+	const [currentPage, setCurrentPage] = useState(1);
+	const [indexEpisode, setIndexEpisode] = useState(0);
+	const [listSize, setListSize] = useState<number>(0);
+	const [onPageSelector, setOnPageSelector] = useState(false);
+
+
+
+	const getCurrentPageEpisodes = () => {
+		if (!episodesData?.episodes) return [];
+		const episodes = Object.entries(episodesData.episodes);
+		const startIndex = (currentPage - 1) * EPISODES_PER_PAGE;
+		const endIndex = startIndex + EPISODES_PER_PAGE;
+		return episodes.slice(startIndex, endIndex);
+	};
+
+	const getTotalPages = () => {
+		if (!episodesData?.episodes) return 1;
+		const totalEpisodes = Object.keys(episodesData.episodes).length;
+		return Math.ceil(totalEpisodes / EPISODES_PER_PAGE);
+	};
+
+
+	useEffect(() => {
+		const currentEpisodes = getCurrentPageEpisodes();
+		setListSize(currentEpisodes.length);
+	}, [currentPage, episodesData]);
+
+	useEffect(() => {
+		const handleRemoteControlEvent = (keyCode: number) => {
+			if (!isSelected) {
+				return;
+			}
+
+			if (keyCode === RemoteControlKey.DPAD_LEFT) {
+				if (onPageSelector) {
+					setCurrentPage(prevPage => {
+						if (prevPage > 1) {
+							return prevPage - 1;
+						} else {
+							setFocusMenu(Side.LEFT);
+							return prevPage;
+						}
+					});
+				} else {
+					if (indexEpisode !== listSize) {
+						setFocusMenu(Side.LEFT);
+						setIndexEpisode(0);
+					} else {
+						setCurrentPage(prevPage => {
+							if (prevPage > 1) {
+								return prevPage - 1;
+							} else {
+								setFocusMenu(Side.LEFT);
+								return prevPage;
+							}
+						});
+						setIndexEpisode(0);
+					}
+				}
+			}
+			else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+				if (onPageSelector) {
+					setCurrentPage(prevPage => {
+						if (prevPage < getTotalPages()) {
+							return prevPage + 1;
+						}
+						return prevPage;
+					});
+				} else {
+					if (indexEpisode !== listSize - 1) {
+						return;
+					} else {
+						setCurrentPage(prevPage => {
+							if (prevPage < getTotalPages()) {
+								return prevPage + 1;
+							}
+							return prevPage;
+						});
+					}
+				}
+			} else if (keyCode === RemoteControlKey.DPAD_UP) {
+				setOnPageSelector(prevValue => {
+					if (prevValue === true) {
+						setIndexEpisode(listSize - 1);
+						return false;
+					}
+					setIndexEpisode(prevIndex => Math.max(prevIndex - 1, 0));
+					return false;
+				});
+			} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
+				setIndexEpisode(prevIndex => {
+					if (prevIndex < listSize - 1) {
+						return Math.min(prevIndex + 1, listSize);
+					} else {
+						setOnPageSelector(true);
+						return prevIndex;
+					}
+				});
+			} else if (keyCode === RemoteControlKey.BACK) {
+				setFocusMenu(Side.LEFT);
+			}
+		};
+
+		const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
+		return () => subscription.remove();
+	}, [isSelected, listSize, onPageSelector]);
+
 	return (
-		<View style={styles.rightPanel}>
+		<View style={[styles.rightPanel, { backgroundColor: `rgba(${averageColor.join(',')}, 0.57)` }]}>
 			<View style={styles.episodeHeader}>
 				<View style={{ flex: 1 }}>
 					<Text
@@ -65,9 +173,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 									key={index}
 									style={[
 										styles.episodeItem,
+										{ backgroundColor: `rgba(${averageColor.join(',')}, 0.7)` },
 										{ marginBottom: index === getCurrentPageEpisodes().length - 1 ? 0 : 15 },
+										indexEpisode === index && isSelected && !onPageSelector ? styles.focusedEpisodeItem : {}
 									]}
-									onPress={() => handleEpisodePress(episodeName, episodeUrls as string[])}
 								>
 									<View style={styles.episodeContent}>
 										<View style={[
@@ -94,13 +203,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 							style={[
 								styles.pageButton,
 								currentPage === 1 && styles.disabledPageButton,
+								{ backgroundColor: onPageSelector && isSelected ? '#E50914' : 'rgba(255,255,255,0.1)', }
 							]}
-							onPress={() => {
-								if (currentPage > 1) {
-									setCurrentPage(currentPage - 1);
-									setSelectedEpisodeIndex(0);
-								}
-							}}
 							disabled={currentPage === 1}
 						>
 							<Icon name="chevron-left" size={24} color="#ffffff" />
@@ -114,13 +218,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 							style={[
 								styles.pageButton,
 								currentPage === getTotalPages() && styles.disabledPageButton,
+								{ backgroundColor: onPageSelector && isSelected ? '#E50914' : 'rgba(255,255,255,0.1)', }
 							]}
-							onPress={() => {
-								if (currentPage < getTotalPages()) {
-									setCurrentPage(currentPage + 1);
-									setSelectedEpisodeIndex(0);
-								}
-							}}
 							disabled={currentPage === getTotalPages()}
 						>
 							<Icon name="chevron-right" size={24} color="#ffffff" />
@@ -156,6 +255,9 @@ const styles = StyleSheet.create({
 		color: '#ffffff',
 		fontSize: 24,
 		fontWeight: 'bold',
+		textShadowColor: 'rgba(0,0,0,0.2)',
+		textShadowOffset: { width: 0, height: 1 },
+		textShadowRadius: 1,
 	},
 	episodesInfo: {
 		backgroundColor: 'rgba(255,255,255,0.1)',
@@ -181,7 +283,6 @@ const styles = StyleSheet.create({
 	episodeItem: {
 		marginBottom: 15,
 		borderRadius: 8,
-		backgroundColor: 'rgba(255,255,255,0.05)',
 		overflow: 'hidden',
 	},
 	episodeContent: {
@@ -205,9 +306,9 @@ const styles = StyleSheet.create({
 		color: '#ffffff',
 		fontSize: 14,
 		fontWeight: 'bold',
-		textShadowColor: 'rgba(0,0,0,0.8)',
+		textShadowColor: 'rgba(0,0,0,0.2)',
 		textShadowOffset: { width: 0, height: 1 },
-		textShadowRadius: 2,
+		textShadowRadius: 1,
 	},
 	episodeDetails: {
 		flex: 1,
@@ -218,9 +319,9 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontWeight: '600',
 		marginBottom: 4,
-		textShadowColor: 'rgba(0,0,0,0.8)',
+		textShadowColor: 'rgba(0,0,0,0.2)',
 		textShadowOffset: { width: 0, height: 1 },
-		textShadowRadius: 2,
+		textShadowRadius: 1,
 	},
 	episodeCurrentIndicator: {
 		color: '#E50914',
@@ -274,5 +375,8 @@ const styles = StyleSheet.create({
 	},
 	bgStyleImage: {
 		opacity: 0.7,
+	},
+	focusedEpisodeItem: {
+		backgroundColor: '#E50914',
 	},
 });

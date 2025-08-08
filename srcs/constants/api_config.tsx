@@ -6,6 +6,7 @@ export const API_CONFIG = {
     GET_ALL_ANIME: "/api/get_all_anime",
     GET_ANIME_SEASON: "/api/get_anime_season",
     GET_PROGRESS: "/api/get_progress",
+    GET_AVERAGE_COLOR: "/api/get_average_color",
     TMDB_PROXY: "/api/tmdb"
   },
   TMDB: {

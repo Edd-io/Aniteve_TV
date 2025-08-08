@@ -9,7 +9,7 @@ export interface AnimeEpisodesData {
 
 export interface ProgressData {
 	episode?: number;
-	find?: boolean;
+	find: boolean;
 	progress?: number;
 	season?: string;
 	status?: number;
@@ -80,11 +80,36 @@ export class AnimeApiService {
 			alternativeTitle: e?.alternativeTitle ?? e?.altTitle ?? undefined,
 			img: String(e?.img ?? e?.image ?? e?.poster ?? ''),
 			url: String(e?.url ?? e?.link ?? ''),
-			genres: e?.genres ?? [],
+			genres: e?.genre ?? [],
 		}));
 
 		return mapped;
 	}
+
+	async fetchAverageColor({ imgUrl }: { imgUrl: string }): Promise<number[]> {
+		try {
+			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_AVERAGE_COLOR}`, {
+				method: 'POST',
+				headers: createHeaders(Secrets.API_TOKEN),
+				body: JSON.stringify({
+					url: imgUrl
+				}),
+			});
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+			const data = await response.json();
+			const averageColor = data?.average_color;
+			if (!averageColor || averageColor.length !== 3) {
+				throw new Error('Invalid average color data received');
+			}
+			return averageColor;
+		} catch (error) {
+			console.error('Error fetching average color:', error);
+			throw error;
+		}
+	}
+
 
 	async fetchAnimeSeasons(animeUrl: string): Promise<String[]> {
 		try {

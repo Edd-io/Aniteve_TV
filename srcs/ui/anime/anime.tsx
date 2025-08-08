@@ -3,16 +3,11 @@ import {
 	View,
 	Text,
 	StyleSheet,
-	TouchableOpacity,
 	ActivityIndicator,
-	Modal,
 	DeviceEventEmitter,
 	SafeAreaView,
-	ScrollView,
-	Image,
 	ImageBackground
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
@@ -20,17 +15,21 @@ import { RootStackParamList } from '../../constants/routes';
 import { RemoteControlKey } from '../../constants/remote_controller';
 import { AnimeApiService, AnimeEpisodesData, ProgressData, TMDBData } from '../../data/anime_api_service';
 import { RightPanel } from './right_panel';
+import { LeftPanel } from './left_panel';
 
 type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
 type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
 
-interface SelectedEpisode {
-	name: string;
-	urls: string[];
+export enum Side {
+	LEFT = 0,
+	RIGHT = 1
 }
 
-
-const EPISODES_PER_PAGE = 5;
+enum LeftMenuButtons {
+	START = 0,
+	SEASONS = 1,
+	INFO = 2,
+}
 
 export const Anime: React.FC = () => {
 	const route = useRoute<AnimeScreenRouteProp>();
@@ -41,31 +40,20 @@ export const Anime: React.FC = () => {
 
 	const [loading, setLoading] = useState(true);
 	const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+
 	const [animeSeasonData, setAnimeSeasonData] = useState<String[]>([]);
 	const [episodesData, setEpisodesData] = useState<AnimeEpisodesData | null>(null);
 	const [progressData, setProgressData] = useState<ProgressData | null>(null);
 	const [tmdbData, setTmdbData] = useState<TMDBData | null>(null);
-	const [showServerSelector, setShowServerSelector] = useState(false);
-	const [selectedEpisode, setSelectedEpisode] = useState<SelectedEpisode | null>(null);
-	const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
+
 	const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0);
-	const [selectedEpisodeIndex, setSelectedEpisodeIndex] = useState(0);
-	const [currentPage, setCurrentPage] = useState(1);
+
 	const [backdropImage, setBackdropImage] = useState<string | null>(null);
+	const [logo, setLogo] = useState<string | null>(null);
+	const [averageColor, setAverageColor] = useState<number[]>([0, 0, 0]);
 
-	const getCurrentPageEpisodes = () => {
-		if (!episodesData?.episodes) return [];
-		const episodes = Object.entries(episodesData.episodes);
-		const startIndex = (currentPage - 1) * EPISODES_PER_PAGE;
-		const endIndex = startIndex + EPISODES_PER_PAGE;
-		return episodes.slice(startIndex, endIndex);
-	};
-
-	const getTotalPages = () => {
-		if (!episodesData?.episodes) return 1;
-		const totalEpisodes = Object.keys(episodesData.episodes).length;
-		return Math.ceil(totalEpisodes / EPISODES_PER_PAGE);
-	};
+	const [focusMenu, setFocusMenu] = useState<Side>(Side.LEFT);
+	const [indexLeftMenu, setIndexLeftMenu] = useState<LeftMenuButtons>(LeftMenuButtons.START);
 
 	useEffect(() => {
 		const loadInitialData = async () => {
@@ -81,20 +69,20 @@ export const Anime: React.FC = () => {
 					});
 					seasonsData = [...seasonsData, ...vfSeasons];
 				}
-
 				setAnimeSeasonData(seasonsData);
 
 
 				const progress = await apiService.fetchProgress(parseInt(anime.url.toString()));
 				setProgressData(progress);
 
-				const tmdbInfo = await apiService.fetchTMDBData(anime.title.toString());
+				const tmdbInfo = await apiService.fetchTMDBData(anime.title.toString(), anime.genres.includes('Film'));
 				setTmdbData(tmdbInfo);
 
+				const averageColor = await apiService.fetchAverageColor({ imgUrl: getBetterBackdrop(tmdbData) ?? anime.img.toString() });
+				setAverageColor(averageColor);
 
 				if (seasonsData.length > 0) {
 					const firstSeason = seasonsData[0];
-					setSelectedSeason(firstSeason.toString());
 					setSelectedSeasonIndex(0);
 					await loadEpisodes(firstSeason.toString());
 				}
@@ -111,6 +99,7 @@ export const Anime: React.FC = () => {
 
 	useEffect(() => {
 		setBackdropImage(getBetterBackdrop(tmdbData));
+		setLogo(getBetterLogo(tmdbData));
 	}, [tmdbData]);
 
 	const loadEpisodes = async (season: string) => {
@@ -118,8 +107,6 @@ export const Anime: React.FC = () => {
 			setLoadingEpisodes(true);
 			const episodes = await apiService.fetchAnimeEpisodes(anime.url.toString(), season);
 			setEpisodesData(episodes);
-			setCurrentPage(1);
-			setSelectedEpisodeIndex(0);
 		} catch (error) {
 			console.error('Error loading episodes:', error);
 			setEpisodesData(null);
@@ -128,20 +115,35 @@ export const Anime: React.FC = () => {
 		}
 	};
 
-
-	const handleEpisodePress = (episodeName: string, episodeUrls: string[]) => {
-		setSelectedEpisode({ name: episodeName, urls: episodeUrls });
-		setShowServerSelector(true);
-	};
-
 	useEffect(() => {
 		const handleRemoteControlEvent = (keyCode: number) => {
-
+			if (focusMenu === Side.RIGHT) {
+				return;
+			}
+			else if (keyCode === RemoteControlKey.DPAD_LEFT) {
+				console.log('Left button pressed');
+				setIndexLeftMenu((prevIndex) => Math.max(prevIndex - 1, 0));
+			}
+			else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+				setIndexLeftMenu((prevIndex) => {
+					if (prevIndex === LeftMenuButtons.INFO) {
+						console.log('Switching to right panel');
+						setFocusMenu(Side.RIGHT);
+					} else {
+						console.log('Right button pressed');
+						return prevIndex + 1;
+					}
+					return prevIndex;
+				});
+			}
+			else if (keyCode === RemoteControlKey.BACK) {
+				navigation.goBack();
+			}
 		};
 
 		const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 		return () => subscription.remove();
-	}, []);
+	}, [focusMenu]);
 
 	if (loading) {
 		return (
@@ -164,25 +166,54 @@ export const Anime: React.FC = () => {
 			>
 				<View style={styles.mainContent}>
 
-					<View style={styles.leftPanel}>
-					</View>
+					<LeftPanel
+						anime={anime}
+						logo={logo}
+						tmdbData={tmdbData}
+						progressData={progressData}
+						averageColor={averageColor}
+						indexLeftMenu={indexLeftMenu}
+						focusMenu={focusMenu}
+					/>
 
 					<RightPanel
-						getTotalPages={getTotalPages}
-						currentPage={currentPage}
 						episodesData={episodesData}
 						loadingEpisodes={loadingEpisodes}
-						getCurrentPageEpisodes={getCurrentPageEpisodes}
-						handleEpisodePress={handleEpisodePress}
-						setCurrentPage={setCurrentPage}
-						setSelectedEpisodeIndex={setSelectedEpisodeIndex}
-						selectedSeason={selectedSeason}
+						selectedSeason={animeSeasonData[selectedSeasonIndex] as string || null}
+						averageColor={averageColor}
+						focusMenu={focusMenu}
+						setFocusMenu={setFocusMenu}
 					/>
 				</View>
 			</ImageBackground>
 		</SafeAreaView>
 	);
 };
+
+function getBetterLogo(tmdbData: TMDBData | null): string | null {
+	let logos = [];
+
+	if (!tmdbData?.logos || tmdbData.logos.length === 0) {
+		return null;
+	}
+	for (const logo of tmdbData.logos) {
+		if (logo.iso_639_1 !== 'fr' && logo.iso_639_1 !== 'jp' && logo.iso_639_1 !== 'en') {
+			continue;
+		}
+		logos.push(logo);
+	}
+	logos.sort((a, b) => {
+		if (a.iso_639_1 === 'en') return -1;
+		if (b.iso_639_1 === 'en') return 1;
+		if (a.iso_639_1 === 'jp') return -1;
+		if (b.iso_639_1 === 'jp') return 1;
+		return 0;
+	});
+	if (logos.length === 0) {
+		return null;
+	}
+	return 'https://image.tmdb.org/t/p/original/' + logos[0].file_path;
+}
 
 function getBetterBackdrop(tmdbData: TMDBData | null): string | null {
 	let better = null;
@@ -235,158 +266,13 @@ const styles = StyleSheet.create({
 		flex: 1,
 		flexDirection: 'row',
 	},
-	leftPanel: {
-		flex: 2,
-		position: 'relative',
-	},
-	rightPanel: {
-		flex: 1,
-		backgroundColor: 'rgba(20, 20, 20, 0.57)',
-		borderLeftWidth: 1,
-		borderLeftColor: 'rgba(255,255,255,0.1)',
-		paddingHorizontal: 20,
-		paddingVertical: 30,
-	},
-	episodeHeader: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginBottom: 20,
-		paddingBottom: 15,
-		borderBottomWidth: 1,
-		borderBottomColor: 'rgba(255,255,255,0.1)',
-	},
-	episodeTitle: {
-		color: '#ffffff',
-		fontSize: 24,
-		fontWeight: 'bold',
-	},
-	episodesInfo: {
-		backgroundColor: 'rgba(255,255,255,0.1)',
-		paddingHorizontal: 12,
-		paddingVertical: 6,
-		borderRadius: 15,
-	},
-	focusedPagination: {
-		backgroundColor: '#E50914',
-	},
-	episodeText: {
-		color: '#ffffff',
-		fontSize: 12,
-		fontWeight: '600',
-	},
-	episodesLoading: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	episodesLoadingText: {
-		color: '#ffffff',
-		fontSize: 14,
-		marginTop: 10,
-	},
-	episodeList: {
-		flex: 1,
-	},
-	episodeItem: {
-		marginBottom: 15,
-		borderRadius: 8,
-		backgroundColor: 'rgba(255,255,255,0.05)',
-		overflow: 'hidden',
-	},
-	selectedEpisodeItem: {
-		backgroundColor: 'rgba(229, 9, 20, 0.46)',
-	},
-	episodeContent: {
-		flexDirection: 'row',
-		padding: 12,
-		alignItems: 'center',
-	},
-	episodeImagePlaceholder: {
-		width: 80,
-		height: 45,
-		backgroundColor: 'rgba(255,255,255,0.15)',
-		borderRadius: 6,
-		justifyContent: 'center',
-		alignItems: 'center',
-		marginRight: 12,
-	},
-	currentEpisodeImagePlaceholder: {
-		backgroundColor: '#E50914',
-	},
-	episodeNumber: {
-		color: '#ffffff',
-		fontSize: 14,
-		fontWeight: 'bold',
-		textShadowColor: 'rgba(0,0,0,0.8)',
-		textShadowOffset: { width: 0, height: 1 },
-		textShadowRadius: 2,
-	},
-	episodeDetails: {
-		flex: 1,
-		justifyContent: 'center',
-	},
-	episodeName: {
-		color: '#ffffff',
-		fontSize: 16,
-		fontWeight: '600',
-		marginBottom: 4,
-		textShadowColor: 'rgba(0,0,0,0.8)',
-		textShadowOffset: { width: 0, height: 1 },
-		textShadowRadius: 2,
-	},
-	episodeCurrentIndicator: {
-		color: '#E50914',
-		fontSize: 12,
-		fontWeight: 'bold',
-		marginTop: 2,
-	},
-	noEpisodesText: {
-		color: 'rgba(255,255,255,0.6)',
-		fontSize: 16,
-		textAlign: 'center',
-		marginTop: 50,
-	},
-	paginationControls: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		marginTop: 20,
-		paddingTop: 15,
-		borderTopWidth: 1,
-		borderTopColor: 'rgba(255,255,255,0.1)',
-	},
-	pageButton: {
-		backgroundColor: 'rgba(255,255,255,0.1)',
-		paddingHorizontal: 15,
-		paddingVertical: 10,
-		borderRadius: 6,
-		minWidth: 40,
-		alignItems: 'center',
-	},
-	focusedPageButton: {
-		backgroundColor: '#E50914',
-	},
-	disabledPageButton: {
-		backgroundColor: 'rgba(255,255,255,0.05)',
-		opacity: 0.5,
-	},
-	pageButtonText: {
-		color: '#ffffff',
-		fontSize: 16,
-		fontWeight: 'bold',
-	},
-	pageIndicator: {
-		color: '#ffffff',
-		fontSize: 14,
-		fontWeight: '600',
-	},
 	bgStyleFull: {
 		justifyContent: 'center',
 		flex: 1,
 		position: 'relative',
 	},
 	bgStyleImage: {
-		opacity: 0.7,
+		opacity: 0.6,
 	},
 });
+
