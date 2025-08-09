@@ -12,6 +12,14 @@ import { getBetterLogo } from "../../utils/get_better_logo";
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
 
+enum MenuElement {
+	RESUME = 0,
+	CHANGE_SOURCE = 1,
+	PREVIOUS_EPISODE = 2,
+	NEXT_EPISODE = 3,
+	EXIT = 4,
+}
+
 const timeSkip: number = 15;
 
 export function Player(): JSX.Element {
@@ -46,8 +54,12 @@ export function Player(): JSX.Element {
 	const [onLoading, setOnLoading] = useState<boolean>(false);
 	const animatedHeight = useRef(new Animated.Value(50)).current;
 	const videoRef = useRef<VideoRef>(null);
-
 	const timeoutInterfaceRef = useRef<NodeJS.Timeout | null>(null);
+	const [resolution, setResolution] = useState<string | null>(null);
+	const [aspectRatio, setAspectRatio] = useState<string | null>(null);
+
+	const [indexMenu, setIndexMenu] = useState<number>(0);
+
 
 	useFocusEffect(
 		useCallback(() => {
@@ -70,6 +82,10 @@ export function Player(): JSX.Element {
 							}
 							return time;
 						});
+					} else {
+						setIndexMenu((prev) => {
+							return prev > 0 ? prev - 1 : 0;
+						});
 					}
 				} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
 					if (!isPaused) {
@@ -80,22 +96,45 @@ export function Player(): JSX.Element {
 							}
 							return time;
 						});
+					} else {
+						setIndexMenu((prev) => {
+							return (prev < (showSourceSelector ? Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length : 4)) ? prev + 1 : prev;
+						});
 					}
 				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
 					if (!error) {
-						setIsPaused((prev) => {
-							if (prev) {
-								setShowInterface(true);
-								timeoutInterfaceRef.current = setTimeout(() => {
-									setShowInterface(false);
-								}, 3000);
-							} else {
-								if (timeoutInterfaceRef.current) {
-									clearTimeout(timeoutInterfaceRef.current);
+						if (isPaused) {
+							if (!showSourceSelector) {
+								if (indexMenu === MenuElement.RESUME) {
+									setIsPaused(false);
+									setShowInterface(true);
+									timeoutInterfaceRef.current = setTimeout(() => {
+										setShowInterface(false);
+									}, 3000);
+								} else if (indexMenu === MenuElement.CHANGE_SOURCE) {
+									setIndexMenu(0);
+									setShowSourceSelector(true);
+								} else if (indexMenu === MenuElement.PREVIOUS_EPISODE) {
+									setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
+								} else if (indexMenu === MenuElement.NEXT_EPISODE) {
+									setEpisodeIndexState((prev) => Math.min(prev + 1, Object.keys(episodesState.episodes).length - 1));
+								} else if (indexMenu === MenuElement.EXIT) {
+									navigation.goBack();
+									return;
 								}
+							} else {
+								if (indexMenu === Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length) {
+									setIndexMenu(0);
+									setShowSourceSelector(false);
+								} else {
+									setSourceIndex(indexMenu);
+									setShowSourceSelector(false);
+								}
+								setIsPaused(false);
 							}
-							return !prev;
-						});
+						} else {
+							setIsPaused(true);
+						}
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
 					navigation.goBack();
@@ -103,7 +142,7 @@ export function Player(): JSX.Element {
 			};
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
-		}, [videoRef, isPaused])
+		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu])
 	);
 
 	useEffect(() => {
@@ -127,6 +166,12 @@ export function Player(): JSX.Element {
 	}, [isPaused]);
 
 	useEffect(() => {
+		setAspectRatio(null);
+		setResolution(null);
+		setError(null);
+		setOnLoading(true);
+		setUrlVideo(null);
+
 		if (!episodes || !episodes.episodes || (Array.isArray(episodes.episodes) && episodes.episodes.length === 0)) {
 			setError("Aucune source disponible pour cet épisode.");
 			return;
@@ -202,6 +247,16 @@ export function Player(): JSX.Element {
 					}}
 					onLoad={(data) => {
 						setDuration(data.duration);
+						setProgress(0);
+						setOnLoading(false);
+						if (videoRef.current) {
+							videoRef.current.seek(0);
+						}
+						if (data.naturalSize && data.naturalSize.width && data.naturalSize.height) {
+							const { width, height } = data.naturalSize;
+							setAspectRatio(getAspectRatio(width, height));
+							setResolution(getResolutionFromHeight(height));
+						}
 					}}
 					onProgress={(data) => {
 						setProgress(data.currentTime);
@@ -210,6 +265,26 @@ export function Player(): JSX.Element {
 						if (error)
 							return;
 						setOnLoading(stateData.isBuffering);
+					}}
+					onVideoTracks={(data) => {
+						if (data.videoTracks && data.videoTracks.length > 0) {
+							const activeTrack = data.videoTracks.find(track => track.selected);
+							if (activeTrack) {
+								const height = activeTrack.height;
+								const width = activeTrack.width;
+								if (height) {
+									setResolution(getResolutionFromHeight(height));
+									if (width) {
+										setAspectRatio(getAspectRatio(width, height));
+									}
+								}
+
+							}
+							else {
+								setResolution(null);
+								setAspectRatio(null);
+							}
+						}
 					}}
 				/>
 			)}
@@ -249,6 +324,31 @@ export function Player(): JSX.Element {
 							>{getSeasonAndEpisodeTitle(seasons[seasonIndex], episodeIndex)}</Text>
 						</View>
 					</View>
+					<View style={[styles.topContainer, { marginTop: 10, justifyContent: 'flex-end' }]}>
+						<View style={[styles.resolutionContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)`, marginRight: (resolution || aspectRatio ? 10 : 0) }]}>
+							<Text
+								style={[styles.resolutionText, styles.textShadow]}
+							>Source {sourceIndex + 1}</Text>
+						</View>
+						{
+							resolution && (
+								<View style={[styles.resolutionContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)`, marginRight: 10 }]}>
+									<Text
+										style={[styles.resolutionText, styles.textShadow]}
+									>{resolution}</Text>
+								</View>
+							)
+						}
+						{
+							aspectRatio && (
+								<View style={[styles.resolutionContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)` }]}>
+									<Text
+										style={[styles.resolutionText, styles.textShadow]}
+									>{aspectRatio}</Text>
+								</View>
+							)
+						}
+					</View>
 
 					<View style={{ flex: 1 }} />
 
@@ -269,7 +369,10 @@ export function Player(): JSX.Element {
 												style={[
 													styles.buttonExtendedInterface,
 													{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
-													error && index == 0 ? { opacity: 0.4 } : { opacity: 1 }
+													error && index == 0 ? { opacity: 0.4 } : { opacity: 1 },
+													indexMenu === index ? { backgroundColor: '#E50914' } : {},
+													index === 2 && episodeIndexState === 0 ? { opacity: 0.4 } : {},
+													index === 3 && episodeIndexState === Object.keys(episodesState.episodes).length - 1 ? { opacity: 0.4 } : {}
 												]}
 											>
 												<Icon name={icon} size={30} color="#FFFFFF" />
@@ -283,13 +386,21 @@ export function Player(): JSX.Element {
 											episodesState.episodes[`eps${episodeIndexState + 1}`].map((element, index) => (
 												<View
 													key={`source-${index}`}
-													style={[styles.buttonExtendedInterface, { backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` }]}
+													style={[
+														styles.buttonExtendedInterface,
+														{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
+														indexMenu === index ? { backgroundColor: '#E50914' } : {}
+													]}
 												>
 													<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>Source {index + 1}</Text>
 												</View>
 											))
 										}
-										<View style={[styles.buttonExtendedInterface, { backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` }]}>
+										<View style={[
+											styles.buttonExtendedInterface,
+											{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
+											indexMenu === Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length ? { backgroundColor: '#E50914' } : {}
+										]}>
 											<Icon name="exit-to-app" size={30} color="#FFFFFF" />
 											<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>Retour</Text>
 										</View>
@@ -332,6 +443,24 @@ function convertSecondsToTime(seconds: number): string {
 	const minutes = Math.floor((seconds % 3600) / 60);
 	const secs = Math.floor(seconds % 60);
 	return `${hours > 0 ? `${hours}:` : ''}${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+function getAspectRatio(width: number, height: number): string {
+	const ratio = width / height;
+	if (Math.abs(ratio - 16 / 9) < 0.05) return "16:9";
+	if (Math.abs(ratio - 4 / 3) < 0.05) return "4:3";
+	if (Math.abs(ratio - 21 / 9) < 0.05) return "21:9";
+	if (Math.abs(ratio - 1) < 0.05) return "1:1";
+	return ratio.toFixed(2) + ":1";
+}
+
+function getResolutionFromHeight(height: number): string {
+	if (height >= 2160) return '4K';
+	if (height >= 1440) return '2K';
+	if (height >= 1080) return '1080p';
+	if (height >= 720) return '720p';
+	if (height >= 480) return '480p';
+	return `${height}p`;
 }
 
 const styles = StyleSheet.create({
@@ -411,6 +540,21 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 	},
 
+	resolutionContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		borderRadius: 10,
+		padding: 5,
+		overflow: 'hidden',
+		paddingHorizontal: 10,
+		alignSelf: 'flex-start'
+	},
+	resolutionText: {
+		color: 'white',
+		fontSize: 16,
+		fontWeight: 'bold',
+	},
+
 	progressBar: {
 		backgroundColor: 'rgba(255, 255, 255, 0.2)',
 		borderRadius: 5,
@@ -441,6 +585,7 @@ const styles = StyleSheet.create({
 		borderRadius: 10,
 		backgroundColor: '#E50914',
 		margin: 5,
+		overflow: 'hidden',
 	},
 
 	textShadow: {
