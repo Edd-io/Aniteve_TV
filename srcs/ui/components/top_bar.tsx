@@ -54,6 +54,17 @@ export default function TopBar(
 					]}
 					isTVSelectable={false}
 				>
+					<View style={{ width: 24, height: 24, borderRadius: 100, borderWidth: 2, borderColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+						<Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>A</Text>
+					</View>
+				</View>
+				<View
+					style={[
+						styles.button,
+						isSelected && currentFocusedIndex === 3 && styles.focusedElement
+					]}
+					isTVSelectable={false}
+				>
 					<Icon name="settings" size={24} color="#fff" />
 				</View>
 			</View>

@@ -98,7 +98,7 @@ export function Home(): React.JSX.Element {
 							});
 						} else if (currentSelectedPart === SelectedPart.TOPBAR) {
 							setIndexTopBar(currentIndex => {
-								return currentIndex + (currentIndex === 2 ? 0 : 1);
+								return currentIndex + (currentIndex === 3 ? 0 : 1);
 							});
 						}
 						return currentSelectedPart;
@@ -139,18 +139,19 @@ export function Home(): React.JSX.Element {
 	);
 }
 
+
 function HomeTop({ featuredAnime, selectedPart, indexBanner, indexTopBar }: { featuredAnime: AnimeItem | null, selectedPart: SelectedPart, indexBanner: number, indexTopBar: number }): React.JSX.Element {
-	const heightAnimation = useRef(new Animated.Value(height * 0.5)).current;
+  const initialHeight = selectedPart === SelectedPart.ANIME_LIST ? height * 0.5 : height * 0.8;
+  const heightAnimation = useRef(new Animated.Value(initialHeight)).current;
 
-	useEffect(() => {
-		const targetHeight = selectedPart === SelectedPart.ANIME_LIST ? height * 0.5 : height * 0.8;
-
-		Animated.timing(heightAnimation, {
-			toValue: targetHeight,
-			duration: 300,
-			useNativeDriver: false,
-		}).start();
-	}, [selectedPart, heightAnimation]);
+  useEffect(() => {
+	const targetHeight = selectedPart === SelectedPart.ANIME_LIST ? height * 0.5 : height * 0.8;
+	Animated.timing(heightAnimation, {
+	  toValue: targetHeight,
+	  duration: 300,
+	  useNativeDriver: false,
+	}).start();
+  }, [selectedPart, heightAnimation]);
 
 	if (selectedPart === SelectedPart.ANIME_LIST && featuredAnime != null) {
 		return (
