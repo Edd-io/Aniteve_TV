@@ -41,6 +41,7 @@ export interface TMDBData {
 	popularity?: number;
 	vote_count?: number;
 	posters?: any[];
+	original_name?: string | null;
 }
 
 export interface backdropImage {
@@ -215,6 +216,7 @@ export class AnimeApiService {
 					logos: [],
 					backdrops: [],
 					posters: [],
+					original_name: null,
 				};
 			}
 
@@ -253,7 +255,6 @@ export class AnimeApiService {
 				const popularityBonus = Math.min((anime.popularity || 0) / 100, 10);
 				const voteBonus = Math.min((anime.vote_count || 0) / 100, 5);
 				const finalScore = Math.max(titleScore, originalScore) + popularityBonus + voteBonus;
-
 				
 				return {
 					index,
@@ -299,6 +300,7 @@ export class AnimeApiService {
 				logos: imageData?.logos || [],
 				backdrops: imageData?.backdrops || [],
 				posters: imageData?.posters || [],
+				original_name: bestMatch.original_name || null,
 			};
 
 		} catch (error) {

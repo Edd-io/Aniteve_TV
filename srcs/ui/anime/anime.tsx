@@ -18,6 +18,7 @@ import { RightPanel } from './right_panel';
 import { LeftPanel } from './left_panel';
 import { getBetterLogo } from '../../utils/get_better_logo';
 import { SeasonSelector } from '../components/season_selector';
+import { InfoPopup } from '../components/info_popup';
 
 export type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
 export type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
@@ -57,6 +58,7 @@ export const Anime: FC = () => {
 	const [focusMenu, setFocusMenu] = useState<Side>(Side.LEFT);
 	const [indexLeftMenu, setIndexLeftMenu] = useState<LeftMenuButtons>(LeftMenuButtons.START);
 	const [showSeasonSelector, setShowSeasonSelector] = useState(false);
+	const [showInfoPopup, setShowInfoPopup] = useState(false);
 
 	const loadInitialData = async () => {
 		try {
@@ -134,7 +136,7 @@ export const Anime: FC = () => {
 	useFocusEffect(
 		useCallback(() => {
 			const handleRemoteControlEvent = (keyCode: number) => {
-				if (focusMenu === Side.RIGHT || showSeasonSelector) {
+				if (focusMenu === Side.RIGHT || showSeasonSelector || showInfoPopup) {
 					return;
 				}
 				else if (keyCode === RemoteControlKey.DPAD_LEFT) {
@@ -165,7 +167,7 @@ export const Anime: FC = () => {
 					} else if (indexLeftMenu === LeftMenuButtons.SEASONS) {
 						setShowSeasonSelector(true);
 					} else if (indexLeftMenu === LeftMenuButtons.INFO) {
-						console.log("Info button pressed");
+						setShowInfoPopup(true);
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
 					navigation.goBack();
@@ -184,7 +186,8 @@ export const Anime: FC = () => {
 			averageColor,
 			anime,
 			navigation,
-			showSeasonSelector
+			showSeasonSelector,
+			showInfoPopup
 		])
 	);
 
@@ -240,6 +243,13 @@ export const Anime: FC = () => {
 				averageColor={averageColor}
 				closePopup={() => setShowSeasonSelector(false)}
 				onSeasonSelect={handleSeasonSelect}
+			/>
+			<InfoPopup
+				visible={showInfoPopup}
+				anime={anime}
+				tmdbData={tmdbData}
+				averageColor={averageColor}
+				closePopup={() => setShowInfoPopup(false)}
 			/>
 		</SafeAreaView>
 	);
