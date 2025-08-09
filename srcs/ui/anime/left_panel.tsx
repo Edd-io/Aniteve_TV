@@ -122,7 +122,7 @@ function Progress({ progress, averageColor, focus }: { progress: ProgressData | 
 		]}>
 			{progress.season?.includes('film') ?
 				<Text style={styles.buttonText}>Film {progress.episode}</Text> :
-				<Text style={styles.buttonText}>{type} {number}- Episode {number}</Text>
+				<Text style={styles.buttonText}>{type} {number} - Episode {number}</Text>
 			}
 			<View style={styles.progressBar}>
 				<View

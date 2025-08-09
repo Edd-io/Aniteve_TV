@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
 	View,
 	Text,
@@ -8,7 +8,7 @@ import {
 	SafeAreaView,
 	ImageBackground
 } from 'react-native';
-import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 import { RootStackParamList } from '../../constants/routes';
@@ -17,8 +17,8 @@ import { AnimeApiService, AnimeEpisodesData, ProgressData, TMDBData } from '../.
 import { RightPanel } from './right_panel';
 import { LeftPanel } from './left_panel';
 
-type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
-type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
+export type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
+export type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
 
 export enum Side {
 	LEFT = 0,
@@ -115,35 +115,37 @@ export const Anime: React.FC = () => {
 		}
 	};
 
-	useEffect(() => {
-		const handleRemoteControlEvent = (keyCode: number) => {
-			if (focusMenu === Side.RIGHT) {
-				return;
-			}
-			else if (keyCode === RemoteControlKey.DPAD_LEFT) {
-				console.log('Left button pressed');
-				setIndexLeftMenu((prevIndex) => Math.max(prevIndex - 1, 0));
-			}
-			else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
-				setIndexLeftMenu((prevIndex) => {
-					if (prevIndex === LeftMenuButtons.INFO) {
-						console.log('Switching to right panel');
-						setFocusMenu(Side.RIGHT);
-					} else {
-						console.log('Right button pressed');
-						return prevIndex + 1;
-					}
-					return prevIndex;
-				});
-			}
-			else if (keyCode === RemoteControlKey.BACK) {
-				navigation.goBack();
-			}
-		};
+	useFocusEffect(
+		React.useCallback(() => {
+			const handleRemoteControlEvent = (keyCode: number) => {
+				if (focusMenu === Side.RIGHT) {
+					return;
+				}
+				else if (keyCode === RemoteControlKey.DPAD_LEFT) {
+					console.log('Left button pressed');
+					setIndexLeftMenu((prevIndex) => Math.max(prevIndex - 1, 0));
+				}
+				else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+					setIndexLeftMenu((prevIndex) => {
+						if (prevIndex === LeftMenuButtons.INFO) {
+							console.log('Switching to right panel');
+							setFocusMenu(Side.RIGHT);
+						} else {
+							console.log('Right button pressed');
+							return prevIndex + 1;
+						}
+						return prevIndex;
+					});
+				}
+				else if (keyCode === RemoteControlKey.BACK) {
+					navigation.goBack();
+				}
+			};
 
-		const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
-		return () => subscription.remove();
-	}, [focusMenu]);
+			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
+			return () => subscription.remove();
+		}, [focusMenu])
+	);
 
 	if (loading) {
 		return (
@@ -184,6 +186,9 @@ export const Anime: React.FC = () => {
 						focusMenu={focusMenu}
 						setFocusMenu={setFocusMenu}
 						isMovie={animeSeasonData[selectedSeasonIndex]?.includes('film')}
+						animeSeasonData={animeSeasonData}
+						selectedSeasonIndex={selectedSeasonIndex}
+						tmdbData={tmdbData}
 					/>
 				</View>
 			</ImageBackground>

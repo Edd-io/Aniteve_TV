@@ -1,10 +1,10 @@
-import { use, useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, DeviceEventEmitter, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Side } from "./anime";
+import { AnimeScreenNavigationProp, AnimeScreenRouteProp, Side } from "./anime";
 import { RemoteControlKey } from "../../constants/remote_controller";
-import { AnimeEpisodesData } from "../../data/anime_api_service";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+import { AnimeEpisodesData, TMDBData } from "../../data/anime_api_service";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 
 const EPISODES_PER_PAGE = 5;
 
@@ -16,6 +16,9 @@ interface RightPanelProps {
 	focusMenu: Side;
 	setFocusMenu?: (side: Side) => void;
 	isMovie: boolean;
+	animeSeasonData: String[];
+	selectedSeasonIndex: number;
+	tmdbData?: TMDBData | null;
 }
 
 export const RightPanel: React.FC<RightPanelProps> = ({
@@ -26,7 +29,13 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 	focusMenu,
 	setFocusMenu = () => { },
 	isMovie,
+	animeSeasonData = [],
+	selectedSeasonIndex = 0,
+	tmdbData = null
 }) => {
+	const route = useRoute<AnimeScreenRouteProp>();
+	const navigation = useNavigation<AnimeScreenNavigationProp>();
+	const { anime } = route.params;
 	const isSelected = focusMenu === Side.RIGHT;
 
 	const [currentPage, setCurrentPage] = useState(1);
@@ -57,26 +66,29 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 		setTimeout(() => setFocusMenu(side), 0);
 	}, [setFocusMenu]);
 
-	useEffect(() => {
-		const handleRemoteControlEvent = (keyCode: number) => {
-			if (!isSelected) {
-				return;
-			}
+	const navigateToPlayer = (indexEpisodeInList: number) => {
+		const indexEpisode =  indexEpisodeInList + ((currentPage - 1) * EPISODES_PER_PAGE);
 
-			if (keyCode === RemoteControlKey.DPAD_LEFT) {
-				if (onPageSelector) {
-					setCurrentPage(prevPage => {
-						if (prevPage > 1) {
-							return prevPage - 1;
-						} else {
-							handleFocusChange(Side.LEFT);
-							return prevPage;
-						}
-					});
-				} else {
-					if (indexEpisode !== listSize) {
-						handleFocusChange(Side.LEFT);
-					} else {
+		navigation.navigate('Player', {
+			anime: anime,
+			episodeIndex: indexEpisode,
+			seasonIndex: selectedSeasonIndex,
+			episodes: episodesData!,
+			seasons: animeSeasonData,
+			tmdbData: tmdbData,
+			averageColor: averageColor,
+		});
+	};
+
+	useFocusEffect(
+		React.useCallback(() => {
+			const handleRemoteControlEvent = (keyCode: number) => {
+				if (!isSelected) {
+					return;
+				}
+
+				if (keyCode === RemoteControlKey.DPAD_LEFT) {
+					if (onPageSelector) {
 						setCurrentPage(prevPage => {
 							if (prevPage > 1) {
 								return prevPage - 1;
@@ -85,56 +97,78 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 								return prevPage;
 							}
 						});
-						setIndexEpisode(0);
+					} else {
+						if (indexEpisode !== listSize) {
+							handleFocusChange(Side.LEFT);
+						} else {
+							setCurrentPage(prevPage => {
+								if (prevPage > 1) {
+									return prevPage - 1;
+								} else {
+									handleFocusChange(Side.LEFT);
+									return prevPage;
+								}
+							});
+							setIndexEpisode(0);
+						}
 					}
 				}
-			}
-			else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
-				if (onPageSelector) {
-					setCurrentPage(prevPage => {
-						if (prevPage < getTotalPages()) {
-							return prevPage + 1;
-						}
-						return prevPage;
-					});
-				} else {
-					if (indexEpisode !== listSize - 1) {
-						return;
-					} else {
+				else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+					if (onPageSelector) {
 						setCurrentPage(prevPage => {
 							if (prevPage < getTotalPages()) {
 								return prevPage + 1;
 							}
 							return prevPage;
 						});
-					}
-				}
-			} else if (keyCode === RemoteControlKey.DPAD_UP) {
-				setOnPageSelector(prevValue => {
-					if (prevValue === true) {
-						setIndexEpisode(listSize - 1);
-						return false;
-					}
-					setIndexEpisode(prevIndex => Math.max(prevIndex - 1, 0));
-					return false;
-				});
-			} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
-				setIndexEpisode(prevIndex => {
-					if (prevIndex < listSize - 1) {
-						return Math.min(prevIndex + 1, listSize);
 					} else {
-						setOnPageSelector(true);
-						return prevIndex;
+						if (indexEpisode !== listSize - 1) {
+							return;
+						} else {
+							setCurrentPage(prevPage => {
+								if (prevPage < getTotalPages()) {
+									return prevPage + 1;
+								}
+								return prevPage;
+							});
+						}
 					}
-				});
-			} else if (keyCode === RemoteControlKey.BACK) {
-				handleFocusChange(Side.LEFT);
-			}
-		};
+				} else if (keyCode === RemoteControlKey.DPAD_UP) {
+					setOnPageSelector(prevValue => {
+						if (prevValue === true) {
+							setIndexEpisode(listSize - 1);
+							return false;
+						}
+						setIndexEpisode(prevIndex => Math.max(prevIndex - 1, 0));
+						return false;
+					});
+				} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
+					setIndexEpisode(prevIndex => {
+						if (prevIndex < listSize - 1) {
+							return Math.min(prevIndex + 1, listSize);
+						} else {
+							setOnPageSelector(true);
+							return prevIndex;
+						}
+					});
+				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+					if (!onPageSelector) {
+						setOnPageSelector(false);
+						setIndexEpisode(prevIndex => {
+							navigateToPlayer(prevIndex);
+							return prevIndex;
+						});
 
-		const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
-		return () => subscription.remove();
-	}, [isSelected, listSize, onPageSelector, handleFocusChange]);
+					}
+				} else if (keyCode === RemoteControlKey.BACK) {
+					handleFocusChange(Side.LEFT);
+				}
+			};
+
+			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
+			return () => subscription.remove();
+		}, [isSelected, listSize, onPageSelector, handleFocusChange, currentPage])
+	);
 
 	return (
 		<View style={[styles.rightPanel, { backgroundColor: `rgba(${averageColor.join(',')}, 0.57)` }]}>

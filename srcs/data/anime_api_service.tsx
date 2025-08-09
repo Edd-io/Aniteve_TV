@@ -149,8 +149,6 @@ export class AnimeApiService {
 			}
 
 			const progressData = await response.json();
-			console.log('Data fetched successfully:', progressData, 'find:', progressData.find, 'id:', animeId, 'userId:', Secrets.USER_ID);
-
 			return progressData as ProgressData;
 		} catch (error) {
 			console.error('Error fetching progress:', error);
@@ -259,6 +257,24 @@ export class AnimeApiService {
 
 		} catch (error) {
 			console.error('Error fetching TMDB data:', error);
+			throw error;
+		}
+	}
+
+	async fetchVideoSource(url: string): Promise<string> {
+		try {
+			const response = await fetch(url, {
+				method: 'POST',
+				headers: createHeaders(Secrets.API_TOKEN),
+				body: JSON.stringify({ serverUrl: API_CONFIG.BASE_URL }),
+			});
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+			const data = await response.json();
+			return data.src;
+		} catch (error) {
+			console.error('Error fetching video source:', error);
 			throw error;
 		}
 	}

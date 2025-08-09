@@ -7,6 +7,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Home } from './srcs/ui/home/home';
 import { Anime } from './srcs/ui/anime/anime';
 import { RootStackParamList } from './srcs/constants/routes';
+import { Player } from './srcs/ui/player/player';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -23,6 +24,7 @@ function App(): React.JSX.Element {
       >
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Anime" component={Anime} />
+        <Stack.Screen name="Player" component={Player} />
       </Stack.Navigator>
     </NavigationContainer>
   );
