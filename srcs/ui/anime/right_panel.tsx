@@ -15,6 +15,7 @@ interface RightPanelProps {
 	averageColor: number[];
 	focusMenu: Side;
 	setFocusMenu?: (side: Side) => void;
+	isMovie: boolean;
 }
 
 export const RightPanel: React.FC<RightPanelProps> = ({
@@ -24,6 +25,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 	averageColor,
 	focusMenu,
 	setFocusMenu = () => { },
+	isMovie,
 }) => {
 	const isSelected = focusMenu === Side.RIGHT;
 
@@ -185,7 +187,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 										</View>
 										<View style={styles.episodeDetails}>
 											<Text style={styles.episodeName} numberOfLines={2}>
-												Épisode {episodeName.replace('eps', '')}
+												{isMovie ? "Film" : "Épisode"} {episodeName.replace('eps', '')}
 											</Text>
 										</View>
 									</View>

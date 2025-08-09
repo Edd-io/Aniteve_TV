@@ -148,7 +148,10 @@ export class AnimeApiService {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
-			return await response.json();
+			const progressData = await response.json();
+			console.log('Data fetched successfully:', progressData, 'find:', progressData.find, 'id:', animeId, 'userId:', Secrets.USER_ID);
+
+			return progressData as ProgressData;
 		} catch (error) {
 			console.error('Error fetching progress:', error);
 			throw error;

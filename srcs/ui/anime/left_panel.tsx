@@ -19,7 +19,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 
 	return (
 		<View style={styles.leftPanel}>
-			<View style={{ height: logo ? 150 : 0, width: '100%' }}>
+			<View style={[styles.logoContainer, { height: logo ? 150 : 0 }]}>
 				{logo &&
 					<Image
 						source={{ uri: logo! }}
@@ -36,7 +36,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 				{anime.title}
 			</Text>
 			{anime.genres && anime.genres.length > 0 && (
-				<View style={{ marginTop: 8, paddingHorizontal: 16, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+				<View style={styles.genresContainer}>
 					{anime.genres.map((genre, index) => {
 						if (genre === 'Vf' || genre === 'Vostfr' || genre === 'Anime' || genre === 'Film') {
 							return null;
@@ -52,10 +52,10 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 			<Text style={styles.synopsis} numberOfLines={3} ellipsizeMode="tail">
 				{tmdbData?.overview || 'Aucune description disponible.'}
 			</Text>
-			<View style={{ marginTop: 8, paddingHorizontal: 16, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+			<View style={styles.buttonsContainer}>
 				<TouchableOpacity
 					style={[
-						styles.button, 
+						styles.button,
 						{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
 						indexLeftMenu === 0 && isSelected ? styles.focusedButton : {}
 					]}
@@ -65,7 +65,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 				</TouchableOpacity>
 				<TouchableOpacity
 					style={[
-						styles.button, 
+						styles.button,
 						{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
 						indexLeftMenu === 1 && isSelected ? styles.focusedButton : {}
 					]}
@@ -75,7 +75,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 				</TouchableOpacity>
 				<TouchableOpacity
 					style={[
-						styles.button, 
+						styles.button,
 						{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
 						indexLeftMenu === 2 && isSelected ? styles.focusedButton : {}
 					]}
@@ -84,7 +84,58 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 					<Text style={styles.buttonText}>Info</Text>
 				</TouchableOpacity>
 			</View>
+			<Progress progress={progressData} averageColor={averageColor} focus={indexLeftMenu === 0 && isSelected} />
 
+		</View>
+	);
+}
+
+function Progress({ progress, averageColor, focus }: { progress: ProgressData | null, averageColor: number[], focus?: boolean }) {
+	if (!progress || !progress.find) {
+		return <></>;
+	}
+	let state = "";
+	let season = progress.season!.split('/')[0];
+
+	if (progress.status === 0) {
+		state = "En cours";
+	} else if (progress.status === 1) {
+		state = "À jour";
+	} else if (progress.status === 2) {
+		state = "Nouveau épisode";
+	} else if (progress.status === 3) {
+		state = "Nouvelle saison";
+	}
+
+	let indexFirstNb = season.search(/[0-9]/);
+	let type: string = season.substring(0, indexFirstNb).trim();
+	if (type.length > 0) {
+		type = type[0].toUpperCase() + type.slice(1);
+	}
+	let number = season.substring(indexFirstNb);
+
+	return (
+		<View style={[
+			styles.progressContainer,
+			{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
+			focus ? styles.focusedButton : {}
+		]}>
+			{progress.season?.includes('film') ?
+				<Text style={styles.buttonText}>Film {progress.episode}</Text> :
+				<Text style={styles.buttonText}>{type} {number}- Episode {number}</Text>
+			}
+			<View style={styles.progressBar}>
+				<View
+					style={[
+						styles.progressFill,
+						{
+							width: `${progress.progress!}%`,
+							backgroundColor: `rgba(${averageColor.map(c => Math.round((c + 255) / 2)).join(',')}, 1)`,
+						}
+					]}
+				/>
+			</View>
+			<Text style={styles.buttonText}>{progress.progress!.toFixed(0)}%</Text>
 		</View>
 	);
 }
@@ -94,6 +145,9 @@ const styles = StyleSheet.create({
 		flex: 1.8,
 		position: 'relative',
 		paddingInline: 36,
+	},
+	logoContainer: {
+		width: '100%',
 	},
 	logoImage: {
 		width: '100%',
@@ -110,6 +164,13 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		textAlign: 'center',
 		marginTop: 24,
+	},
+	genresContainer: {
+		marginTop: 8,
+		paddingHorizontal: 16,
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		justifyContent: 'center',
 	},
 	genre: {
 		color: '#ffffff',
@@ -136,6 +197,13 @@ const styles = StyleSheet.create({
 		textShadowOffset: { width: 0, height: 1 },
 		textShadowRadius: 1,
 	},
+	buttonsContainer: {
+		marginTop: 8,
+		paddingHorizontal: 16,
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		justifyContent: 'center',
+	},
 	button: {
 		backgroundColor: '#00000087',
 		padding: 10,
@@ -158,5 +226,29 @@ const styles = StyleSheet.create({
 	focusedButton: {
 		opacity: 1,
 		backgroundColor: '#E50914',
+	},
+	progressContainer: {
+		marginTop: 8,
+		paddingHorizontal: 16,
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		justifyContent: 'center',
+		borderRadius: 5,
+		padding: 10,
+		marginHorizontal: 16,
+	},
+	progressBar: {
+		flex: 1,
+		height: 10,
+		backgroundColor: '#ffffff5b',
+		marginVertical: 7,
+		marginHorizontal: 15,
+		borderRadius: 5,
+		flexDirection: 'row',
+		overflow: 'hidden',
+	},
+	progressFill: {
+		height: '100%',
+		borderRadius: 5,
 	},
 });

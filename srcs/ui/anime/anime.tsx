@@ -72,7 +72,7 @@ export const Anime: React.FC = () => {
 				setAnimeSeasonData(seasonsData);
 
 
-				const progress = await apiService.fetchProgress(parseInt(anime.url.toString()));
+				const progress = await apiService.fetchProgress(anime.id);
 				setProgressData(progress);
 
 				const tmdbInfo = await apiService.fetchTMDBData(anime.title.toString(), anime.genres.includes('Film'));
@@ -183,6 +183,7 @@ export const Anime: React.FC = () => {
 						averageColor={averageColor}
 						focusMenu={focusMenu}
 						setFocusMenu={setFocusMenu}
+						isMovie={animeSeasonData[selectedSeasonIndex]?.includes('film')}
 					/>
 				</View>
 			</ImageBackground>
