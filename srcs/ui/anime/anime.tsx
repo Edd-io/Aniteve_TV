@@ -17,6 +17,7 @@ import { AnimeApiService, AnimeEpisodesData, ProgressData, TMDBData } from '../.
 import { RightPanel } from './right_panel';
 import { LeftPanel } from './left_panel';
 import { getBetterLogo } from '../../utils/get_better_logo';
+import { SeasonSelector } from '../components/season_selector';
 
 export type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
 export type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
@@ -55,6 +56,7 @@ export const Anime: FC = () => {
 
 	const [focusMenu, setFocusMenu] = useState<Side>(Side.LEFT);
 	const [indexLeftMenu, setIndexLeftMenu] = useState<LeftMenuButtons>(LeftMenuButtons.START);
+	const [showSeasonSelector, setShowSeasonSelector] = useState(false);
 
 	const loadInitialData = async () => {
 		try {
@@ -70,7 +72,6 @@ export const Anime: FC = () => {
 				seasonsData = [...seasonsData, ...vfSeasons];
 			}
 			setAnimeSeasonData(seasonsData);
-
 
 			const progress = await apiService.fetchProgress(anime.id);
 			setProgressData(progress);
@@ -118,10 +119,22 @@ export const Anime: FC = () => {
 		}
 	};
 
+	const handleSeasonSelect = async (season: string) => {
+		console.log(`Selected season: ${season}`);
+		const seasonIndex = animeSeasonData.findIndex(s => s === season);
+		if (seasonIndex === selectedSeasonIndex) {
+			return;
+		}
+		if (seasonIndex !== -1) {
+			setSelectedSeasonIndex(seasonIndex);
+			await loadEpisodes(season);
+		}
+	};
+
 	useFocusEffect(
 		useCallback(() => {
 			const handleRemoteControlEvent = (keyCode: number) => {
-				if (focusMenu === Side.RIGHT) {
+				if (focusMenu === Side.RIGHT || showSeasonSelector) {
 					return;
 				}
 				else if (keyCode === RemoteControlKey.DPAD_LEFT) {
@@ -149,6 +162,10 @@ export const Anime: FC = () => {
 							averageColor: averageColor,
 							progressData: progressData
 						});
+					} else if (indexLeftMenu === LeftMenuButtons.SEASONS) {
+						setShowSeasonSelector(true);
+					} else if (indexLeftMenu === LeftMenuButtons.INFO) {
+						console.log("Info button pressed");
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
 					navigation.goBack();
@@ -166,7 +183,8 @@ export const Anime: FC = () => {
 			tmdbData,
 			averageColor,
 			anime,
-			navigation
+			navigation,
+			showSeasonSelector
 		])
 	);
 
@@ -215,6 +233,14 @@ export const Anime: FC = () => {
 					/>
 				</View>
 			</ImageBackground>
+			<SeasonSelector
+				visible={showSeasonSelector}
+				seasons={animeSeasonData.map(s => s.toString())}
+				currentSeason={animeSeasonData[selectedSeasonIndex]?.toString() || ''}
+				averageColor={averageColor}
+				closePopup={() => setShowSeasonSelector(false)}
+				onSeasonSelect={handleSeasonSelect}
+			/>
 		</SafeAreaView>
 	);
 };

@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AnimeItem from "../../models/anime_item";
 import { ProgressData, TMDBData } from "../../data/anime_api_service";
@@ -14,7 +15,15 @@ interface LeftPanelProps {
 	focusMenu: Side;
 }
 
-export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, progressData, averageColor, indexLeftMenu, focusMenu }) => {
+export const LeftPanel: React.FC<LeftPanelProps> = ({ 
+	anime, 
+	logo, 
+	tmdbData, 
+	progressData, 
+	averageColor, 
+	indexLeftMenu, 
+	focusMenu,
+}) => {
 	const isSelected = focusMenu === Side.LEFT;
 
 	return (
@@ -85,7 +94,6 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 				</TouchableOpacity>
 			</View>
 			<Progress progress={progressData} averageColor={averageColor} focus={indexLeftMenu === 0 && isSelected} />
-
 		</View>
 	);
 }
