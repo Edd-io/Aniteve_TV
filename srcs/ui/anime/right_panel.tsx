@@ -154,10 +154,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
 					if (!onPageSelector) {
 						setOnPageSelector(false);
-						setIndexEpisode(prevIndex => {
-							navigateToPlayer(prevIndex);
-							return prevIndex;
-						});
+						navigateToPlayer(indexEpisode);
 
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
@@ -167,7 +164,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
-		}, [isSelected, listSize, onPageSelector, handleFocusChange, currentPage])
+		}, [isSelected, listSize, onPageSelector, handleFocusChange, currentPage, indexEpisode])
 	);
 
 	return (

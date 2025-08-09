@@ -40,6 +40,7 @@ export interface TMDBData {
 	backdrops?: backdropImage[];
 	popularity?: number;
 	vote_count?: number;
+	posters?: any[];
 }
 
 export interface backdropImage {
@@ -213,16 +214,60 @@ export class AnimeApiService {
 					first_air_date: '',
 					logos: [],
 					backdrops: [],
+					posters: [],
 				};
 			}
 
-			const nameDifferences = allAnimeData.map(anime => {
+			const calculateSimilarity = (str1: string, str2: string): number => {
+				const s1 = str1.toLowerCase().trim();
+				const s2 = str2.toLowerCase().trim();
+				
+				if (s1 === s2) return 100;
+				
+				if (s1.includes(s2) || s2.includes(s1)) return 80;
+				
+				const levenshteinDistance = (a: string, b: string): number => {
+					const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+					for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+					for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+					for (let j = 1; j <= b.length; j++) {
+						for (let i = 1; i <= a.length; i++) {
+							matrix[j][i] = b[j - 1] === a[i - 1] 
+								? matrix[j - 1][i - 1]
+								: Math.min(matrix[j - 1][i - 1] + 1, matrix[j][i - 1] + 1, matrix[j - 1][i] + 1);
+						}
+					}
+					return matrix[b.length][a.length];
+				};
+				
+				const distance = levenshteinDistance(s1, s2);
+				const maxLength = Math.max(s1.length, s2.length);
+				return maxLength === 0 ? 0 : ((maxLength - distance) / maxLength) * 100;
+			};
+
+			const animeScores = allAnimeData.map((anime, index) => {
 				const tmdbName = anime[isMovie ? 'title' : 'name'] || '';
-				return Math.abs(tmdbName.length - animeName.length);
+				const originalName = anime.original_name || '';
+				const titleScore = calculateSimilarity(animeName, tmdbName);
+				const originalScore = originalName ? calculateSimilarity(animeName, originalName) : 0;
+				const popularityBonus = Math.min((anime.popularity || 0) / 100, 10);
+				const voteBonus = Math.min((anime.vote_count || 0) / 100, 5);
+				const finalScore = Math.max(titleScore, originalScore) + popularityBonus + voteBonus;
+
+				
+				return {
+					index,
+					score: finalScore,
+					anime,
+					titleScore,
+					originalScore,
+					tmdbName,
+					originalName,
+				};
 			});
 
-			const bestMatchIndex = nameDifferences.indexOf(Math.min(...nameDifferences));
-			const bestMatch = allAnimeData[bestMatchIndex];
+			animeScores.sort((a, b) => b.score - a.score);
+			const bestMatch = animeScores[0]?.anime;
 			const animeId = bestMatch?.id;
 
 			if (!animeId) {
@@ -253,6 +298,7 @@ export class AnimeApiService {
 				vote_count: bestMatch.vote_count,
 				logos: imageData?.logos || [],
 				backdrops: imageData?.backdrops || [],
+				posters: imageData?.posters || [],
 			};
 
 		} catch (error) {
@@ -278,4 +324,64 @@ export class AnimeApiService {
 			throw error;
 		}
 	}
+
+	async updateProgress(
+		animeId: number,
+		episode: number,
+		totalEpisodes: number,
+		seasonId: number,
+		allSeasons: String[],
+		progress: number,
+		poster: String
+	): Promise<void> {
+		try {
+			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PROGRESS}`, {
+				method: 'POST',
+				headers: createHeaders(Secrets.API_TOKEN),
+				body: JSON.stringify({
+					id: animeId,
+					episode: episode,
+					totalEpisode: totalEpisodes,
+					seasonId: seasonId,
+					allSeasons: allSeasons,
+					progress: progress,
+					poster: poster,
+					idUser: Secrets.USER_ID,
+				}),
+			});
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+		} catch (error) {
+			console.error('Error fetching video source:', error);
+			throw error;
+		}
+	}
 }
+
+
+// 				fetch(localData.addr + "/api/update_progress", {
+// 					method: 'POST',
+// 					headers: {
+// 						'Content-Type': 'application/json',
+// 						'Authorization': localData.token || '',
+// 					},
+// 					body: JSON.stringify({
+// 						id: stateData.back.id,
+// 						episode: newValueEpisode,
+// 						totalEpisode: Object.keys(stateData.listUrlEpisodes).length,
+// 						seasonId: stateData.selectedSeasons,
+// 						allSeasons: stateData.season,
+// 						progress: pourcent,
+// 						poster: stateData.poster,
+// 						idUser: localData.user.id,
+// 					})
+// 				}).then((response) => {return response.json()})
+// 				.then((stateData) => {
+// 					setSendRequest(!sendRequest);
+// 				})
+// 				.catch((err) => {
+// 					console.warn(err);
+// 					setSendRequest(!sendRequest);
+// 				});
+// 			}

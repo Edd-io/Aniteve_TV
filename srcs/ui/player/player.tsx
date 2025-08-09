@@ -8,6 +8,7 @@ import Video, { VideoRef } from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { getBetterLogo } from "../../utils/get_better_logo";
+import { getBetterPoster } from "../../utils/get_better_poster";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
@@ -32,7 +33,8 @@ export function Player(): JSX.Element {
 		episodes,
 		seasons,
 		tmdbData,
-		averageColor
+		averageColor,
+		progressData
 	} = route.params;
 
 	const apiService = new AnimeApiService();
@@ -52,6 +54,9 @@ export function Player(): JSX.Element {
 	const [progress, setProgress] = useState<number>(0);
 	const [isPaused, setIsPaused] = useState<boolean>(false);
 	const [onLoading, setOnLoading] = useState<boolean>(false);
+	const [initPercent, setInitPercent] = useState<number>(progressData?.find ? progressData!.progress! : 0);
+	const [timeToResume, setTimeToResume] = useState<number>(0);
+	const [videoReady, setVideoReady] = useState<boolean>(false);
 	const animatedHeight = useRef(new Animated.Value(50)).current;
 	const videoRef = useRef<VideoRef>(null);
 	const timeoutInterfaceRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,6 +65,23 @@ export function Player(): JSX.Element {
 
 	const [indexMenu, setIndexMenu] = useState<number>(0);
 
+	useEffect(() => {
+		if (!error) {
+			if (timeoutInterfaceRef.current) {
+				clearTimeout(timeoutInterfaceRef.current);
+			}
+			setShowInterface(true);
+			timeoutInterfaceRef.current = setTimeout(() => {
+				setIsPaused(value => {
+					if (!value) {
+						setShowInterface(false);
+						setIndexMenu(0);
+					}
+					return value;
+				});
+			}, 3000);
+		}
+	}, []);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -70,7 +92,13 @@ export function Player(): JSX.Element {
 					}
 					setShowInterface(true);
 					timeoutInterfaceRef.current = setTimeout(() => {
-						setShowInterface(false);
+						setIsPaused(value => {
+							if (!value) {
+								setShowInterface(false);
+								setIndexMenu(0);
+							}
+							return value;
+						});
 					}, 3000);
 				}
 				if (keyCode === RemoteControlKey.DPAD_LEFT) {
@@ -116,8 +144,14 @@ export function Player(): JSX.Element {
 									setShowSourceSelector(true);
 								} else if (indexMenu === MenuElement.PREVIOUS_EPISODE) {
 									setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
+									setSourceIndex(0);
+									setIndexMenu(0);
+									setIsPaused(false);
 								} else if (indexMenu === MenuElement.NEXT_EPISODE) {
 									setEpisodeIndexState((prev) => Math.min(prev + 1, Object.keys(episodesState.episodes).length - 1));
+									setSourceIndex(0);
+									setIndexMenu(0);
+									setIsPaused(false);
 								} else if (indexMenu === MenuElement.EXIT) {
 									navigation.goBack();
 									return;
@@ -127,6 +161,7 @@ export function Player(): JSX.Element {
 									setIndexMenu(0);
 									setShowSourceSelector(false);
 								} else {
+									setTimeToResume(progress);
 									setSourceIndex(indexMenu);
 									setShowSourceSelector(false);
 								}
@@ -137,7 +172,15 @@ export function Player(): JSX.Element {
 						}
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
-					navigation.goBack();
+					if (!isPaused) {
+						navigation.goBack();
+					} else if (showSourceSelector) {
+						setShowSourceSelector(false);
+						setIndexMenu(0);
+					} else {
+						setIsPaused(false);
+						setIndexMenu(0);
+					}
 				}
 			};
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
@@ -166,11 +209,36 @@ export function Player(): JSX.Element {
 	}, [isPaused]);
 
 	useEffect(() => {
+		const interval = setInterval(() => {
+			if (!videoRef.current || isPaused || error) {
+				return;
+			}
+			setProgress((value) => {
+				apiService.updateProgress(
+					anime.id,
+					episodeIndexState + 1,
+					episodesState.number,
+					seasonIndexState,
+					seasons,
+					value * 100 / duration,
+					getBetterPoster(tmdbData) ?? '',
+				).catch((err) => {
+					console.error('Error updating progress:', err);
+				});
+				return value;
+			});
+		}, 10000);
+
+		return () => clearInterval(interval);
+	}, [duration, tmdbData, isPaused, error, videoRef]);
+
+	useEffect(() => {
 		setAspectRatio(null);
 		setResolution(null);
 		setError(null);
 		setOnLoading(true);
 		setUrlVideo(null);
+		setVideoReady(false);
 
 		if (!episodes || !episodes.episodes || (Array.isArray(episodes.episodes) && episodes.episodes.length === 0)) {
 			setError("Aucune source disponible pour cet épisode.");
@@ -178,12 +246,12 @@ export function Player(): JSX.Element {
 		}
 
 		const episodesArray = Object.values(episodes.episodes);
-		if (episodeIndex >= episodesArray.length || episodeIndex < 0) {
-			setError(`Épisode ${episodeIndex + 1} introuvable.`);
+		if (episodeIndexState >= episodesArray.length || episodeIndexState < 0) {
+			setError(`Épisode ${episodeIndexState + 1} introuvable.`);
 			return;
 		}
 
-		const currentEpisode = episodesArray[episodeIndex];
+		const currentEpisode = episodesArray[episodeIndexState];
 		if (!currentEpisode || !Array.isArray(currentEpisode) || currentEpisode.length === 0) {
 			setError("Aucune source disponible pour cet épisode.");
 			return;
@@ -223,7 +291,7 @@ export function Player(): JSX.Element {
 			.catch((error) => {
 				setError("Erreur réseau lors de la récupération de la source vidéo.");
 			});
-	}, [episodeIndex, episodes, sourceIndex]);
+	}, [episodeIndexState, episodes, sourceIndex]);
 
 
 	return (
@@ -236,7 +304,11 @@ export function Player(): JSX.Element {
 			)}
 			{urlVideo && !error && (
 				<Video
-					style={[styles.video, { opacity: isPaused ? 0.5 : 1 }]}
+					style={[
+						styles.video,
+						{ opacity: isPaused ? 0.5 : 1 },
+						!videoReady && { opacity: 0 }
+					]}
 					source={{ uri: urlVideo, type: typeSource }}
 					resizeMode="contain"
 					ref={videoRef}
@@ -246,12 +318,22 @@ export function Player(): JSX.Element {
 						setError("Erreur de lecture vidéo.");
 					}}
 					onLoad={(data) => {
+						setVideoReady(true);
 						setDuration(data.duration);
-						setProgress(0);
 						setOnLoading(false);
-						if (videoRef.current) {
-							videoRef.current.seek(0);
+
+						if (initPercent > 0) {
+							const seekTime = (initPercent * data.duration) / 100;
+							setProgress(seekTime);
+							videoRef.current?.seek(seekTime);
+							setInitPercent(0);
+						} else {
+							const seekTime = timeToResume > 0 ? timeToResume : 0;
+							setProgress(seekTime);
+							videoRef.current?.seek(seekTime);
 						}
+						setTimeToResume(0);
+
 						if (data.naturalSize && data.naturalSize.width && data.naturalSize.height) {
 							const { width, height } = data.naturalSize;
 							setAspectRatio(getAspectRatio(width, height));
@@ -321,7 +403,7 @@ export function Player(): JSX.Element {
 								style={[styles.episodeNumber, styles.textShadow]}
 								numberOfLines={1}
 								ellipsizeMode="tail"
-							>{getSeasonAndEpisodeTitle(seasons[seasonIndex], episodeIndex)}</Text>
+							>{getSeasonAndEpisodeTitle(seasons[seasonIndexState], episodeIndexState)}</Text>
 						</View>
 					</View>
 					<View style={[styles.topContainer, { marginTop: 10, justifyContent: 'flex-end' }]}>

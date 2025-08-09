@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FC, useCallback } from 'react';
 import {
 	View,
 	Text,
@@ -32,7 +32,7 @@ enum LeftMenuButtons {
 	INFO = 2,
 }
 
-export const Anime: React.FC = () => {
+export const Anime: FC = () => {
 	const route = useRoute<AnimeScreenRouteProp>();
 	const navigation = useNavigation<AnimeScreenNavigationProp>();
 	const { anime } = route.params;
@@ -56,47 +56,49 @@ export const Anime: React.FC = () => {
 	const [focusMenu, setFocusMenu] = useState<Side>(Side.LEFT);
 	const [indexLeftMenu, setIndexLeftMenu] = useState<LeftMenuButtons>(LeftMenuButtons.START);
 
-	useEffect(() => {
-		const loadInitialData = async () => {
-			try {
-				setLoading(true);
+	const loadInitialData = async () => {
+		try {
+			setLoading(true);
 
-				let seasonsData: String[] = await apiService.fetchAnimeSeasons(anime.url.toString());
+			let seasonsData: String[] = await apiService.fetchAnimeSeasons(anime.url.toString());
 
-				if (anime.genres.includes('Vf')) {
-					let vfSeasons: String[] = [];
-					seasonsData.forEach((season, index) => {
-						vfSeasons.push(season.replace('vostfr', 'vf'));
-					});
-					seasonsData = [...seasonsData, ...vfSeasons];
-				}
-				setAnimeSeasonData(seasonsData);
-
-
-				const progress = await apiService.fetchProgress(anime.id);
-				setProgressData(progress);
-
-				const tmdbInfo = await apiService.fetchTMDBData(anime.title.toString(), anime.genres.includes('Film'));
-				setTmdbData(tmdbInfo);
-
-				const averageColor = await apiService.fetchAverageColor({ imgUrl: getBetterBackdrop(tmdbData) ?? anime.img.toString() });
-				setAverageColor(averageColor);
-
-				if (seasonsData.length > 0) {
-					const firstSeason = seasonsData[0];
-					setSelectedSeasonIndex(0);
-					await loadEpisodes(firstSeason.toString());
-				}
-
-			} catch (error) {
-				console.error('Error loading anime data:', error);
-			} finally {
-				setLoading(false);
+			if (anime.genres.includes('Vf')) {
+				let vfSeasons: String[] = [];
+				seasonsData.forEach((season, index) => {
+					vfSeasons.push(season.replace('vostfr', 'vf'));
+				});
+				seasonsData = [...seasonsData, ...vfSeasons];
 			}
-		};
+			setAnimeSeasonData(seasonsData);
 
-		loadInitialData();
-	}, [anime]);
+
+			const progress = await apiService.fetchProgress(anime.id);
+			setProgressData(progress);
+
+			const tmdbInfo = await apiService.fetchTMDBData(anime.title.toString(), anime.genres.includes('Film'));
+			setTmdbData(tmdbInfo);
+
+			const averageColor = await apiService.fetchAverageColor({ imgUrl: getBetterBackdrop(tmdbData) ?? anime.img.toString() });
+			setAverageColor(averageColor);
+
+			if (seasonsData.length > 0) {
+				const firstSeason = seasonsData[0];
+				setSelectedSeasonIndex(0);
+				await loadEpisodes(firstSeason.toString());
+			}
+
+		} catch (error) {
+			console.error('Error loading anime data:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useFocusEffect(
+		useCallback(() => {
+			loadInitialData();
+		}, [anime])
+	);
 
 	useEffect(() => {
 		setBackdropImage(getBetterBackdrop(tmdbData));
@@ -117,35 +119,55 @@ export const Anime: React.FC = () => {
 	};
 
 	useFocusEffect(
-		React.useCallback(() => {
+		useCallback(() => {
 			const handleRemoteControlEvent = (keyCode: number) => {
 				if (focusMenu === Side.RIGHT) {
 					return;
 				}
 				else if (keyCode === RemoteControlKey.DPAD_LEFT) {
-					console.log('Left button pressed');
 					setIndexLeftMenu((prevIndex) => Math.max(prevIndex - 1, 0));
 				}
 				else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
 					setIndexLeftMenu((prevIndex) => {
 						if (prevIndex === LeftMenuButtons.INFO) {
-							console.log('Switching to right panel');
 							setFocusMenu(Side.RIGHT);
 						} else {
-							console.log('Right button pressed');
 							return prevIndex + 1;
 						}
 						return prevIndex;
 					});
 				}
-				else if (keyCode === RemoteControlKey.BACK) {
+				else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+					if (indexLeftMenu === LeftMenuButtons.START) {
+						navigation.navigate('Player', {
+							anime: anime,
+							episodeIndex: progressData?.find ? progressData!.episode! - 1 : 0,
+							seasonIndex: progressData?.find ? animeSeasonData.indexOf(progressData!.season!) : 0,
+							episodes: episodesData!,
+							seasons: animeSeasonData,
+							tmdbData: tmdbData,
+							averageColor: averageColor,
+							progressData: progressData
+						});
+					}
+				} else if (keyCode === RemoteControlKey.BACK) {
 					navigation.goBack();
 				}
 			};
 
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
-		}, [focusMenu])
+		}, [
+			focusMenu,
+			indexLeftMenu,
+			episodesData,
+			progressData,
+			animeSeasonData,
+			tmdbData,
+			averageColor,
+			anime,
+			navigation
+		])
 	);
 
 	if (loading) {
