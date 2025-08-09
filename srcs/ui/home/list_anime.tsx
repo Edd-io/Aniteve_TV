@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity, ActivityIndicator } from 'react-native';
 import AnimeItem from '../../models/anime_item';
 import { SelectedPart } from './home';
 import { AnimeApiService } from '../../data/anime_api_service';
@@ -53,7 +53,6 @@ export function ListAnime({ selectedPart, indexItem, animeList, setAnimeList }: 
 					<AnimeItemComponent
 						item={item}
 						index={index}
-						isFirst={index === 0}
 						isFocused={isSelected && index === currentFocusedIndex}
 					/>
 				)}
@@ -63,6 +62,10 @@ export function ListAnime({ selectedPart, indexItem, animeList, setAnimeList }: 
 				showsHorizontalScrollIndicator={false}
 				numColumns={4}
 				scrollEnabled={true}
+				initialNumToRender={16}
+				maxToRenderPerBatch={16}
+				windowSize={10}
+				updateCellsBatchingPeriod={50}
 			/>
 		</View>
 	);
@@ -71,16 +74,25 @@ export function ListAnime({ selectedPart, indexItem, animeList, setAnimeList }: 
 const AnimeItemComponent = React.memo(({
 	item,
 	index,
-	isFirst,
 	isFocused = false
 }: {
 	item: AnimeItem,
 	index: number,
-	isFirst?: boolean,
 	isFocused?: boolean
 }) => {
 	const scaleValue = useRef(new Animated.Value(1)).current;
 	const imageOpacity = useRef(new Animated.Value(0.7)).current;
+	const [imageLoaded, setImageLoaded] = useState(false);
+	const [shouldLoadImage, setShouldLoadImage] = useState(index < 12);
+
+	useEffect(() => {
+		if (!shouldLoadImage && index >= 12) {
+			const timer = setTimeout(() => {
+				setShouldLoadImage(true);
+			}, index * 50);
+			return () => clearTimeout(timer);
+		}
+	}, [index, shouldLoadImage]);
 
 	useEffect(() => {
 		if (isFocused) {
@@ -130,15 +142,25 @@ const AnimeItemComponent = React.memo(({
 					}
 				]}
 			>
-				<Animated.Image
-					source={{ uri: item.img.toString() }}
-					style={[
-						styles.animeImage,
-						{
-							opacity: imageOpacity,
-						}
-					]}
-				/>
+				{!imageLoaded && (
+					<View style={styles.imagePlaceholder}>
+						<ActivityIndicator size="small" color="#e50914" />
+					</View>
+				)}
+				{shouldLoadImage && (
+					<Animated.Image
+						source={{ uri: item.img.toString() }}
+						style={[
+							styles.animeImage,
+							{
+								opacity: imageLoaded ? imageOpacity : 0,
+							}
+						]}
+						onLoad={() => setImageLoaded(true)}
+						fadeDuration={300}
+						resizeMode="cover"
+					/>
+				)}
 			</Animated.View>
 		</TouchableOpacity>
 	);
@@ -164,10 +186,20 @@ const styles = StyleSheet.create({
 		shadowOffset: { width: 0, height: 2 },
 		shadowOpacity: 0.25,
 		shadowRadius: 4,
+		position: 'relative',
 	},
 	animeImage: {
 		width: '100%',
 		height: '100%',
 		resizeMode: 'cover',
+	},
+	imagePlaceholder: {
+		position: 'absolute',
+		width: '100%',
+		height: '100%',
+		backgroundColor: '#1a1a1a',
+		justifyContent: 'center',
+		alignItems: 'center',
+		zIndex: 1,
 	},
 });

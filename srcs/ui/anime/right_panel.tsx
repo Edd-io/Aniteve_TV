@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, DeviceEventEmitter, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Side } from "./anime";
@@ -53,6 +53,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 		setListSize(currentEpisodes.length);
 	}, [currentPage, episodesData]);
 
+	const handleFocusChange = useCallback((side: Side) => {
+		setTimeout(() => setFocusMenu(side), 0);
+	}, [setFocusMenu]);
+
 	useEffect(() => {
 		const handleRemoteControlEvent = (keyCode: number) => {
 			if (!isSelected) {
@@ -65,20 +69,19 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 						if (prevPage > 1) {
 							return prevPage - 1;
 						} else {
-							setFocusMenu(Side.LEFT);
+							handleFocusChange(Side.LEFT);
 							return prevPage;
 						}
 					});
 				} else {
 					if (indexEpisode !== listSize) {
-						setFocusMenu(Side.LEFT);
-						setIndexEpisode(0);
+						handleFocusChange(Side.LEFT);
 					} else {
 						setCurrentPage(prevPage => {
 							if (prevPage > 1) {
 								return prevPage - 1;
 							} else {
-								setFocusMenu(Side.LEFT);
+								handleFocusChange(Side.LEFT);
 								return prevPage;
 							}
 						});
@@ -125,13 +128,13 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 					}
 				});
 			} else if (keyCode === RemoteControlKey.BACK) {
-				setFocusMenu(Side.LEFT);
+				handleFocusChange(Side.LEFT);
 			}
 		};
 
 		const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 		return () => subscription.remove();
-	}, [isSelected, listSize, onPageSelector]);
+	}, [isSelected, listSize, onPageSelector, handleFocusChange]);
 
 	return (
 		<View style={[styles.rightPanel, { backgroundColor: `rgba(${averageColor.join(',')}, 0.57)` }]}>

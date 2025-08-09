@@ -118,7 +118,7 @@ function Progress({ progress, averageColor, focus }: { progress: ProgressData | 
 		<View style={[
 			styles.progressContainer,
 			{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
-			focus ? styles.focusedButton : {}
+			focus ? {opacity: 1 } : { opacity: 0.5 }
 		]}>
 			{progress.season?.includes('film') ?
 				<Text style={styles.buttonText}>Film {progress.episode}</Text> :

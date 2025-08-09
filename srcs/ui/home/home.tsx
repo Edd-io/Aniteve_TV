@@ -24,7 +24,6 @@ export enum SelectedPart {
 
 export function Home(): React.JSX.Element {
 	const navigation = useNavigation<HomeScreenNavigationProp>();
-	const route = useRoute();
 	const [selectedPart, setSelectedPart] = useState<SelectedPart>(SelectedPart.BANNER);
 	const [indexTopBar, setIndexTopBar] = useState<number>(0);
 	const [indexBanner, setIndexBanner] = useState<number>(0);
