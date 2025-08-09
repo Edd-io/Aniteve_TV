@@ -1,18 +1,20 @@
-import { RouteProp, useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
-import { Text, View, StyleSheet, DeviceEventEmitter, Animated } from "react-native";
+import { RouteProp, useFocusEffect, useNavigation, useRoute, } from "@react-navigation/native";
+import { Text, View, StyleSheet, DeviceEventEmitter, Animated, ActivityIndicator, Image } from "react-native";
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { useEffect } from "react";
+import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
 import { AnimeApiService } from "../../data/anime_api_service";
 import Video, { VideoRef } from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import AnimeItem from "../../models/anime_item";
 import { RemoteControlKey } from "../../constants/remote_controller";
+import { getBetterLogo } from "../../utils/get_better_logo";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
 
-export function Player(): React.JSX.Element {
+const timeSkip: number = 15;
+
+export function Player(): JSX.Element {
 	const route = useRoute<PlayerScreenRouteProp>();
 	const navigation = useNavigation<PlayerScreenNavigationProp>();
 	const {
@@ -27,38 +29,96 @@ export function Player(): React.JSX.Element {
 
 	const apiService = new AnimeApiService();
 
-	const [typeSource, setTypeSource] = React.useState<string>('');
-	const [episodesState, setEpisodesState] = React.useState(episodes);
-	const [episodeIndexState, setEpisodeIndexState] = React.useState<number>(episodeIndex);
-	const [sourceIndex, setSourceIndex] = React.useState<number>(0);
-	const [seasonIndexState, setSeasonIndexState] = React.useState<number>(seasonIndex);
-	const [urlVideo, setUrlVideo] = React.useState<string | null>();
+	const [typeSource, setTypeSource] = useState<string>('');
+	const [episodesState, setEpisodesState] = useState(episodes);
+	const [episodeIndexState, setEpisodeIndexState] = useState<number>(episodeIndex);
+	const [sourceIndex, setSourceIndex] = useState<number>(0);
+	const [seasonIndexState, setSeasonIndexState] = useState<number>(seasonIndex);
+	const [urlVideo, setUrlVideo] = useState<string | null>();
 
-	const [error, setError] = React.useState<string | null>(null);
+	const [error, setError] = useState<string | null>(null);
 
-	const [showInterface, setShowInterface] = React.useState<boolean>(true);
-	const [showSourceSelector, setShowSourceSelector] = React.useState<boolean>(true);
-	const [duration, setDuration] = React.useState<number>(0);
-	const [progress, setProgress] = React.useState<number>(0);
-	const [isPaused, setIsPaused] = React.useState<boolean>(true);
-	const animatedHeight = React.useRef(new Animated.Value(50)).current;
-	const videoRef = React.useRef<VideoRef>(null);
+	const [showInterface, setShowInterface] = useState<boolean>(true);
+	const [showSourceSelector, setShowSourceSelector] = useState<boolean>(false);
+	const [duration, setDuration] = useState<number>(0);
+	const [progress, setProgress] = useState<number>(0);
+	const [isPaused, setIsPaused] = useState<boolean>(false);
+	const [onLoading, setOnLoading] = useState<boolean>(false);
+	const animatedHeight = useRef(new Animated.Value(50)).current;
+	const videoRef = useRef<VideoRef>(null);
 
-	console.log([0]);
+	const timeoutInterfaceRef = useRef<NodeJS.Timeout | null>(null);
 
 	useFocusEffect(
-		React.useCallback(() => {
+		useCallback(() => {
 			const handleRemoteControlEvent = (keyCode: number) => {
-				if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-					setIsPaused((prev) => !prev);
+				if (!error) {
+					if (timeoutInterfaceRef.current) {
+						clearTimeout(timeoutInterfaceRef.current);
+					}
+					setShowInterface(true);
+					timeoutInterfaceRef.current = setTimeout(() => {
+						setShowInterface(false);
+					}, 3000);
+				}
+				if (keyCode === RemoteControlKey.DPAD_LEFT) {
+					if (!isPaused) {
+						setProgress((prev) => {
+							const time: number = Math.max(prev - timeSkip, 0);
+							if (videoRef.current) {
+								videoRef.current.seek(time);
+							}
+							return time;
+						});
+					}
+				} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+					if (!isPaused) {
+						setProgress((prev) => {
+							const time: number = Math.min(prev + timeSkip, duration);
+							if (videoRef.current) {
+								videoRef.current.seek(time);
+							}
+							return time;
+						});
+					}
+				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+					if (!error) {
+						setIsPaused((prev) => {
+							if (prev) {
+								setShowInterface(true);
+								timeoutInterfaceRef.current = setTimeout(() => {
+									setShowInterface(false);
+								}, 3000);
+							} else {
+								if (timeoutInterfaceRef.current) {
+									clearTimeout(timeoutInterfaceRef.current);
+								}
+							}
+							return !prev;
+						});
+					}
+				} else if (keyCode === RemoteControlKey.BACK) {
+					navigation.goBack();
 				}
 			};
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
-		}, [])
+		}, [videoRef, isPaused])
 	);
 
-	React.useEffect(() => {
+	useEffect(() => {
+		if (error) {
+			if (timeoutInterfaceRef.current) {
+				clearTimeout(timeoutInterfaceRef.current);
+			}
+			setShowInterface(true);
+			setIsPaused(true);
+			setOnLoading(false);
+			return;
+		}
+	}, [error]);
+
+	useEffect(() => {
 		Animated.timing(animatedHeight, {
 			toValue: isPaused ? 100 : 0,
 			duration: 250,
@@ -124,7 +184,10 @@ export function Player(): React.JSX.Element {
 	return (
 		<View style={styles.container}>
 			{error && (
-				<Text style={styles.error}>{error}</Text>
+				<View style={styles.errorContainer}>
+					<Icon name="error-outline" size={48} color="#E50914" />
+					<Text style={styles.errorText}>{error}</Text>
+				</View>
 			)}
 			{urlVideo && !error && (
 				<Video
@@ -143,7 +206,30 @@ export function Player(): React.JSX.Element {
 					onProgress={(data) => {
 						setProgress(data.currentTime);
 					}}
+					onBuffer={(stateData) => {
+						if (error)
+							return;
+						setOnLoading(stateData.isBuffering);
+					}}
 				/>
+			)}
+			{onLoading && (
+				<View style={styles.loadingContainer}>
+					{tmdbData && (() => {
+						const betterLogo = getBetterLogo(tmdbData);
+						if (!betterLogo) {
+							return null;
+						}
+						return (
+							<Image
+								source={{ uri: betterLogo }}
+								style={styles.logoImage}
+								resizeMode="contain"
+							/>
+						);
+					})()}
+					<ActivityIndicator size={450} color="#FFFFFF" />
+				</View>
 			)}
 			{(showInterface || isPaused) && (
 				<View style={styles.interface}>
@@ -169,7 +255,7 @@ export function Player(): React.JSX.Element {
 					<Animated.View style={[styles.completeMenuContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.85)` }]}>
 						<Animated.View style={{ height: animatedHeight, overflow: 'hidden', width: '100%' }}>
 							{isPaused && (
-								showSourceSelector ? (
+								!showSourceSelector ? (
 									<View style={{ flex: 1, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-around' }}>
 										{[
 											['play-arrow', 'Reprendre'],
@@ -180,7 +266,11 @@ export function Player(): React.JSX.Element {
 										].map(([icon, label], index) => (
 											<View
 												key={`button-${index}`}
-												style={[styles.buttonExtendedInterface, { backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` }]}
+												style={[
+													styles.buttonExtendedInterface,
+													{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
+													error && index == 0 ? { opacity: 0.4 } : { opacity: 1 }
+												]}
 											>
 												<Icon name={icon} size={30} color="#FFFFFF" />
 												<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>{label}</Text>
@@ -210,7 +300,7 @@ export function Player(): React.JSX.Element {
 						<View style={styles.bottomProgressContainer}>
 							<Text style={[styles.bottomText, styles.textShadow]}>{convertSecondsToTime(progress)}</Text>
 							<View style={styles.progressBar}>
-								<View style={[styles.progressFill, { width: `${progress * 100 / duration}%` }]} />
+								<View style={[styles.progressFill, { width: duration > 0 ? `${progress * 100 / duration}%` : '0%' }]} />
 							</View>
 							<Text style={[styles.bottomText, styles.textShadow]}>{convertSecondsToTime(duration)}</Text>
 						</View>
@@ -270,11 +360,13 @@ const styles = StyleSheet.create({
 	topContainer: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
+		zIndex: 5,
 	},
 	completeMenuContainer: {
 		borderRadius: 10,
 		paddingHorizontal: 10,
 		flexDirection: 'column',
+		zIndex: 5,
 	},
 	bottomProgressContainer: {
 		flexDirection: 'row',
@@ -357,4 +449,47 @@ const styles = StyleSheet.create({
 		textShadowRadius: 2,
 	},
 
+	loadingContainer: {
+		position: 'absolute',
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		justifyContent: 'center',
+		alignItems: 'center',
+		zIndex: 2,
+	},
+	logoImage: {
+		position: 'absolute',
+		maxWidth: 400,
+		maxHeight: 400,
+		width: '100%',
+		height: '100%',
+		top: '50%',
+		left: '50%',
+		transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
+		justifyContent: 'center',
+		alignItems: 'center',
+		zIndex: 2,
+	},
+
+	errorContainer: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		justifyContent: 'center',
+		alignItems: 'center',
+		zIndex: 4,
+		backgroundColor: 'rgba(0, 0, 0, 0.8)',
+	},
+	errorText: {
+		color: 'white',
+		fontSize: 20,
+		marginTop: 16,
+		textAlign: 'center',
+		paddingHorizontal: 24,
+	},
 });
