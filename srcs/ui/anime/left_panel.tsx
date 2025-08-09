@@ -61,7 +61,7 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({ anime, logo, tmdbData, pro
 					]}
 				>
 					<Icon name="play-arrow" size={20} color="#ffffff" />
-					<Text style={styles.buttonText}>{progressData?.find ? 'Reprendre' : 'Commencer'}</Text>
+					<Text style={styles.buttonText}>{progressData?.find ? (progressData!.progress! == 100 ? 'Recommencer' : 'Reprendre') : 'Commencer'}</Text>
 				</TouchableOpacity>
 				<TouchableOpacity
 					style={[
