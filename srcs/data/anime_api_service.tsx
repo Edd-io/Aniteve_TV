@@ -29,6 +29,7 @@ export interface ProgressData {
 	poster: string;
 	progress: ProgressStatus;
 	season: string;
+	find: boolean;
 }
 
 export interface TMDBSearchResult {
@@ -239,25 +240,25 @@ export class AnimeApiService {
 			const calculateSimilarity = (str1: string, str2: string): number => {
 				const s1 = str1.toLowerCase().trim();
 				const s2 = str2.toLowerCase().trim();
-				
+
 				if (s1 === s2) return 100;
-				
+
 				if (s1.includes(s2) || s2.includes(s1)) return 80;
-				
+
 				const levenshteinDistance = (a: string, b: string): number => {
 					const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
 					for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
 					for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
 					for (let j = 1; j <= b.length; j++) {
 						for (let i = 1; i <= a.length; i++) {
-							matrix[j][i] = b[j - 1] === a[i - 1] 
+							matrix[j][i] = b[j - 1] === a[i - 1]
 								? matrix[j - 1][i - 1]
 								: Math.min(matrix[j - 1][i - 1] + 1, matrix[j][i - 1] + 1, matrix[j - 1][i] + 1);
 						}
 					}
 					return matrix[b.length][a.length];
 				};
-				
+
 				const distance = levenshteinDistance(s1, s2);
 				const maxLength = Math.max(s1.length, s2.length);
 				return maxLength === 0 ? 0 : ((maxLength - distance) / maxLength) * 100;
@@ -271,7 +272,7 @@ export class AnimeApiService {
 				const popularityBonus = Math.min((anime.popularity || 0) / 100, 10);
 				const voteBonus = Math.min((anime.vote_count || 0) / 100, 5);
 				const finalScore = Math.max(titleScore, originalScore) + popularityBonus + voteBonus;
-				
+
 				return {
 					index,
 					score: finalScore,
@@ -401,7 +402,8 @@ export class AnimeApiService {
 				poster: item.poster,
 				progress: item.progress,
 				season: item.season,
-			}));
+				find: true,
+			} as ProgressData));
 		} catch (error) {
 			console.error('Error fetching all progress:', error);
 			throw error;

@@ -19,6 +19,7 @@ import { LeftPanel } from './left_panel';
 import { getBetterLogo } from '../../utils/get_better_logo';
 import { SeasonSelector } from '../components/season_selector';
 import { InfoPopup } from '../components/info_popup';
+import { Colors } from "../../constants/colors";
 
 export type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
 export type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
@@ -197,7 +198,7 @@ export const Anime: FC = () => {
 	if (loading) {
 		return (
 			<SafeAreaView style={styles.loadingContainer}>
-				<ActivityIndicator size="large" color="#e50914" />
+				<ActivityIndicator size="large" color={Colors.primary} />
 				<Text style={styles.loadingText}>Chargement...</Text>
 			</SafeAreaView>
 		);

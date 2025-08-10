@@ -4,6 +4,7 @@ import AnimeItem from "../../models/anime_item";
 import { ProgressDataAnime, ProgressStatus, TMDBData } from "../../data/anime_api_service";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Side } from "./anime";
+import { Colors } from "../../constants/colors";
 
 interface LeftPanelProps {
 	anime: AnimeItem,
@@ -16,13 +17,13 @@ interface LeftPanelProps {
 	haveEpisodes?: boolean;
 }
 
-export const LeftPanel: FC<LeftPanelProps> = ({ 
-	anime, 
-	logo, 
-	tmdbData, 
-	ProgressDataAnime, 
-	averageColor, 
-	indexLeftMenu, 
+export const LeftPanel: FC<LeftPanelProps> = ({
+	anime,
+	logo,
+	tmdbData,
+	ProgressDataAnime,
+	averageColor,
+	indexLeftMenu,
 	focusMenu,
 	haveEpisodes
 }) => {
@@ -101,7 +102,7 @@ export const LeftPanel: FC<LeftPanelProps> = ({
 	);
 }
 
-function Progress({ progress, averageColor, focus }: { progress: ProgressDataAnime | null, averageColor: number[], focus?: boolean }) {
+export function Progress({ progress, averageColor, focus, height = null }: { progress: ProgressDataAnime | null, averageColor: number[], focus?: boolean, height?: number | null }) {
 	if (!progress || !progress.find) {
 		return <></>;
 	}
@@ -129,7 +130,8 @@ function Progress({ progress, averageColor, focus }: { progress: ProgressDataAni
 		<View style={[
 			styles.progressContainer,
 			{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
-			focus ? {opacity: 1 } : { opacity: 0.5 }
+			focus ? { opacity: 1 } : { opacity: 0.5 },
+			height ? { height: height } : {}
 		]}>
 			{progress.season?.includes('film') ?
 				<Text style={styles.buttonText}>Film {progress.episode}</Text> :
@@ -146,7 +148,10 @@ function Progress({ progress, averageColor, focus }: { progress: ProgressDataAni
 					]}
 				/>
 			</View>
-			<Text style={styles.buttonText}>{progress.progress!.toFixed(0)}%</Text>
+			<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+				<Text style={styles.buttonText}>{progress.progress!.toFixed(0)}%</Text>
+				<Text style={styles.buttonLittleText}>   {state}</Text>
+			</View>
 		</View>
 	);
 }
@@ -234,19 +239,19 @@ const styles = StyleSheet.create({
 		textShadowColor: 'rgba(0,0,0,0.2)',
 		textShadowOffset: { width: 0, height: 1 },
 		textShadowRadius: 1,
+		includeFontPadding: false,
 	},
 	focusedButton: {
 		opacity: 1,
-		backgroundColor: '#E50914',
+		backgroundColor: Colors.primary,
 	},
 	progressContainer: {
-		paddingHorizontal: 16,
 		flexDirection: 'row',
-		flexWrap: 'wrap',
-		justifyContent: 'center',
-		borderRadius: 5,
+		justifyContent: 'space-between',
 		padding: 10,
-		marginHorizontal: 16,
+		borderRadius: 10,
+		alignItems: 'center',
+		marginHorizontal: 20,
 	},
 	progressBar: {
 		flex: 1,
@@ -261,5 +266,9 @@ const styles = StyleSheet.create({
 	progressFill: {
 		height: '100%',
 		borderRadius: 5,
+	},
+	buttonLittleText: {
+		color: '#ffffff',
+		fontSize: 12,
 	},
 });

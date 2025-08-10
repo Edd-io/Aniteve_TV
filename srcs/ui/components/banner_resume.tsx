@@ -1,19 +1,22 @@
-import { Dimensions, ImageBackground, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import AnimeItem from "../../models/anime_item";
-import { SelectedPart } from "../home/home";
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FeaturedAnime, SelectedPart } from "../home/home";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../../constants/routes";
+import { Progress } from "../anime/left_panel";
+import { Colors } from "../../constants/colors";
+import { hexToRgb } from "../../utils/hexa_to_rgb";
 
 const { width, height } = Dimensions.get('window');
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
-export default function BannerResume({ featuredAnime, selectedPart, index, disableButtons }: { featuredAnime: AnimeItem, selectedPart: SelectedPart, index: number, disableButtons: boolean }): React.JSX.Element {
+export default function BannerResume({ featuredAnime, selectedPart, index, disableButtons }: { featuredAnime: FeaturedAnime | null, selectedPart: SelectedPart, index: number, disableButtons: boolean }): React.JSX.Element {
 	const navigation = useNavigation<NavigationProp>();
 	const currentFocusedIndex = index;
 	const isSelected = selectedPart === SelectedPart.BANNER;
 
+	console.log("BannerResume rendered with featuredAnime:", featuredAnime);
 	return (
 		<View style={styles.featuredOverlay}>
 			<View style={styles.featuredContent}>
@@ -22,7 +25,7 @@ export default function BannerResume({ featuredAnime, selectedPart, index, disab
 					numberOfLines={1}
 					ellipsizeMode="tail"
 				>
-					{featuredAnime.title}
+					{featuredAnime?.anime.title ?? "Aniteve TV"}
 				</Text>
 
 				{!disableButtons ? null :
@@ -30,19 +33,22 @@ export default function BannerResume({ featuredAnime, selectedPart, index, disab
 						<TouchableOpacity
 							style={[
 								styles.playButton,
-								isSelected && currentFocusedIndex === 0 && styles.focusedButton
+								isSelected && currentFocusedIndex === 0 && styles.focusedButton,
+								!featuredAnime?.progress && { opacity: 0.5 }
 							]}
 						>
-							<Text style={styles.playButtonText}>Reprendre</Text>
+							<Text style={styles.playButtonText}>{!featuredAnime?.progress ? "Aucune anime à reprendre" : "Reprendre"}</Text>
 						</TouchableOpacity>
-						<TouchableOpacity
-							style={[
-								styles.infoButton,
-								isSelected && currentFocusedIndex === 1 && styles.focusedButton
-							]}
-						>
-							<Text style={styles.infoButtonText}>Plus d'infos</Text>
-						</TouchableOpacity>
+						{featuredAnime?.progress && (
+							<View style={{ width: '100%', justifyContent: 'center' }}>
+								<Progress
+									progress={featuredAnime.progress}
+									averageColor={hexToRgb(Colors.primary)}
+									focus={isSelected && currentFocusedIndex === 0}
+									height={56}
+								/>
+							</View>
+						)}
 					</View>
 				}
 			</View>
@@ -82,10 +88,11 @@ const styles = StyleSheet.create({
 		marginTop: 16,
 	},
 	playButton: {
-		backgroundColor: '#e50914',
+		backgroundColor: Colors.primary,
 		paddingHorizontal: 32,
 		paddingVertical: 16,
 		borderRadius: 8,
+		height: 56,
 		flexDirection: 'row',
 		opacity: 0.5,
 		alignItems: 'center',

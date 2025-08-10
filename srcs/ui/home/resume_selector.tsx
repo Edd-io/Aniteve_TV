@@ -12,33 +12,31 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from '../../constants/remote_controller';
-import { AnimeApiService, ProgressData, ProgressStatus } from '../../data/anime_api_service';
+import { ProgressData, ProgressStatus } from '../../data/anime_api_service';
 
 interface ResumeSelectorProps {
 	visible: boolean;
 	close: () => void;
 	navigation: any;
+	allProgress: ProgressData[];
 }
 
 export const ResumeSelector: FC<ResumeSelectorProps> = ({
 	visible,
 	close,
+	allProgress,
 	navigation
 }) => {
 	const screenHeight = Dimensions.get('window').height;
 	const fadeAnim = useRef(new Animated.Value(0)).current;
 	const scaleAnim = useRef(new Animated.Value(0.9)).current;
 	const flatListRef = useRef<FlatList>(null);
-	const apiService = new AnimeApiService();
 	const filters = useRef<string[]>(['Tous', 'En cours', 'Nouveau épisode', 'Nouvelle saison', 'À jour']);
 
 	const [selectedIndex, setSelectedIndex] = useState(0);
-	const [allProgress, setAllProgress] = useState<ProgressData[]>([]);
 	const [filterFocus, setFilterFocus] = useState(false);
 	const [selectedFilter, setSelectedFilter] = useState<number>(0);
-	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
-	const progressCache = useRef<ProgressData[] | null>(null);
 
 	const filteredProgress = allProgress.filter(item => {
 		if (selectedFilter === 0) return true;
@@ -50,7 +48,6 @@ export const ResumeSelector: FC<ResumeSelectorProps> = ({
 	});
 
 	useEffect(() => {
-		setLoading(true);
 		if (visible) {
 			Animated.parallel([
 				Animated.timing(fadeAnim, {
@@ -65,30 +62,6 @@ export const ResumeSelector: FC<ResumeSelectorProps> = ({
 					useNativeDriver: true,
 				}),
 			]).start();
-			if (progressCache.current) {
-				setAllProgress(progressCache.current);
-				setLoading(false);
-			} else {
-				apiService.fetchAllProgress()
-					.then(async progressData => {
-						if (!progressData || progressData.length === 0) {
-							setError("Aucune donnée de progression trouvée.");
-							return;
-						}
-						await Promise.all(
-							progressData.map(p =>
-								Image.prefetch(String(p.poster || p.anime.img))
-							)
-						);
-						setAllProgress(progressData);
-						progressCache.current = progressData;
-					})
-					.catch(error => {
-						setError("Erreur lors de la récupération des données de progression.");
-					}).finally(() => {
-						setLoading(false);
-					});
-			}
 		} else {
 			Animated.parallel([
 				Animated.timing(fadeAnim, {
@@ -199,11 +172,7 @@ export const ResumeSelector: FC<ResumeSelectorProps> = ({
 						<Icon name="play-arrow" size={24} color="#ffffff" />
 						<Text style={styles.headerTitle}>Reprendre</Text>
 					</View>
-					{loading ? (
-						<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
-							<Text style={{ color: '#fff', opacity: 0.7 }}>Chargement...</Text>
-						</View>
-					) : error ? (
+					{error ? (
 						<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
 							<Text style={{ color: '#fff', opacity: 0.7 }}>{error}</Text>
 						</View>

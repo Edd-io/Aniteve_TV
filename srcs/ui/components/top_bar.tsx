@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet, Text, TextInput } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SelectedPart } from "../home/home";
+import { Colors } from '../../constants/colors';
 
 export default function TopBar(
 	{ selectedPart, index }: { selectedPart: SelectedPart, index: number }
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
 		padding: 3,
 	},
 	focusedElement: {
-		backgroundColor: '#17171788',
+		backgroundColor: Colors.primary,
 		borderRadius: 10,
 	},
 });

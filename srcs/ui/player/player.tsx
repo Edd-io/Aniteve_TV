@@ -9,6 +9,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { getBetterLogo } from "../../utils/get_better_logo";
 import { getBetterPoster } from "../../utils/get_better_poster";
+import { Colors } from "../../constants/colors";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
@@ -309,7 +310,7 @@ export function Player(): JSX.Element {
 		<View style={styles.container}>
 			{error && (
 				<View style={styles.errorContainer}>
-					<Icon name="error-outline" size={48} color="#E50914" />
+					<Icon name="error-outline" size={48} color={Colors.primary} />
 					<Text style={styles.errorText}>{error}</Text>
 				</View>
 			)}
@@ -463,7 +464,7 @@ export function Player(): JSX.Element {
 													styles.buttonExtendedInterface,
 													{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
 													error && index == 0 ? { opacity: 0.4 } : { opacity: 1 },
-													indexMenu === index ? { backgroundColor: '#E50914' } : {},
+													indexMenu === index ? { backgroundColor: Colors.primary } : {},
 													index === 2 && episodeIndexState === 0 ? { opacity: 0.4 } : {},
 													index === 3 && episodeIndexState === Object.keys(episodesState.episodes).length - 1 ? { opacity: 0.4 } : {}
 												]}
@@ -482,7 +483,7 @@ export function Player(): JSX.Element {
 													style={[
 														styles.buttonExtendedInterface,
 														{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
-														indexMenu === index ? { backgroundColor: '#E50914' } : {}
+														indexMenu === index ? { backgroundColor: Colors.primary } : {}
 													]}
 												>
 													<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>Source {index + 1}</Text>
@@ -492,7 +493,7 @@ export function Player(): JSX.Element {
 										<View style={[
 											styles.buttonExtendedInterface,
 											{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
-											indexMenu === Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length ? { backgroundColor: '#E50914' } : {}
+											indexMenu === Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length ? { backgroundColor: Colors.primary } : {}
 										]}>
 											<Icon name="exit-to-app" size={30} color="#FFFFFF" />
 											<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>Retour</Text>
@@ -659,7 +660,7 @@ const styles = StyleSheet.create({
 	},
 	progressFill: {
 		height: '100%',
-		backgroundColor: '#E50914',
+		backgroundColor: Colors.primary,
 		width: '50%',
 		borderRadius: 5,
 	},
@@ -676,7 +677,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		borderRadius: 10,
-		backgroundColor: '#E50914',
+		backgroundColor: Colors.primary,
 		margin: 5,
 		overflow: 'hidden',
 	},

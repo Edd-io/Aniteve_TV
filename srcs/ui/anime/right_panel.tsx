@@ -5,6 +5,7 @@ import { AnimeScreenNavigationProp, AnimeScreenRouteProp, Side } from "./anime";
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { AnimeEpisodesData, TMDBData } from "../../data/anime_api_service";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { Colors } from "../../constants/colors";
 
 const EPISODES_PER_PAGE = 5;
 
@@ -192,7 +193,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 
 			{loadingEpisodes ? (
 				<View style={styles.episodesLoading}>
-					<ActivityIndicator size="small" color="#e50914" />
+					<ActivityIndicator size="small" color={Colors.primary} />
 					<Text style={styles.episodesLoadingText}>Chargement...</Text>
 				</View>
 			) : episodesData && episodesData.episodes ? (
@@ -236,7 +237,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 							style={[
 								styles.pageButton,
 								currentPage === 1 && styles.disabledPageButton,
-								{ backgroundColor: onPageSelector && isSelected ? '#E50914' : 'rgba(255,255,255,0.1)', }
+								{ backgroundColor: onPageSelector && isSelected ? Colors.primary : 'rgba(255,255,255,0.1)', }
 							]}
 							disabled={currentPage === 1}
 						>
@@ -251,7 +252,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 							style={[
 								styles.pageButton,
 								currentPage === getTotalPages() && styles.disabledPageButton,
-								{ backgroundColor: onPageSelector && isSelected ? '#E50914' : 'rgba(255,255,255,0.1)', }
+								{ backgroundColor: onPageSelector && isSelected ? Colors.primary : 'rgba(255,255,255,0.1)', }
 							]}
 							disabled={currentPage === getTotalPages()}
 						>
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
 		marginRight: 12,
 	},
 	currentEpisodeImagePlaceholder: {
-		backgroundColor: '#E50914',
+		backgroundColor: Colors.primary,
 	},
 	episodeNumber: {
 		color: '#ffffff',
@@ -357,7 +358,7 @@ const styles = StyleSheet.create({
 		textShadowRadius: 1,
 	},
 	episodeCurrentIndicator: {
-		color: '#E50914',
+		color: Colors.primary,
 		fontSize: 12,
 		fontWeight: 'bold',
 		marginTop: 2,
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	focusedPageButton: {
-		backgroundColor: '#E50914',
+		backgroundColor: Colors.primary,
 	},
 	disabledPageButton: {
 		backgroundColor: 'rgba(255,255,255,0.05)',
@@ -410,6 +411,6 @@ const styles = StyleSheet.create({
 		opacity: 0.7,
 	},
 	focusedEpisodeItem: {
-		backgroundColor: '#E50914',
+		backgroundColor: Colors.primary,
 	},
 });

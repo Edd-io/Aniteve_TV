@@ -3,6 +3,7 @@ import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity, Act
 import AnimeItem from '../../models/anime_item';
 import { SelectedPart } from './home';
 import { AnimeApiService } from '../../data/anime_api_service';
+import { Colors } from '../../constants/colors';
 
 const { width } = Dimensions.get('window');
 const itemsPerRow = 4;
@@ -144,7 +145,7 @@ const AnimeItemComponent = React.memo(({
 			>
 				{!imageLoaded && (
 					<View style={styles.imagePlaceholder}>
-						<ActivityIndicator size="small" color="#e50914" />
+						<ActivityIndicator size="small" color={Colors.primary} />
 					</View>
 				)}
 				{shouldLoadImage && (
