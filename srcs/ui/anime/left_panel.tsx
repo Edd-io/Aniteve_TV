@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { FC, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AnimeItem from "../../models/anime_item";
-import { ProgressData, TMDBData } from "../../data/anime_api_service";
+import { ProgressDataAnime, ProgressStatus, TMDBData } from "../../data/anime_api_service";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Side } from "./anime";
 
@@ -9,20 +9,22 @@ interface LeftPanelProps {
 	anime: AnimeItem,
 	logo: string | null;
 	tmdbData: TMDBData | null;
-	progressData: ProgressData | null;
+	ProgressDataAnime: ProgressDataAnime | null;
 	averageColor: number[];
 	indexLeftMenu: number;
 	focusMenu: Side;
+	haveEpisodes?: boolean;
 }
 
-export const LeftPanel: React.FC<LeftPanelProps> = ({ 
+export const LeftPanel: FC<LeftPanelProps> = ({ 
 	anime, 
 	logo, 
 	tmdbData, 
-	progressData, 
+	ProgressDataAnime, 
 	averageColor, 
 	indexLeftMenu, 
 	focusMenu,
+	haveEpisodes
 }) => {
 	const isSelected = focusMenu === Side.LEFT;
 
@@ -66,11 +68,12 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
 					style={[
 						styles.button,
 						{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
-						indexLeftMenu === 0 && isSelected ? styles.focusedButton : {}
+						indexLeftMenu === 0 && isSelected ? styles.focusedButton : {},
+						haveEpisodes ? {} : { opacity: 0.5 }
 					]}
 				>
 					<Icon name="play-arrow" size={20} color="#ffffff" />
-					<Text style={styles.buttonText}>{progressData?.find ? (progressData!.progress! == 100 ? 'Recommencer' : 'Reprendre') : 'Commencer'}</Text>
+					<Text style={styles.buttonText}>{ProgressDataAnime?.find ? (ProgressDataAnime!.progress! == 100 ? 'Recommencer' : 'Reprendre') : 'Commencer'}</Text>
 				</TouchableOpacity>
 				<TouchableOpacity
 					style={[
@@ -93,25 +96,25 @@ export const LeftPanel: React.FC<LeftPanelProps> = ({
 					<Text style={styles.buttonText}>Info</Text>
 				</TouchableOpacity>
 			</View>
-			<Progress progress={progressData} averageColor={averageColor} focus={indexLeftMenu === 0 && isSelected} />
+			<Progress progress={ProgressDataAnime} averageColor={averageColor} focus={indexLeftMenu === 0 && isSelected} />
 		</View>
 	);
 }
 
-function Progress({ progress, averageColor, focus }: { progress: ProgressData | null, averageColor: number[], focus?: boolean }) {
+function Progress({ progress, averageColor, focus }: { progress: ProgressDataAnime | null, averageColor: number[], focus?: boolean }) {
 	if (!progress || !progress.find) {
 		return <></>;
 	}
 	let state = "";
 	let season = progress.season!.split('/')[0];
 
-	if (progress.status === 0) {
+	if (progress.status === ProgressStatus.IN_PROGRESS) {
 		state = "En cours";
-	} else if (progress.status === 1) {
+	} else if (progress.status === ProgressStatus.UP_TO_DATE) {
 		state = "À jour";
-	} else if (progress.status === 2) {
+	} else if (progress.status === ProgressStatus.NEW_EPISODE) {
 		state = "Nouveau épisode";
-	} else if (progress.status === 3) {
+	} else if (progress.status === ProgressStatus.NEW_SEASON) {
 		state = "Nouvelle saison";
 	}
 

@@ -34,7 +34,7 @@ export function Player(): JSX.Element {
 		seasons,
 		tmdbData,
 		averageColor,
-		progressData
+		ProgressDataAnime
 	} = route.params;
 
 	const apiService = new AnimeApiService();
@@ -54,7 +54,7 @@ export function Player(): JSX.Element {
 	const [progress, setProgress] = useState<number>(0);
 	const [isPaused, setIsPaused] = useState<boolean>(false);
 	const [onLoading, setOnLoading] = useState<boolean>(false);
-	const [initPercent, setInitPercent] = useState<number>(progressData?.find ? progressData!.progress! : 0);
+	const [initPercent, setInitPercent] = useState<number>(ProgressDataAnime?.find ? ProgressDataAnime!.progress! : 0);
 	const [timeToResume, setTimeToResume] = useState<number>(0);
 	const [videoReady, setVideoReady] = useState<boolean>(false);
 	const animatedHeight = useRef(new Animated.Value(50)).current;
@@ -143,11 +143,17 @@ export function Player(): JSX.Element {
 									setIndexMenu(0);
 									setShowSourceSelector(true);
 								} else if (indexMenu === MenuElement.PREVIOUS_EPISODE) {
+									if (episodeIndexState == 0) {
+										return;
+									}
 									setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
 									setSourceIndex(0);
 									setIndexMenu(0);
 									setIsPaused(false);
 								} else if (indexMenu === MenuElement.NEXT_EPISODE) {
+									if (episodeIndexState >= Object.keys(episodesState.episodes).length - 1) {
+										return;
+									}
 									setEpisodeIndexState((prev) => Math.min(prev + 1, Object.keys(episodesState.episodes).length - 1));
 									setSourceIndex(0);
 									setIndexMenu(0);
@@ -185,7 +191,7 @@ export function Player(): JSX.Element {
 			};
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
-		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu])
+		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState])
 	);
 
 	useEffect(() => {
@@ -214,13 +220,18 @@ export function Player(): JSX.Element {
 				return;
 			}
 			setProgress((value) => {
+				const percent = (value * 100) / duration;
+
+				if (percent > 85) {
+					return value;
+				}
 				apiService.updateProgress(
 					anime.id,
 					episodeIndexState + 1,
 					episodesState.number,
 					seasonIndexState,
 					seasons,
-					value * 100 / duration,
+					percent,
 					getBetterPoster(tmdbData) ?? '',
 				).catch((err) => {
 					console.error('Error updating progress:', err);

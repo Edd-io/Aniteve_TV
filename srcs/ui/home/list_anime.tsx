@@ -149,7 +149,7 @@ const AnimeItemComponent = React.memo(({
 				)}
 				{shouldLoadImage && (
 					<Animated.Image
-						source={{ uri: item.img.toString() }}
+						source={{ uri: item.img.toString(), cache: 'force-cache' }}
 						style={[
 							styles.animeImage,
 							{

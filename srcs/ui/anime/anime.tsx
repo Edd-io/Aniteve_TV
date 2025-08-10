@@ -13,7 +13,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 import { RootStackParamList } from '../../constants/routes';
 import { RemoteControlKey } from '../../constants/remote_controller';
-import { AnimeApiService, AnimeEpisodesData, ProgressData, TMDBData } from '../../data/anime_api_service';
+import { AnimeApiService, AnimeEpisodesData, ProgressDataAnime, TMDBData } from '../../data/anime_api_service';
 import { RightPanel } from './right_panel';
 import { LeftPanel } from './left_panel';
 import { getBetterLogo } from '../../utils/get_better_logo';
@@ -46,7 +46,7 @@ export const Anime: FC = () => {
 
 	const [animeSeasonData, setAnimeSeasonData] = useState<String[]>([]);
 	const [episodesData, setEpisodesData] = useState<AnimeEpisodesData | null>(null);
-	const [progressData, setProgressData] = useState<ProgressData | null>(null);
+	const [ProgressDataAnime, setProgressDataAnime] = useState<ProgressDataAnime | null>(null);
 	const [tmdbData, setTmdbData] = useState<TMDBData | null>(null);
 
 	const [selectedSeasonIndex, setSelectedSeasonIndex] = useState(0);
@@ -76,7 +76,7 @@ export const Anime: FC = () => {
 			setAnimeSeasonData(seasonsData);
 
 			const progress = await apiService.fetchProgress(anime.id);
-			setProgressData(progress);
+			setProgressDataAnime(progress);
 
 			const tmdbInfo = await apiService.fetchTMDBData(anime.title.toString(), anime.genres.includes('Film'));
 			setTmdbData(tmdbInfo);
@@ -154,15 +154,18 @@ export const Anime: FC = () => {
 				}
 				else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
 					if (indexLeftMenu === LeftMenuButtons.START) {
+						if (!episodesData) {
+							return;
+						}
 						navigation.navigate('Player', {
 							anime: anime,
-							episodeIndex: progressData?.find ? progressData!.episode! - 1 : 0,
-							seasonIndex: progressData?.find ? animeSeasonData.indexOf(progressData!.season!) : 0,
+							episodeIndex: ProgressDataAnime?.find ? ProgressDataAnime!.episode! - 1 : 0,
+							seasonIndex: ProgressDataAnime?.find ? animeSeasonData.indexOf(ProgressDataAnime!.season!) : 0,
 							episodes: episodesData!,
 							seasons: animeSeasonData,
 							tmdbData: tmdbData,
 							averageColor: averageColor,
-							progressData: progressData
+							ProgressDataAnime: ProgressDataAnime
 						});
 					} else if (indexLeftMenu === LeftMenuButtons.SEASONS) {
 						setShowSeasonSelector(true);
@@ -180,7 +183,7 @@ export const Anime: FC = () => {
 			focusMenu,
 			indexLeftMenu,
 			episodesData,
-			progressData,
+			ProgressDataAnime,
 			animeSeasonData,
 			tmdbData,
 			averageColor,
@@ -216,10 +219,11 @@ export const Anime: FC = () => {
 						anime={anime}
 						logo={logo}
 						tmdbData={tmdbData}
-						progressData={progressData}
+						ProgressDataAnime={ProgressDataAnime}
 						averageColor={averageColor}
 						indexLeftMenu={indexLeftMenu}
 						focusMenu={focusMenu}
+						haveEpisodes={!!episodesData}
 					/>
 
 					<RightPanel

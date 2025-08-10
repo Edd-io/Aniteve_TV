@@ -8,7 +8,8 @@ export const API_CONFIG = {
     GET_PROGRESS: "/api/get_progress",
     GET_AVERAGE_COLOR: "/api/get_average_color",
     UPDATE_PROGRESS: "/api/update_progress",
-    TMDB_PROXY: "/api/tmdb"
+    TMDB_PROXY: "/api/tmdb",
+    GET_ALL_PROGRESS: "/api/get_all_progress",
   },
   TMDB: {
     BASE_IMAGE_URL: "https://image.tmdb.org/t/p/w1280",

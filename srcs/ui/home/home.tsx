@@ -11,6 +11,7 @@ import { featuredAnimeMock } from "../../data/mockData";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../../constants/routes";
+import { ResumeSelector } from "./resume_selector";
 
 const { height } = Dimensions.get('window');
 
@@ -30,10 +31,12 @@ export function Home(): React.JSX.Element {
 	const [indexItem, setIndexItem] = useState<number>(0);
 	const [animeList, setAnimeList] = useState<AnimeItem[]>([]);
 	const [featuredAnime, setFeaturedAnime] = useState<AnimeItem | null>(null);
+	const [resumeVisible, setResumeVisible] = useState<boolean>(false);
 
 	useFocusEffect(
 		useCallback(() => {
 			const subscription = DeviceEventEmitter.addListener('keyPressed', (keyCode: number) => {
+				if (resumeVisible) return;
 				if (keyCode === RemoteControlKey.DPAD_UP) {
 					setIndexItem(currentIndex => {
 						setSelectedPart(currentSelectedPart => {
@@ -104,14 +107,15 @@ export function Home(): React.JSX.Element {
 						return currentSelectedPart;
 					});
 				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-					if (selectedPart === SelectedPart.ANIME_LIST) {
-						setIndexItem(currentIndex => {
-							const selectedAnime = animeList[currentIndex];
-							if (selectedAnime) {
-								navigation.navigate('Anime', { anime: selectedAnime });
-							}
-							return currentIndex;
-						});
+					if (selectedPart === SelectedPart.TOPBAR) {
+						if (indexTopBar === 0) {
+						} else if (indexTopBar === 1) {
+							console.log('Open resume selector');
+							setResumeVisible(true);
+						} else if (indexTopBar === 2) {
+						} else if (indexTopBar === 3) {
+						}
+
 					} else if (selectedPart === SelectedPart.BANNER) {
 						if (indexBanner === 1) {
 							if (featuredAnime) {
@@ -119,11 +123,20 @@ export function Home(): React.JSX.Element {
 							}
 						}
 					}
+					else if (selectedPart === SelectedPart.ANIME_LIST) {
+						setIndexItem(currentIndex => {
+							const selectedAnime = animeList[currentIndex];
+							if (selectedAnime) {
+								navigation.navigate('Anime', { anime: selectedAnime });
+							}
+							return currentIndex;
+						});
+					}
 				}
 			});
 
 			return () => subscription.remove();
-		}, [animeList, navigation, indexBanner, featuredAnime, selectedPart])
+		}, [animeList, navigation, indexBanner, featuredAnime, selectedPart, resumeVisible, indexTopBar])
 	);
 
 	useEffect(() => {
@@ -132,8 +145,23 @@ export function Home(): React.JSX.Element {
 
 	return (
 		<View style={styles.column}>
-			<HomeTop featuredAnime={featuredAnime} selectedPart={selectedPart} indexBanner={indexBanner} indexTopBar={indexTopBar} />
-			<ListAnime selectedPart={selectedPart} indexItem={indexItem} animeList={animeList} setAnimeList={setAnimeList} />
+			<HomeTop
+				featuredAnime={featuredAnime}
+				selectedPart={selectedPart}
+				indexBanner={indexBanner}
+				indexTopBar={indexTopBar} 
+			/>
+			<ListAnime
+				selectedPart={selectedPart}
+				indexItem={indexItem}
+				animeList={animeList}
+				setAnimeList={setAnimeList}
+			/>
+			<ResumeSelector
+				visible={resumeVisible}
+				close={() => setResumeVisible(false)}
+				navigation={navigation}
+			/>
 		</View>
 
 	);

@@ -7,12 +7,28 @@ export interface AnimeEpisodesData {
 	number: number;
 }
 
-export interface ProgressData {
+export interface ProgressDataAnime {
 	episode?: number;
 	find: boolean;
 	progress?: number;
 	season?: string;
 	status?: number;
+}
+
+export enum ProgressStatus {
+	IN_PROGRESS = 0,
+	UP_TO_DATE = 1,
+	NEW_EPISODE = 2,
+	NEW_SEASON = 3,
+}
+
+export interface ProgressData {
+	anime: AnimeItem;
+	completed: number;
+	episode: number;
+	poster: string;
+	progress: ProgressStatus;
+	season: string;
 }
 
 export interface TMDBSearchResult {
@@ -135,7 +151,7 @@ export class AnimeApiService {
 		}
 	}
 
-	async fetchProgress(animeId: number): Promise<ProgressData> {
+	async fetchProgress(animeId: number): Promise<ProgressDataAnime> {
 		try {
 			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_PROGRESS}`, {
 				method: 'POST',
@@ -150,8 +166,8 @@ export class AnimeApiService {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
-			const progressData = await response.json();
-			return progressData as ProgressData;
+			const ProgressDataAnime = await response.json();
+			return ProgressDataAnime as ProgressDataAnime;
 		} catch (error) {
 			console.error('Error fetching progress:', error);
 			throw error;
@@ -359,31 +375,36 @@ export class AnimeApiService {
 			throw error;
 		}
 	}
+
+	async fetchAllProgress(): Promise<ProgressData[]> {
+		try {
+			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_PROGRESS}`, {
+				method: 'POST',
+				headers: createHeaders(Secrets.API_TOKEN),
+				body: JSON.stringify({ idUser: Secrets.USER_ID }),
+			});
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+			const data = await response.json();
+			return data.map((item: any) => ({
+				anime: new AnimeItem({
+					id: item.anime.id,
+					title: item.anime.title,
+					alternativeTitle: item.anime.alternativeTitle,
+					img: item.anime.img,
+					url: item.anime.url,
+					genres: item.anime.genres ?? item.anime.genre ?? [],
+				}),
+				completed: item.completed,
+				episode: item.episode,
+				poster: item.poster,
+				progress: item.progress,
+				season: item.season,
+			}));
+		} catch (error) {
+			console.error('Error fetching all progress:', error);
+			throw error;
+		}
+	}
 }
-
-
-// 				fetch(localData.addr + "/api/update_progress", {
-// 					method: 'POST',
-// 					headers: {
-// 						'Content-Type': 'application/json',
-// 						'Authorization': localData.token || '',
-// 					},
-// 					body: JSON.stringify({
-// 						id: stateData.back.id,
-// 						episode: newValueEpisode,
-// 						totalEpisode: Object.keys(stateData.listUrlEpisodes).length,
-// 						seasonId: stateData.selectedSeasons,
-// 						allSeasons: stateData.season,
-// 						progress: pourcent,
-// 						poster: stateData.poster,
-// 						idUser: localData.user.id,
-// 					})
-// 				}).then((response) => {return response.json()})
-// 				.then((stateData) => {
-// 					setSendRequest(!sendRequest);
-// 				})
-// 				.catch((err) => {
-// 					console.warn(err);
-// 					setSendRequest(!sendRequest);
-// 				});
-// 			}
