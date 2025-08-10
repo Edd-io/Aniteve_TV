@@ -3,7 +3,7 @@ import { ActivityIndicator, DeviceEventEmitter, StyleSheet, Text, TouchableOpaci
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AnimeScreenNavigationProp, AnimeScreenRouteProp, Side } from "./anime";
 import { RemoteControlKey } from "../../constants/remote_controller";
-import { AnimeEpisodesData, TMDBData } from "../../data/anime_api_service";
+import { AnimeEpisodesData, Season, TMDBData } from "../../data/anime_api_service";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/colors";
 
@@ -12,12 +12,12 @@ const EPISODES_PER_PAGE = 5;
 interface RightPanelProps {
 	episodesData: AnimeEpisodesData | null;
 	loadingEpisodes: boolean;
-	selectedSeason: string | null;
+	selectedSeason: Season | null;
 	averageColor: number[];
 	focusMenu: Side;
 	setFocusMenu?: (side: Side) => void;
 	isMovie: boolean;
-	animeSeasonData: String[];
+	animeSeasonData: Season[];
 	selectedSeasonIndex: number;
 	tmdbData?: TMDBData | null;
 }
@@ -177,7 +177,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 						numberOfLines={1}
 						ellipsizeMode="tail"
 					>
-						{selectedSeason}
+						{selectedSeason?.name} {selectedSeason?.lang ? `- ${selectedSeason.lang.toUpperCase()}` : ''}
 					</Text>
 				</View>
 				{getTotalPages() > 1 && (
@@ -204,7 +204,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 
 							return (
 								<TouchableOpacity
-									key={index}
+									key={episodeKey}
 									style={[
 										styles.episodeItem,
 										{ backgroundColor: `rgba(${averageColor.join(',')}, 0.7)` },
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
 	},
 	episodeTitle: {
 		color: '#ffffff',
-		fontSize: 24,
+		fontSize: 20,
 		fontWeight: 'bold',
 		textShadowColor: 'rgba(0,0,0,0.2)',
 		textShadowOffset: { width: 0, height: 1 },

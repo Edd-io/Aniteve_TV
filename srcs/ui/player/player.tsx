@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, DeviceEventEmitter, Animated, ActivityIndicator
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
-import { AnimeApiService } from "../../data/anime_api_service";
+import { AnimeApiService, Season } from "../../data/anime_api_service";
 import Video, { VideoRef } from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from "../../constants/remote_controller";
@@ -231,7 +231,7 @@ export function Player(): JSX.Element {
 					episodeIndexState + 1,
 					episodesState.number,
 					seasonIndexState,
-					seasons,
+					seasons.map(s => s.url.toString()),
 					percent,
 					getBetterPoster(tmdbData) ?? '',
 				).catch((err) => {
@@ -516,20 +516,8 @@ export function Player(): JSX.Element {
 	);
 }
 
-function getSeasonAndEpisodeTitle(season: String, episodeIndex: number): string {
-	const isMovie = season.toLowerCase().includes('film');
-	if (isMovie) {
-		return `Film ${episodeIndex + 1}`;
-	}
-	season = season.split('/')[0];
-	let indexFirstNb = season.search(/[0-9]/);
-	let type: string = season.substring(0, indexFirstNb).trim();
-	if (type.length > 0) {
-		type = type[0].toUpperCase() + type.slice(1);
-	}
-	let number = season.substring(indexFirstNb);
-
-	return `${type} ${number} - Episode ${episodeIndex + 1}`;
+function getSeasonAndEpisodeTitle(season: Season, episodeIndex: number): string {
+	return `${season.name} - Episode ${episodeIndex + 1}`;
 }
 
 function convertSecondsToTime(seconds: number): string {

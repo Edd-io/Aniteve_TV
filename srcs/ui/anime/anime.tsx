@@ -13,7 +13,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 import { RootStackParamList } from '../../constants/routes';
 import { RemoteControlKey } from '../../constants/remote_controller';
-import { AnimeApiService, AnimeEpisodesData, ProgressDataAnime, TMDBData } from '../../data/anime_api_service';
+import { AnimeApiService, AnimeEpisodesData, ProgressDataAnime, Season, TMDBData } from '../../data/anime_api_service';
 import { RightPanel } from './right_panel';
 import { LeftPanel } from './left_panel';
 import { getBetterLogo } from '../../utils/get_better_logo';
@@ -45,7 +45,7 @@ export const Anime: FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [loadingEpisodes, setLoadingEpisodes] = useState(false);
 
-	const [animeSeasonData, setAnimeSeasonData] = useState<String[]>([]);
+	const [animeSeasonData, setAnimeSeasonData] = useState<Season[]>([]);
 	const [episodesData, setEpisodesData] = useState<AnimeEpisodesData | null>(null);
 	const [ProgressDataAnime, setProgressDataAnime] = useState<ProgressDataAnime | null>(null);
 	const [tmdbData, setTmdbData] = useState<TMDBData | null>(null);
@@ -65,12 +65,17 @@ export const Anime: FC = () => {
 		try {
 			setLoading(true);
 
-			let seasonsData: String[] = await apiService.fetchAnimeSeasons(anime.url.toString());
+			let seasonsData: Season[] = await apiService.fetchAnimeSeasons(anime.url.toString());
 
 			if (anime.genres.includes('Vf')) {
-				let vfSeasons: String[] = [];
+				let vfSeasons: Season[] = [];
 				seasonsData.forEach((season, index) => {
-					vfSeasons.push(season.replace('vostfr', 'vf'));
+					const newSeason = {
+						name: season.name,
+						url: season.url,
+						lang: 'vf'
+					};
+					vfSeasons.push(newSeason);
 				});
 				seasonsData = [...seasonsData, ...vfSeasons];
 			}
@@ -88,7 +93,7 @@ export const Anime: FC = () => {
 			if (seasonsData.length > 0) {
 				const firstSeason = seasonsData[0];
 				setSelectedSeasonIndex(0);
-				await loadEpisodes(firstSeason.toString());
+				await loadEpisodes(firstSeason);
 			}
 
 		} catch (error) {
@@ -109,10 +114,11 @@ export const Anime: FC = () => {
 		setLogo(getBetterLogo(tmdbData));
 	}, [tmdbData]);
 
-	const loadEpisodes = async (season: string) => {
+	const loadEpisodes = async (season: Season) => {
+		console.log(`Loading episodes for season: ${season}`);
 		try {
 			setLoadingEpisodes(true);
-			const episodes = await apiService.fetchAnimeEpisodes(anime.url.toString(), season);
+			const episodes = await apiService.fetchAnimeEpisodes(anime.url.toString(), season.url.toString());
 			setEpisodesData(episodes);
 		} catch (error) {
 			console.error('Error loading episodes:', error);
@@ -122,9 +128,9 @@ export const Anime: FC = () => {
 		}
 	};
 
-	const handleSeasonSelect = async (season: string) => {
+	const handleSeasonSelect = async (season: Season) => {
 		console.log(`Selected season: ${season}`);
-		const seasonIndex = animeSeasonData.findIndex(s => s === season);
+		const seasonIndex = animeSeasonData.findIndex(s => s.name.toString() === season.name.toString());
 		if (seasonIndex === selectedSeasonIndex) {
 			return;
 		}
@@ -161,7 +167,7 @@ export const Anime: FC = () => {
 						navigation.navigate('Player', {
 							anime: anime,
 							episodeIndex: ProgressDataAnime?.find ? ProgressDataAnime!.episode! - 1 : 0,
-							seasonIndex: ProgressDataAnime?.find ? animeSeasonData.indexOf(ProgressDataAnime!.season!) : 0,
+							seasonIndex: ProgressDataAnime?.find ? animeSeasonData.findIndex(s => s.name === ProgressDataAnime!.season!) : 0,
 							episodes: episodesData!,
 							seasons: animeSeasonData,
 							tmdbData: tmdbData,
@@ -230,11 +236,11 @@ export const Anime: FC = () => {
 					<RightPanel
 						episodesData={episodesData}
 						loadingEpisodes={loadingEpisodes}
-						selectedSeason={animeSeasonData[selectedSeasonIndex] as string || null}
+						selectedSeason={animeSeasonData[selectedSeasonIndex] || null}
 						averageColor={averageColor}
 						focusMenu={focusMenu}
 						setFocusMenu={setFocusMenu}
-						isMovie={animeSeasonData[selectedSeasonIndex]?.includes('film')}
+						isMovie={animeSeasonData[selectedSeasonIndex]?.name?.toString().toLowerCase().includes('film')}
 						animeSeasonData={animeSeasonData}
 						selectedSeasonIndex={selectedSeasonIndex}
 						tmdbData={tmdbData}
@@ -243,8 +249,8 @@ export const Anime: FC = () => {
 			</ImageBackground>
 			<SeasonSelector
 				visible={showSeasonSelector}
-				seasons={animeSeasonData.map(s => s.toString())}
-				currentSeason={animeSeasonData[selectedSeasonIndex]?.toString() || ''}
+				seasons={animeSeasonData}
+				currentSeason={animeSeasonData[selectedSeasonIndex]}
 				averageColor={averageColor}
 				closePopup={() => setShowSeasonSelector(false)}
 				onSeasonSelect={handleSeasonSelect}

@@ -197,21 +197,18 @@ export function Home(): React.JSX.Element {
 						}
 					}
 					else if (selectedPart === SelectedPart.ANIME_LIST) {
-						setIndexItem(currentIndex => {
-							if (animeListFiltered.length > 0 && currentIndex < animeListFiltered.length) {
-								const selectedAnime = animeListFiltered[currentIndex];
-								if (selectedAnime) {
-									navigation.navigate('Anime', { anime: selectedAnime });
-								}
+						if (animeListFiltered.length > 0 && indexItem < animeListFiltered.length) {
+							const selectedAnime = animeListFiltered[indexItem];
+							if (selectedAnime) {
+								navigation.navigate('Anime', { anime: selectedAnime });
 							}
-							return currentIndex;
-						});
+						}
 					}
 				}
 			});
 
 			return () => subscription.remove();
-		}, [animeList, navigation, featuredAnime, selectedPart, resumeVisible, indexTopBar, animeListFiltered, isGlobalLoading])
+		}, [animeList, navigation, featuredAnime, selectedPart, resumeVisible, indexTopBar, animeListFiltered, isGlobalLoading, indexItem])
 	);
 
 	useEffect(() => {

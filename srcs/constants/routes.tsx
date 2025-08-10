@@ -1,4 +1,4 @@
-import { AnimeEpisodesData, ProgressDataAnime, TMDBData } from "../data/anime_api_service";
+import { AnimeEpisodesData, ProgressDataAnime, Season, TMDBData } from "../data/anime_api_service";
 import AnimeItem from "../models/anime_item";
 
 export type RootStackParamList = {
@@ -9,7 +9,7 @@ export type RootStackParamList = {
     episodeIndex: number;
     seasonIndex: number;
     episodes: AnimeEpisodesData;
-    seasons: String[];
+    seasons: Season[];
     tmdbData?: TMDBData | null;
     averageColor: number[];
     ProgressDataAnime?: ProgressDataAnime | null;

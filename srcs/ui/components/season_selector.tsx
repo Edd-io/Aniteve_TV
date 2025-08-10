@@ -11,14 +11,15 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from '../../constants/remote_controller';
+import { Season } from '../../data/anime_api_service';
 
 interface SeasonSelectorProps {
 	visible: boolean;
-	seasons: string[];
-	currentSeason?: string;
+	seasons: Season[];
+	currentSeason?: Season;
 	averageColor: number[];
 	closePopup: () => void;
-	onSeasonSelect: (season: string) => void;
+	onSeasonSelect: (season: Season) => void;
 }
 
 export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
@@ -136,25 +137,8 @@ export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
 		}
 	};
 
-	const formatSeasonName = (season: string) => {
-		let indexFirstNb = season.search(/[0-9]/);
-		if (indexFirstNb === -1) return season;
-
-		let type = season.substring(0, indexFirstNb).trim();
-		if (type.length > 0) {
-			type = type[0].toUpperCase() + type.slice(1);
-		}
-		let number = season.substring(indexFirstNb);
-
-		if (season.includes('film')) {
-			return `Film ${number}`;
-		}
-
-		return `${type} ${number}`;
-	};
-
-	const getSeasonIcon = (season: string) => {
-		if (season.includes('film')) {
+	const getSeasonIcon = (season: Season) => {
+		if (season.url.includes('film')) {
 			return 'movie';
 		}
 		return 'tv';
@@ -232,7 +216,7 @@ export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
 											<Text style={[
 												styles.seasonText,
 											]}>
-												{formatSeasonName(season)}
+												{season.name.toString()}
 											</Text>
 											{isSelected && (
 												<Icon name="check" size={20} color="#ffffff" />

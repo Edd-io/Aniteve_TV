@@ -77,6 +77,12 @@ export interface User {
 	name: string;
 }
 
+export interface Season {
+	name: string;
+	url: string;
+	lang: string;
+}
+
 export class AnimeApiService {
 	private static token: string = '';
 	private static baseUrl: string = '';
@@ -248,7 +254,7 @@ export class AnimeApiService {
 	}
 
 
-	async fetchAnimeSeasons(animeUrl: string): Promise<String[]> {
+	async fetchAnimeSeasons(animeUrl: string): Promise<Season[]> {
 		try {
 			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_ANIME_SEASON}`, {
 				method: 'POST',
