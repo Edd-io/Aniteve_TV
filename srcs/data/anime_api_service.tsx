@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_CONFIG, createHeaders } from "../constants/api_config";
 import Secrets from "../constants/secrets";
 import AnimeItem from "../models/anime_item";
@@ -72,17 +73,76 @@ export interface backdropImage {
 }
 
 export class AnimeApiService {
+	private static token: string = '';
+	private static baseUrl: string = '';
 
 	constructor() {
 	}
 
+	static setToken(token: string) {
+		AnimeApiService.token = token;
+	}
+
+	static setBaseUrl(baseUrl: string) {
+		AnimeApiService.baseUrl = baseUrl;
+	}
+
+	async login(addr: string, password: string): Promise<void> {
+		try {
+			const response = await fetch(`${addr}${API_CONFIG.ENDPOINTS.LOGIN}`, {
+				method: 'POST',
+				headers: createHeaders(),
+				body: JSON.stringify({
+					addr: addr,
+					password: password,
+				}),
+			});
+			if (!response.ok) {
+				throw new Error(`Erreur ${response.status}, veuillez vérifier vos informations de connexion`);
+			}
+			const data = await response.json();
+			if (data?.token && typeof data.token === 'string') {
+				AnimeApiService.setToken(data.token);
+				AnimeApiService.setBaseUrl(addr);
+				await AsyncStorage.setItem('token', data.token);
+				await AsyncStorage.setItem('addr', addr);
+			} else if (data?.error) {
+				throw new Error('Mot de passe incorrect');
+			} else {
+				throw new Error('Mot de passe ou adresse incorrecte');
+			}
+		} catch (error) {
+			console.error('Error during login:', error);
+			throw error;
+		}
+	}
+
+	async checkTokenValidity(token: string, addr: string): Promise<boolean> {
+		try {
+			const response = await fetch(`${addr}${API_CONFIG.ENDPOINTS.CHECK_TOKEN}`, {
+				method: 'POST',
+				headers: createHeaders(),
+				body: JSON.stringify({ token }),
+			});
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const data = await response.json();
+			if (data?.status === 'success') {
+				return true;
+			}
+			return false;
+		} catch (error) {
+			console.error('Error checking token validity:', error);
+			return false;
+		}
+	}
 	async fetchAllAnime({ signal }: { signal?: AbortSignal } = {}): Promise<AnimeItem[]> {
 		const response = await fetch(Secrets.API_URL + API_CONFIG.ENDPOINTS.GET_ALL_ANIME, {
 			method: 'GET',
-			headers: {
-				Authorization: `${Secrets.API_TOKEN}`,
-				Accept: 'application/json',
-			},
+			headers: createHeaders(AnimeApiService.token),
 			signal,
 		});
 
@@ -107,9 +167,9 @@ export class AnimeApiService {
 
 	async fetchAverageColor({ imgUrl }: { imgUrl: string }): Promise<number[]> {
 		try {
-			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_AVERAGE_COLOR}`, {
+			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_AVERAGE_COLOR}`, {
 				method: 'POST',
-				headers: createHeaders(Secrets.API_TOKEN),
+				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({
 					url: imgUrl
 				}),
@@ -132,9 +192,9 @@ export class AnimeApiService {
 
 	async fetchAnimeSeasons(animeUrl: string): Promise<String[]> {
 		try {
-			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ANIME_SEASON}`, {
+			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_ANIME_SEASON}`, {
 				method: 'POST',
-				headers: createHeaders(Secrets.API_TOKEN),
+				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({
 					serverUrl: "",
 					url: animeUrl
@@ -154,9 +214,9 @@ export class AnimeApiService {
 
 	async fetchProgress(animeId: number): Promise<ProgressDataAnime> {
 		try {
-			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_PROGRESS}`, {
+			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_PROGRESS}`, {
 				method: 'POST',
-				headers: createHeaders(Secrets.API_TOKEN),
+				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({
 					id: animeId,
 					idUser: Secrets.USER_ID,
@@ -177,13 +237,13 @@ export class AnimeApiService {
 
 	async fetchAnimeEpisodes(animeUrl: string, season: string): Promise<AnimeEpisodesData> {
 		try {
-			const response = await fetch(`${API_CONFIG.BASE_URL}/api/get_anime_episodes`, {
+			const response = await fetch(`${AnimeApiService.baseUrl}/api/get_anime_episodes`, {
 				method: 'POST',
-				headers: createHeaders(Secrets.API_TOKEN),
+				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({
 					url: animeUrl,
 					season: season,
-					serverUrl: API_CONFIG.BASE_URL
+					serverUrl: AnimeApiService.baseUrl
 				}),
 			});
 
@@ -199,9 +259,9 @@ export class AnimeApiService {
 	}
 
 	private async callTMDBProxy(url: string): Promise<any> {
-		const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TMDB_PROXY}`, {
+		const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.TMDB_PROXY}`, {
 			method: 'POST',
-			headers: createHeaders(Secrets.API_TOKEN),
+			headers: createHeaders(AnimeApiService.token),
 			body: JSON.stringify({ url }),
 		});
 
@@ -424,8 +484,8 @@ export class AnimeApiService {
 		try {
 			const response = await fetch(url, {
 				method: 'POST',
-				headers: createHeaders(Secrets.API_TOKEN),
-				body: JSON.stringify({ serverUrl: API_CONFIG.BASE_URL }),
+				headers: createHeaders(AnimeApiService.token),
+				body: JSON.stringify({ serverUrl: AnimeApiService.baseUrl }),
 			});
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
@@ -448,9 +508,9 @@ export class AnimeApiService {
 		poster: String
 	): Promise<void> {
 		try {
-			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_PROGRESS}`, {
+			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.UPDATE_PROGRESS}`, {
 				method: 'POST',
-				headers: createHeaders(Secrets.API_TOKEN),
+				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({
 					id: animeId,
 					episode: episode,
@@ -473,9 +533,9 @@ export class AnimeApiService {
 
 	async fetchAllProgress(): Promise<ProgressData[]> {
 		try {
-			const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_PROGRESS}`, {
+			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_ALL_PROGRESS}`, {
 				method: 'POST',
-				headers: createHeaders(Secrets.API_TOKEN),
+				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({ idUser: Secrets.USER_ID }),
 			});
 			if (!response.ok) {

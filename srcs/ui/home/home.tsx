@@ -1,4 +1,4 @@
-import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image, TextInput } from "react-native";
+import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image, TextInput, Text, ActivityIndicator } from "react-native";
 import AnimeItem from "../../models/anime_item";
 import TopBar from "../components/top_bar";
 import BannerResume from "../components/banner_resume";
@@ -12,6 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../../constants/routes";
 import { ResumeSelector } from "./resume_selector";
 import { AnimeApiService, ProgressData, ProgressStatus } from "../../data/anime_api_service";
+import { Colors } from "../../constants/colors";
 
 const { height } = Dimensions.get('window');
 
@@ -41,7 +42,27 @@ export function Home(): React.JSX.Element {
 	const [allProgress, setAllProgress] = useState<ProgressData[]>([]);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [isProgressLoaded, setIsProgressLoaded] = useState<boolean>(false);
+	const [isAnimeListLoaded, setIsAnimeListLoaded] = useState<boolean>(false);
+	const [showLoadingOverlay, setShowLoadingOverlay] = useState<boolean>(true);
+	const [animationCompleted, setAnimationCompleted] = useState<boolean>(false);
 	const searchInputRef = useRef<TextInput>(null);
+	const loadingOpacity = useRef(new Animated.Value(1)).current;
+
+	const isGlobalLoading = !isProgressLoaded || !isAnimeListLoaded;
+
+	useEffect(() => {
+		if (!isGlobalLoading && !animationCompleted) {
+			Animated.timing(loadingOpacity, {
+				toValue: 0,
+				duration: 500,
+				useNativeDriver: true,
+			}).start(() => {
+				setShowLoadingOverlay(false);
+				setAnimationCompleted(true);
+			});
+		}
+	}, [isGlobalLoading, loadingOpacity, animationCompleted]);
 
 	useEffect(() => {
 		if (searchValue) {
@@ -84,11 +105,14 @@ export function Home(): React.JSX.Element {
 			})
 			.catch(error => {
 			}).finally(() => {
+				setIsProgressLoaded(true);
 			});
 	}, [resumeVisible]);
 
 	useFocusEffect(
 		useCallback(() => {
+			if (isGlobalLoading) return;
+
 			const subscription = DeviceEventEmitter.addListener('keyPressed', (keyCode: number) => {
 				if (resumeVisible) return;
 				if (keyCode === RemoteControlKey.DPAD_UP) {
@@ -186,7 +210,7 @@ export function Home(): React.JSX.Element {
 			});
 
 			return () => subscription.remove();
-		}, [animeList, navigation, featuredAnime, selectedPart, resumeVisible, indexTopBar, animeListFiltered])
+		}, [animeList, navigation, featuredAnime, selectedPart, resumeVisible, indexTopBar, animeListFiltered, isGlobalLoading])
 	);
 
 	useEffect(() => {
@@ -221,6 +245,7 @@ export function Home(): React.JSX.Element {
 				setAnimeList={(list) => {
 					setAnimeList(list);
 					setIsLoading(false);
+					setIsAnimeListLoaded(true);
 				}}
 				isLoading={isLoading}
 				setIsLoading={setIsLoading}
@@ -232,6 +257,18 @@ export function Home(): React.JSX.Element {
 				navigation={navigation}
 				allProgress={allProgress}
 			/>
+			
+			{showLoadingOverlay && (
+				<Animated.View style={[styles.globalLoadingOverlay, { opacity: loadingOpacity }]}>
+					<View style={styles.globalLoadingContainer}>
+						<ActivityIndicator size="large" color={Colors.primary} />
+						<Text style={styles.globalLoadingText}>Chargement en cours...</Text>
+						<Text style={styles.globalLoadingSubtext}>
+							Préparation de votre bibliothèque d'animes
+						</Text>
+					</View>
+				</Animated.View>
+			)}
 		</View>
 
 	);
@@ -372,5 +409,35 @@ const styles = StyleSheet.create({
 		flex: 1,
 		flexDirection: 'column',
 		backgroundColor: '#222222ff',
+	},
+	globalLoadingOverlay: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		backgroundColor: 'rgba(34, 34, 34, 0.95)',
+		justifyContent: 'center',
+		alignItems: 'center',
+		zIndex: 1000,
+	},
+	globalLoadingContainer: {
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: 40,
+	},
+	globalLoadingText: {
+		color: '#ffffff',
+		fontSize: 18,
+		fontWeight: '600',
+		marginTop: 20,
+		textAlign: 'center',
+	},
+	globalLoadingSubtext: {
+		color: '#cccccc',
+		fontSize: 14,
+		marginTop: 8,
+		textAlign: 'center',
+		opacity: 0.8,
 	},
 });

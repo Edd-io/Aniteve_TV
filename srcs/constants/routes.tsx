@@ -14,4 +14,5 @@ export type RootStackParamList = {
     averageColor: number[];
     ProgressDataAnime?: ProgressDataAnime | null;
   };
+  Login: undefined;
 };

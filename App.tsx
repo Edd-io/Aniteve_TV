@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  StyleSheet,
+	StyleSheet,
+	View,
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -8,33 +9,101 @@ import { Home } from './srcs/ui/home/home';
 import { Anime } from './srcs/ui/anime/anime';
 import { RootStackParamList } from './srcs/constants/routes';
 import { Player } from './srcs/ui/player/player';
+import { SplashScreen } from './srcs/ui/splash_screen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+import { Animated } from 'react-native';
+import { Login } from './srcs/ui/login/login';
+import { AnimeApiService } from './srcs/data/anime_api_service';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
 function App(): React.JSX.Element {
+	const [showSplash, setShowSplash] = useState(true);
+	const fadeAnim = useRef(new Animated.Value(0)).current;
+	const [showMain, setShowMain] = useState(false);
+	const [showLogin, setShowLogin] = useState(false);
 
-  return (
-    <NavigationContainer>
-      <Stack.Navigator 
-        initialRouteName="Home"
-        screenOptions={{
-          headerShown: false,
-          cardStyle: { backgroundColor: '#0a0a0a' }
-        }}
-      >
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Anime" component={Anime} />
-        <Stack.Screen name="Player" component={Player} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+	const handleSplashFinish = React.useCallback(() => {
+		setShowSplash(false);
+		setShowMain(true);
+	}, []);
+
+	useEffect(() => {
+		const checkLoginStatus = async () => {
+			const apiService = new AnimeApiService();
+
+			try {
+				const token = await AsyncStorage.getItem('token');
+				const addr = await AsyncStorage.getItem('addr');
+
+				console.log('Checking login status:', { token, addr });
+				if (token && addr) {
+					apiService.checkTokenValidity(token, addr)
+						.then(isValid => {
+							if (isValid) {
+								AnimeApiService.setToken(token);
+								AnimeApiService.setBaseUrl(addr);
+							} else {
+								setShowLogin(true);
+							}
+						})
+						.catch(() => setShowLogin(true))
+						.finally(() => {
+							handleSplashFinish();
+						});
+				} else {
+					setShowLogin(true);
+					handleSplashFinish();
+				}
+			} catch (error) {
+				setShowLogin(true);
+				handleSplashFinish();
+				console.error('Error checking login status:', error);
+			}
+		};
+
+		setTimeout(() => {
+			checkLoginStatus();
+		}, 2000);
+	}, []);
+
+	useEffect(() => {
+		if (showMain) {
+			Animated.timing(fadeAnim, {
+				toValue: 1,
+				duration: 500,
+				useNativeDriver: true,
+			}).start();
+		}
+	}, [showMain, fadeAnim]);
+
+	return (
+		<>
+			{showSplash && (
+				<SplashScreen />
+			)}
+			{showMain && (
+				<Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+					<NavigationContainer>
+						<Stack.Navigator
+							initialRouteName={showLogin ? "Login" : "Home"}
+							screenOptions={{
+								headerShown: false,
+								cardStyle: { backgroundColor: '#0a0a0a' }
+							}}
+						>
+							<Stack.Screen name="Home" component={Home} />
+							<Stack.Screen name="Anime" component={Anime} />
+							<Stack.Screen name="Player" component={Player} />
+							<Stack.Screen name="Login" component={Login} />
+						</Stack.Navigator>
+					</NavigationContainer>
+				</Animated.View>
+			)}
+		</>
+	);
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-});
 
 export default App;
