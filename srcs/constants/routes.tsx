@@ -15,4 +15,5 @@ export type RootStackParamList = {
     ProgressDataAnime?: ProgressDataAnime | null;
   };
   Login: undefined;
+  ChooseUser: undefined;
 };

@@ -187,6 +187,7 @@ export function Home(): React.JSX.Element {
 						} else if (indexTopBar === 1) {
 							setResumeVisible(true);
 						} else if (indexTopBar === 2) {
+							navigation.replace('ChooseUser');
 						} else if (indexTopBar === 3) {
 						}
 

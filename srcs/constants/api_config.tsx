@@ -11,6 +11,7 @@ export const API_CONFIG = {
     GET_ALL_PROGRESS: "/api/get_all_progress",
     CHECK_TOKEN: "/api/check_token",
     LOGIN: "/api/login",
+    GET_USERS: "/api/get_users",
   },
   TMDB: {
     BASE_IMAGE_URL: "https://image.tmdb.org/t/p/w1280",

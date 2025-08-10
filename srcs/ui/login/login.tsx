@@ -15,6 +15,7 @@ import { RemoteControlKey } from '../../constants/remote_controller';
 import { AnimeApiService } from '../../data/anime_api_service';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../constants/routes';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -35,6 +36,7 @@ export const Login: React.FC = () => {
 
 
 	useEffect(() => {
+		AsyncStorage.removeItem('user')
 		const animationSequence = Animated.parallel([
 			Animated.timing(fadeAnim, {
 				toValue: 1,

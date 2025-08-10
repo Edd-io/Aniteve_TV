@@ -3,6 +3,7 @@ import { View, StyleSheet, Text, TextInput } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SelectedPart } from "../home/home";
 import { Colors } from '../../constants/colors';
+import { AnimeApiService } from "../../data/anime_api_service";
 
 export default function TopBar({
 	selectedPart,
@@ -70,7 +71,7 @@ export default function TopBar({
 					isTVSelectable={false}
 				>
 					<View style={{ width: 24, height: 24, borderRadius: 100, borderWidth: 2, borderColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
-						<Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>A</Text>
+						<Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>{AnimeApiService.getActualUser()?.name[0] ?? '?'}</Text>
 					</View>
 				</View>
 				<View

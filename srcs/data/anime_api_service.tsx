@@ -72,9 +72,15 @@ export interface backdropImage {
 	width: number;
 }
 
+export interface User {
+	id: number;
+	name: string;
+}
+
 export class AnimeApiService {
 	private static token: string = '';
 	private static baseUrl: string = '';
+	private static user: User | null = null;
 
 	constructor() {
 	}
@@ -85,6 +91,14 @@ export class AnimeApiService {
 
 	static setBaseUrl(baseUrl: string) {
 		AnimeApiService.baseUrl = baseUrl;
+	}
+
+	static setUser(user: User | null) {
+		AnimeApiService.user = user;
+	}
+
+	static getActualUser(): User | null {
+		return AnimeApiService.user;
 	}
 
 	async login(addr: string, password: string): Promise<void> {
@@ -139,30 +153,74 @@ export class AnimeApiService {
 			return false;
 		}
 	}
-	async fetchAllAnime({ signal }: { signal?: AbortSignal } = {}): Promise<AnimeItem[]> {
-		const response = await fetch(Secrets.API_URL + API_CONFIG.ENDPOINTS.GET_ALL_ANIME, {
-			method: 'GET',
-			headers: createHeaders(AnimeApiService.token),
-			signal,
-		});
 
-		if (!response.ok) {
-			throw new Error(`API error ${response.status}`);
+	async fetchAllUsers(): Promise<User[]> {
+		try {
+			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_USERS}`, {
+				method: 'GET',
+				headers: createHeaders(AnimeApiService.token),
+			});
+
+			if (!response.ok) {
+				throw new Error(`API error ${response.status}`);
+			}
+			const json = await response.json();
+			return json || [];
+		} catch (error) {
+			console.error('Error fetching users:', error);
+			throw error;
 		}
+	}
 
-		const json = await response.json();
-		const rawList = Array.isArray(json) ? json : (json?.data ?? []);
+	async addNewUser(name: string): Promise<boolean> {
+		try {
+			const response = await fetch(`${AnimeApiService.baseUrl}/api/add_user`, {
+				method: 'POST',
+				headers: createHeaders(AnimeApiService.token),
+				body: JSON.stringify({ name }),
+			});
 
-		const mapped: AnimeItem[] = (rawList as any[]).map((e: any, idx: number) => new AnimeItem({
-			id: Number(e?.id ?? idx + 1),
-			title: String(e?.title ?? e?.name ?? 'Untitled'),
-			alternativeTitle: e?.alternativeTitle ?? e?.altTitle ?? undefined,
-			img: String(e?.img ?? e?.image ?? e?.poster ?? ''),
-			url: String(e?.url ?? e?.link ?? ''),
-			genres: e?.genre ?? [],
-		}));
+			if (!response.ok) {
+				throw new Error(`API error ${response.status}`);
+			}
 
-		return mapped;
+			const json = await response.json();
+			return json.status === 'success';
+		} catch (error) {
+			console.error('Error adding new user:', error);
+			throw error;
+		}
+	}
+
+	async fetchAllAnime({ signal }: { signal?: AbortSignal } = {}): Promise<AnimeItem[]> {
+		try {
+			const response = await fetch(Secrets.API_URL + API_CONFIG.ENDPOINTS.GET_ALL_ANIME, {
+				method: 'GET',
+				headers: createHeaders(AnimeApiService.token),
+				signal,
+			});
+	
+			if (!response.ok) {
+				throw new Error(`API error ${response.status}`);
+			}
+	
+			const json = await response.json();
+			const rawList = Array.isArray(json) ? json : (json?.data ?? []);
+	
+			const mapped: AnimeItem[] = (rawList as any[]).map((e: any, idx: number) => new AnimeItem({
+				id: Number(e?.id ?? idx + 1),
+				title: String(e?.title ?? e?.name ?? 'Untitled'),
+				alternativeTitle: e?.alternativeTitle ?? e?.altTitle ?? undefined,
+				img: String(e?.img ?? e?.image ?? e?.poster ?? ''),
+				url: String(e?.url ?? e?.link ?? ''),
+				genres: e?.genre ?? [],
+			}));
+	
+			return mapped;
+		} catch (error) {
+			console.error('Error fetching all anime:', error);
+			throw error;
+		}
 	}
 
 	async fetchAverageColor({ imgUrl }: { imgUrl: string }): Promise<number[]> {
@@ -219,7 +277,7 @@ export class AnimeApiService {
 				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({
 					id: animeId,
-					idUser: Secrets.USER_ID,
+					idUser: AnimeApiService.user?.id ?? -1,
 				}),
 			});
 
@@ -519,7 +577,7 @@ export class AnimeApiService {
 					allSeasons: allSeasons,
 					progress: progress,
 					poster: poster,
-					idUser: Secrets.USER_ID,
+					idUser: AnimeApiService.user?.id ?? -1,
 				}),
 			});
 			if (!response.ok) {
@@ -536,7 +594,7 @@ export class AnimeApiService {
 			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_ALL_PROGRESS}`, {
 				method: 'POST',
 				headers: createHeaders(AnimeApiService.token),
-				body: JSON.stringify({ idUser: Secrets.USER_ID }),
+				body: JSON.stringify({ idUser: AnimeApiService.user?.id ?? -1 }),
 			});
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);

@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Animated } from 'react-native';
 import { Login } from './srcs/ui/login/login';
 import { AnimeApiService } from './srcs/data/anime_api_service';
+import { ChooseUser } from './srcs/ui/choose_user';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -24,6 +25,7 @@ function App(): React.JSX.Element {
 	const fadeAnim = useRef(new Animated.Value(0)).current;
 	const [showMain, setShowMain] = useState(false);
 	const [showLogin, setShowLogin] = useState(false);
+	const [userSelected, setUserSelected] = useState(false);
 
 	const handleSplashFinish = React.useCallback(() => {
 		setShowSplash(false);
@@ -37,14 +39,20 @@ function App(): React.JSX.Element {
 			try {
 				const token = await AsyncStorage.getItem('token');
 				const addr = await AsyncStorage.getItem('addr');
+				const user = await AsyncStorage.getItem('user');
 
-				console.log('Checking login status:', { token, addr });
+				console.log('Checking login status:', { token, addr, user });
 				if (token && addr) {
 					apiService.checkTokenValidity(token, addr)
 						.then(isValid => {
 							if (isValid) {
 								AnimeApiService.setToken(token);
 								AnimeApiService.setBaseUrl(addr);
+								if (user) {
+									setUserSelected(true);
+									const parsedUser = JSON.parse(user);
+									AnimeApiService.setUser(parsedUser);
+								} 
 							} else {
 								setShowLogin(true);
 							}
@@ -66,7 +74,7 @@ function App(): React.JSX.Element {
 
 		setTimeout(() => {
 			checkLoginStatus();
-		}, 2000);
+		}, 1500);
 	}, []);
 
 	useEffect(() => {
@@ -88,7 +96,7 @@ function App(): React.JSX.Element {
 				<Animated.View style={{ flex: 1, opacity: fadeAnim }}>
 					<NavigationContainer>
 						<Stack.Navigator
-							initialRouteName={showLogin ? "Login" : "Home"}
+							initialRouteName={showLogin ? "Login" : (userSelected ? "Home" : "ChooseUser")}
 							screenOptions={{
 								headerShown: false,
 								cardStyle: { backgroundColor: '#0a0a0a' }
@@ -98,6 +106,7 @@ function App(): React.JSX.Element {
 							<Stack.Screen name="Anime" component={Anime} />
 							<Stack.Screen name="Player" component={Player} />
 							<Stack.Screen name="Login" component={Login} />
+							<Stack.Screen name="ChooseUser" component={ChooseUser} />
 						</Stack.Navigator>
 					</NavigationContainer>
 				</Animated.View>
