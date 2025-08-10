@@ -1,22 +1,14 @@
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { FeaturedAnime, SelectedPart } from "../home/home";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from "../../constants/routes";
 import { Progress } from "../anime/left_panel";
 import { Colors } from "../../constants/colors";
 import { hexToRgb } from "../../utils/hexa_to_rgb";
 
 const { width, height } = Dimensions.get('window');
 
-type NavigationProp = StackNavigationProp<RootStackParamList>;
-
-export default function BannerResume({ featuredAnime, selectedPart, index, disableButtons }: { featuredAnime: FeaturedAnime | null, selectedPart: SelectedPart, index: number, disableButtons: boolean }): React.JSX.Element {
-	const navigation = useNavigation<NavigationProp>();
-	const currentFocusedIndex = index;
+export default function BannerResume({ featuredAnime, selectedPart, disableButtons }: { featuredAnime: FeaturedAnime | null, selectedPart: SelectedPart, disableButtons: boolean }): React.JSX.Element {
 	const isSelected = selectedPart === SelectedPart.BANNER;
 
-	console.log("BannerResume rendered with featuredAnime:", featuredAnime);
 	return (
 		<View style={styles.featuredOverlay}>
 			<View style={styles.featuredContent}>
@@ -33,7 +25,7 @@ export default function BannerResume({ featuredAnime, selectedPart, index, disab
 						<TouchableOpacity
 							style={[
 								styles.playButton,
-								isSelected && currentFocusedIndex === 0 && styles.focusedButton,
+								isSelected && styles.focusedButton,
 								!featuredAnime?.progress && { opacity: 0.5 }
 							]}
 						>
@@ -44,7 +36,7 @@ export default function BannerResume({ featuredAnime, selectedPart, index, disab
 								<Progress
 									progress={featuredAnime.progress}
 									averageColor={hexToRgb(Colors.primary)}
-									focus={isSelected && currentFocusedIndex === 0}
+									focus={isSelected}
 									height={56}
 								/>
 							</View>

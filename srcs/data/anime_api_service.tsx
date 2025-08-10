@@ -219,9 +219,96 @@ export class AnimeApiService {
 				: `https://api.themoviedb.org/3/search/tv?{api_key_tmdb}&query=${encodeURIComponent(animeName)}&language=fr-FR`;
 
 			const searchData = await this.callTMDBProxy(searchUrl);
-			const allAnimeData: TMDBSearchResult[] = searchData?.results?.filter((result: TMDBSearchResult) =>
+			
+			let allAnimeData: TMDBSearchResult[] = searchData?.results?.filter((result: TMDBSearchResult) =>
 				result.genre_ids?.includes(16)
 			) || [];
+
+			if (allAnimeData.length === 0) {
+				allAnimeData = searchData?.results || [];
+			}
+
+			if (allAnimeData.length === 0) {
+				const englishSearchUrl = isMovie
+					? `https://api.themoviedb.org/3/search/movie?{api_key_tmdb}&query=${encodeURIComponent(animeName)}&language=en-US`
+					: `https://api.themoviedb.org/3/search/tv?{api_key_tmdb}&query=${encodeURIComponent(animeName)}&language=en-US`;
+				
+				const englishSearchData = await this.callTMDBProxy(englishSearchUrl);
+				allAnimeData = englishSearchData?.results || [];
+			}
+
+			if (allAnimeData.length === 0) {
+				
+				const searchVariations = [];
+				
+				const withoutPunctuation = animeName.replace(/[^\w\s]/g, '').trim();
+				if (withoutPunctuation !== animeName) {
+					searchVariations.push(withoutPunctuation);
+				}
+				
+				const words = animeName.split(/\s+/);
+				for (let i = 1; i <= Math.min(3, words.length); i++) {
+					const shortVersion = words.slice(0, i).join(' ');
+					if (shortVersion !== animeName && !searchVariations.includes(shortVersion)) {
+						searchVariations.push(shortVersion);
+					}
+				}
+				
+				const wordsToTry = animeName.split(/\s+/).filter(word => 
+					!['ga', 'wo', 'ni', 'no', 'wa', 'de', 'to', '!', '?'].includes(word.toLowerCase())
+				);
+				if (wordsToTry.length > 0 && wordsToTry.join(' ') !== animeName) {
+					searchVariations.push(wordsToTry.join(' '));
+				}
+
+				for (const variation of searchVariations) {
+					const variationUrl = isMovie
+						? `https://api.themoviedb.org/3/search/movie?{api_key_tmdb}&query=${encodeURIComponent(variation)}&language=en-US`
+						: `https://api.themoviedb.org/3/search/tv?{api_key_tmdb}&query=${encodeURIComponent(variation)}&language=en-US`;
+					
+					try {
+						const variationData = await this.callTMDBProxy(variationUrl);
+						const variationResults = variationData?.results || [];
+						
+						if (variationResults.length > 0) {
+							allAnimeData = variationResults;
+							break;
+						}
+					} catch (error) {
+						console.warn(`Error with variation "${variation}":`, error);
+					}
+				}
+			}
+
+			if (allAnimeData.length === 0) {
+				const firstWord = animeName.split(/\s+/)[0];
+				if (firstWord.length > 2) {
+					console.log(`Last attempt with first word: "${firstWord}"`);
+					const lastAttemptUrl = `https://api.themoviedb.org/3/search/tv?{api_key_tmdb}&query=${encodeURIComponent(firstWord)}&language=en-US`;
+					
+					try {
+						const lastAttemptData = await this.callTMDBProxy(lastAttemptUrl);
+						const lastAttemptResults = lastAttemptData?.results || [];
+						
+						const possibleAnimes = lastAttemptResults.filter((result: TMDBSearchResult) => {
+							const name = (result.name || '').toLowerCase();
+							const originalName = (result.original_name || '').toLowerCase();
+							
+							return result.genre_ids?.includes(16) ||
+								   name.includes('anime') ||
+								   originalName.includes('anime') ||
+								   result.genre_ids?.includes(10759) ||
+								   result.genre_ids?.includes(10765);
+						});
+						
+						if (possibleAnimes.length > 0) {
+							allAnimeData = possibleAnimes;
+						}
+					} catch (error) {
+						console.warn(`Error with last attempt search:`, error);
+					}
+				}
+			}
 
 			if (allAnimeData.length === 0) {
 				return {
@@ -244,6 +331,13 @@ export class AnimeApiService {
 				if (s1 === s2) return 100;
 
 				if (s1.includes(s2) || s2.includes(s1)) return 80;
+
+				const normalize = (str: string) => str.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+				const n1 = normalize(s1);
+				const n2 = normalize(s2);
+				
+				if (n1 === n2) return 95;
+				if (n1.includes(n2) || n2.includes(n1)) return 75;
 
 				const levenshteinDistance = (a: string, b: string): number => {
 					const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));

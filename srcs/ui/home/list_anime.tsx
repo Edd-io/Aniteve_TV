@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import AnimeItem from '../../models/anime_item';
 import { SelectedPart } from './home';
 import { AnimeApiService } from '../../data/anime_api_service';
@@ -11,20 +11,49 @@ const containerPadding = 16;
 const itemMargin = 8;
 const itemWidth = (width - containerPadding * 2 - itemMargin * 2 * itemsPerRow) / itemsPerRow;
 
-export function ListAnime({ selectedPart, indexItem, animeList, setAnimeList }: { selectedPart: SelectedPart, indexItem: number, animeList: AnimeItem[], setAnimeList: React.Dispatch<React.SetStateAction<AnimeItem[]>> }): React.JSX.Element {
+export function ListAnime({ 
+	selectedPart, 
+	indexItem, 
+	animeList, 
+	setAnimeList,
+	isLoading = false,
+	isSearchActive = false,
+	setIsLoading = () => {}
+}: { 
+	selectedPart: SelectedPart, 
+	indexItem: number, 
+	animeList: AnimeItem[], 
+	setAnimeList: React.Dispatch<React.SetStateAction<AnimeItem[]>>,
+	isLoading?: boolean,
+	isSearchActive?: boolean,
+	setIsLoading?: React.Dispatch<React.SetStateAction<boolean>>
+}): React.JSX.Element {
 	const flatListRef = useRef<FlatList>(null);
 	const apiService = new AnimeApiService();
-	
+
 	const currentFocusedIndex = indexItem;
 	const isSelected = selectedPart === SelectedPart.ANIME_LIST;
 
 	useEffect(() => {
+		setIsLoading(true);
 		let isMounted = true;
 		const controller = new AbortController();
 
 		apiService.fetchAllAnime({ signal: controller.signal })
-			.then(list => { if (isMounted) setAnimeList(list); })
-			.catch(err => { if (isMounted) { console.warn('Failed to load anime list', err); setAnimeList([]); } });
+			.then(list => {
+				if (isMounted) {
+					setAnimeList(list);
+				}
+			})
+			.catch(err => {
+				if (isMounted) {
+					console.warn('Failed to load anime list', err);
+					setAnimeList([]);
+				}
+			})
+			.finally(() => {
+				setIsLoading(false);
+			});
 
 		return () => {
 			isMounted = false;
@@ -37,7 +66,7 @@ export function ListAnime({ selectedPart, indexItem, animeList, setAnimeList }: 
 			const currentRow = Math.floor(currentFocusedIndex / itemsPerRow);
 			const itemHeight = (itemWidth * 0.6) + 16;
 			const offset = currentRow * itemHeight - (itemHeight / 2);
-			
+
 			flatListRef.current.scrollToOffset({
 				offset: Math.max(0, offset),
 				animated: true
@@ -47,27 +76,47 @@ export function ListAnime({ selectedPart, indexItem, animeList, setAnimeList }: 
 
 	return (
 		<View style={styles.container}>
-			<FlatList
-				ref={flatListRef}
-				data={animeList}
-				renderItem={({ item, index }) => (
-					<AnimeItemComponent
-						item={item}
-						index={index}
-						isFocused={isSelected && index === currentFocusedIndex}
+			{
+				isLoading ? (
+					<View style={styles.centerContainer}>
+						<ActivityIndicator size="large" color={Colors.primary} />
+						<Text style={styles.loadingText}>Chargement des animes...</Text>
+					</View>
+				) : 
+				isSearchActive && animeList.length === 0 ? (
+					<View style={styles.centerContainer}>
+						<Text style={styles.noResultsText}>Aucun résultat trouvé</Text>
+						<Text style={styles.noResultsSubtext}>Essayez avec un autre terme de recherche</Text>
+					</View>
+				) : 
+				!isSearchActive && animeList.length === 0 ? (
+					<View style={styles.centerContainer}>
+						<Text style={styles.noResultsText}>Aucun anime disponible</Text>
+					</View>
+				) : (
+					<FlatList
+						ref={flatListRef}
+						data={animeList}
+						renderItem={({ item, index }) => (
+							<AnimeItemComponent
+								item={item}
+								index={index}
+								isFocused={isSelected && index === currentFocusedIndex}
+							/>
+						)}
+						keyExtractor={(item) => item.id.toString()}
+						contentContainerStyle={styles.flatListContent}
+						showsVerticalScrollIndicator={false}
+						showsHorizontalScrollIndicator={false}
+						numColumns={4}
+						scrollEnabled={true}
+						initialNumToRender={16}
+						maxToRenderPerBatch={16}
+						windowSize={10}
+						updateCellsBatchingPeriod={50}
 					/>
-				)}
-				keyExtractor={(item) => item.id.toString()}
-				contentContainerStyle={styles.flatListContent}
-				showsVerticalScrollIndicator={false}
-				showsHorizontalScrollIndicator={false}
-				numColumns={4}
-				scrollEnabled={true}
-				initialNumToRender={16}
-				maxToRenderPerBatch={16}
-				windowSize={10}
-				updateCellsBatchingPeriod={50}
-			/>
+				)
+			}
 		</View>
 	);
 }
@@ -202,5 +251,29 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		zIndex: 1,
+	},
+	centerContainer: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 40,
+	},
+	loadingText: {
+		color: '#fff',
+		fontSize: 16,
+		marginTop: 16,
+		textAlign: 'center',
+	},
+	noResultsText: {
+		color: '#fff',
+		fontSize: 20,
+		fontWeight: 'bold',
+		textAlign: 'center',
+		marginBottom: 8,
+	},
+	noResultsSubtext: {
+		color: '#ccc',
+		fontSize: 14,
+		textAlign: 'center',
 	},
 });

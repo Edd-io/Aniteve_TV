@@ -1,15 +1,24 @@
-import React from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { View, StyleSheet, Text, TextInput } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SelectedPart } from "../home/home";
 import { Colors } from '../../constants/colors';
 
-export default function TopBar(
-	{ selectedPart, index }: { selectedPart: SelectedPart, index: number }
-): React.JSX.Element {
-	const searchInputRef = React.useRef<TextInput>(null);
+export default function TopBar({
+	selectedPart,
+	index,
+	searchInputRef,
+	setSearchValue,
+	setIsLoading
+}: { selectedPart: SelectedPart,
+	index: number,
+	searchInputRef: React.RefObject<TextInput | null>,
+	setSearchValue: Dispatch<SetStateAction<string>>,
+	setIsLoading: Dispatch<SetStateAction<boolean>>
+}): React.JSX.Element {
 	const currentFocusedIndex = index;
 	const isSelected = selectedPart === SelectedPart.TOPBAR;
+	const [localSearchValue, setLocalSearchValue] = useState('');
 
 	return (
 		<View style={styles.header}>
@@ -34,6 +43,11 @@ export default function TopBar(
 						ref={searchInputRef}
 						editable={isSelected && currentFocusedIndex === 0}
 						placeholder="Rechercher un anime..."
+						onChangeText={setLocalSearchValue}
+						onSubmitEditing={() => {
+							setIsLoading(true);
+							setSearchValue(localSearchValue);
+						}}
 					/>
 				</View>
 				<Icon name="search" size={24} color="#fff" style={{ marginLeft: 10 }} />
@@ -73,12 +87,6 @@ export default function TopBar(
 	);
 }
 
-function openSearch(searchInputRef: React.RefObject<TextInput>) {
-	if (searchInputRef.current) {
-		searchInputRef.current.clear();
-		searchInputRef.current.focus();
-	}
-}
 
 const styles = StyleSheet.create({
 	header: {

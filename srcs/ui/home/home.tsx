@@ -1,9 +1,9 @@
-import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image } from "react-native";
+import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image, TextInput } from "react-native";
 import AnimeItem from "../../models/anime_item";
 import TopBar from "../components/top_bar";
 import BannerResume from "../components/banner_resume";
 import LinearGradient from 'react-native-linear-gradient';
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, RefObject, Dispatch, SetStateAction } from "react";
 import { ListAnime } from "./list_anime";
 import { DeviceEventEmitter } from 'react-native'
 import { RemoteControlKey } from "../../constants/remote_controller";
@@ -33,12 +33,31 @@ export function Home(): React.JSX.Element {
 	const apiService = new AnimeApiService();
 	const [selectedPart, setSelectedPart] = useState<SelectedPart>(SelectedPart.BANNER);
 	const [indexTopBar, setIndexTopBar] = useState<number>(0);
-	const [indexBanner, setIndexBanner] = useState<number>(0);
 	const [indexItem, setIndexItem] = useState<number>(0);
 	const [animeList, setAnimeList] = useState<AnimeItem[]>([]);
+	const [animeListFiltered, setAnimeListFiltered] = useState<AnimeItem[]>([]);
 	const [featuredAnime, setFeaturedAnime] = useState<FeaturedAnime | null>(null);
 	const [resumeVisible, setResumeVisible] = useState<boolean>(false);
 	const [allProgress, setAllProgress] = useState<ProgressData[]>([]);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const searchInputRef = useRef<TextInput>(null);
+
+	useEffect(() => {
+		if (searchValue) {
+			const filtered = animeList.filter(anime =>
+				anime.title.toLowerCase().includes(searchValue.toLowerCase())
+			);
+			setAnimeListFiltered(filtered);
+			if (filtered.length > 0) {
+				setSelectedPart(SelectedPart.ANIME_LIST);
+				setIndexItem(0);
+			}
+		} else {
+			setAnimeListFiltered(animeList);
+		}
+		setIsLoading(false);
+	}, [searchValue, animeList]);
 
 	useEffect(() => {
 		apiService.fetchAllProgress()
@@ -93,7 +112,7 @@ export function Home(): React.JSX.Element {
 						setIndexItem(currentIndex => {
 							if (currentSelectedPart < SelectedPart.ANIME_LIST) {
 								return currentIndex;
-							} else if (currentIndex + 4 < animeList.length) {
+							} else if (currentIndex + 4 < animeListFiltered.length) {
 								return currentIndex + 4;
 							}
 							return currentIndex;
@@ -121,7 +140,7 @@ export function Home(): React.JSX.Element {
 					setSelectedPart(currentSelectedPart => {
 						if (currentSelectedPart === SelectedPart.ANIME_LIST) {
 							setIndexItem(currentIndex => {
-								if (currentIndex + 1 >= animeList.length) {
+								if (currentIndex + 1 >= animeListFiltered.length) {
 									return currentIndex;
 								}
 								return currentIndex + (currentIndex % 4 === 3 ? 0 : 1);
@@ -136,6 +155,11 @@ export function Home(): React.JSX.Element {
 				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
 					if (selectedPart === SelectedPart.TOPBAR) {
 						if (indexTopBar === 0) {
+							if (searchInputRef.current) {
+								searchInputRef.current.clear();
+								setSearchValue('');
+								openSearch(searchInputRef);
+							}
 						} else if (indexTopBar === 1) {
 							setResumeVisible(true);
 						} else if (indexTopBar === 2) {
@@ -143,17 +167,17 @@ export function Home(): React.JSX.Element {
 						}
 
 					} else if (selectedPart === SelectedPart.BANNER) {
-						if (indexBanner === 0) {
-							if (featuredAnime && featuredAnime.progress) {
-								navigation.navigate('Anime', { anime: featuredAnime.anime });
-							}
+						if (featuredAnime && featuredAnime.progress) {
+							navigation.navigate('Anime', { anime: featuredAnime.anime });
 						}
 					}
 					else if (selectedPart === SelectedPart.ANIME_LIST) {
 						setIndexItem(currentIndex => {
-							const selectedAnime = animeList[currentIndex];
-							if (selectedAnime) {
-								navigation.navigate('Anime', { anime: selectedAnime });
+							if (animeListFiltered.length > 0 && currentIndex < animeListFiltered.length) {
+								const selectedAnime = animeListFiltered[currentIndex];
+								if (selectedAnime) {
+									navigation.navigate('Anime', { anime: selectedAnime });
+								}
 							}
 							return currentIndex;
 						});
@@ -162,33 +186,45 @@ export function Home(): React.JSX.Element {
 			});
 
 			return () => subscription.remove();
-		}, [animeList, navigation, indexBanner, featuredAnime, selectedPart, resumeVisible, indexTopBar])
+		}, [animeList, navigation, featuredAnime, selectedPart, resumeVisible, indexTopBar, animeListFiltered])
 	);
 
 	useEffect(() => {
 		if (selectedPart === SelectedPart.ANIME_LIST) {
-			setFeaturedAnime({
-				anime: animeList[indexItem],
-				progress: null
-			});
+			if (animeListFiltered.length > 0 && indexItem < animeListFiltered.length) {
+				setFeaturedAnime({
+					anime: animeListFiltered[indexItem],
+					progress: null
+				});
+			} else {
+				setFeaturedAnime(null);
+			}
 		} else {
 			setFeaturedAnime(getFeaturedAnime(allProgress));
 		}
-	}, [indexItem, animeList, selectedPart, allProgress]);
+	}, [indexItem, selectedPart, allProgress, animeListFiltered]);
 
 	return (
 		<View style={styles.column}>
 			<HomeTop
 				featuredAnime={featuredAnime}
 				selectedPart={selectedPart}
-				indexBanner={indexBanner}
 				indexTopBar={indexTopBar}
+				searchInputRef={searchInputRef}
+				setSearchValue={setSearchValue}
+				setIsLoading={setIsLoading}
 			/>
 			<ListAnime
 				selectedPart={selectedPart}
 				indexItem={indexItem}
-				animeList={animeList}
-				setAnimeList={setAnimeList}
+				animeList={animeListFiltered}
+				setAnimeList={(list) => {
+					setAnimeList(list);
+					setIsLoading(false);
+				}}
+				isLoading={isLoading}
+				setIsLoading={setIsLoading}
+				isSearchActive={searchValue.trim() !== ''}
 			/>
 			<ResumeSelector
 				visible={resumeVisible}
@@ -201,17 +237,20 @@ export function Home(): React.JSX.Element {
 	);
 }
 
-
 function HomeTop({
 	featuredAnime,
 	selectedPart,
-	indexBanner,
-	indexTopBar
+	indexTopBar,
+	searchInputRef,
+	setSearchValue,
+	setIsLoading
 }: {
 	featuredAnime: FeaturedAnime | null;
 	selectedPart: SelectedPart;
-	indexBanner: number;
 	indexTopBar: number;
+	searchInputRef: RefObject<TextInput | null>;
+	setSearchValue: Dispatch<SetStateAction<string>>;
+	setIsLoading: Dispatch<SetStateAction<boolean>>;
 }): React.JSX.Element {
 	const initialHeight = selectedPart === SelectedPart.ANIME_LIST ? height * 0.5 : height * 0.8;
 	const heightAnimation = useRef(new Animated.Value(initialHeight)).current;
@@ -236,9 +275,15 @@ function HomeTop({
 				>
 					<View style={{ zIndex: 1, flex: 1, flexDirection: 'column' }}>
 
-						<TopBar selectedPart={selectedPart} index={indexTopBar} />
+						<TopBar
+							selectedPart={selectedPart}
+							index={indexTopBar}
+							searchInputRef={searchInputRef}
+							setSearchValue={setSearchValue}
+							setIsLoading={setIsLoading}
+						/>
 						<View style={{ flex: 1 }} />
-						<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} index={indexBanner} disableButtons={false} />
+						<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={false} />
 					</View>
 					<LinearGradient
 						colors={["transparent", "#222222ff"]}
@@ -259,8 +304,14 @@ function HomeTop({
 				resizeMode="cover"
 			>
 				<View style={styles.featuredBackgroundFull}>
-					<TopBar selectedPart={selectedPart} index={indexTopBar} />
-					<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} index={indexBanner} disableButtons={true} />
+					<TopBar
+						selectedPart={selectedPart}
+						index={indexTopBar}
+						searchInputRef={searchInputRef}
+						setSearchValue={setSearchValue}
+						setIsLoading={setIsLoading}
+					/>
+					<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={true} />
 					<LinearGradient
 						colors={["transparent", "#222222"]}
 						style={styles.gradient}
@@ -286,6 +337,13 @@ function getFeaturedAnime(allProgress: ProgressData[]): FeaturedAnime | null {
 		}
 	}
 	return null;
+}
+
+function openSearch(searchInputRef: React.RefObject<TextInput | null>): void {
+	if (searchInputRef.current) {
+		searchInputRef.current.clear();
+		searchInputRef.current.focus();
+	}
 }
 
 const styles = StyleSheet.create({
