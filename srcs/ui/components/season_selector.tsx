@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	View,
 	Text,
@@ -12,6 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from '../../constants/remote_controller';
 import { Season } from '../../data/anime_api_service';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface SeasonSelectorProps {
 	visible: boolean;
@@ -86,34 +87,39 @@ export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
 		}
 	}, [visible]);
 
-	useEffect(() => {
-		const handleRemoteControlEvent = (keyCode: number) => {
-			if (keyCode === RemoteControlKey.DPAD_UP) {
-				setSelectedIndex(prevIndex => {
-					const newIndex = Math.max(prevIndex - 1, 0);
-					scrollToIndex(newIndex);
-					return newIndex;
-				});
-			} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
-				setSelectedIndex(prevIndex => {
-					const newIndex = Math.min(prevIndex + 1, seasons.length - 1);
-					scrollToIndex(newIndex);
-					return newIndex;
-				});
-			} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-				const selectedSeason = seasons[selectedIndex];
-				if (selectedSeason) {
-					onSeasonSelect(selectedSeason);
+	useFocusEffect(
+		useCallback(() => {
+			const handleRemoteControlEvent = (keyCode: number) => {
+				if (!visible) {
+					return;
+				}
+				if (keyCode === RemoteControlKey.DPAD_UP) {
+					setSelectedIndex(prevIndex => {
+						const newIndex = Math.max(prevIndex - 1, 0);
+						scrollToIndex(newIndex);
+						return newIndex;
+					});
+				} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
+					setSelectedIndex(prevIndex => {
+						const newIndex = Math.min(prevIndex + 1, seasons.length - 1);
+						scrollToIndex(newIndex);
+						return newIndex;
+					});
+				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+					const selectedSeason = seasons[selectedIndex];
+					if (selectedSeason) {
+						onSeasonSelect(selectedSeason);
+						closePopup();
+					}
+				} else if (keyCode === RemoteControlKey.BACK) {
 					closePopup();
 				}
-			} else if (keyCode === RemoteControlKey.BACK) {
-				closePopup();
-			}
-		};
+			};
 
-		const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
-		return () => subscription.remove();
-	}, [visible, selectedIndex, seasons]);
+			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
+			return () => subscription.remove();
+		}, [visible, selectedIndex, seasons])
+	);
 
 	const scrollToIndex = (index: number) => {
 		if (scrollViewRef.current) {
@@ -184,10 +190,6 @@ export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
 								const isSelected = season === currentSeason;
 								const isFocused = index === selectedIndex;
 
-								if (index === 0 || index === 1) {
-									console.log(`Season ${index}: isSelected=${isSelected}, isFocused=${isFocused}, selectedIndex=${selectedIndex}`);
-								}
-
 								return (
 									<TouchableOpacity
 										key={index}
@@ -216,7 +218,7 @@ export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
 											<Text style={[
 												styles.seasonText,
 											]}>
-												{season.name.toString()}
+												{season.name.toString()} - {season.lang.toUpperCase()}
 											</Text>
 											{isSelected && (
 												<Icon name="check" size={20} color="#ffffff" />

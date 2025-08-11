@@ -8,7 +8,6 @@ export type RootStackParamList = {
     anime: AnimeItem,
     episodeIndex: number;
     seasonIndex: number;
-    episodes: AnimeEpisodesData;
     seasons: Season[];
     tmdbData?: TMDBData | null;
     averageColor: number[];

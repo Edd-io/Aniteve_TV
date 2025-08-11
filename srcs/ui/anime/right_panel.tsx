@@ -74,7 +74,6 @@ export const RightPanel: React.FC<RightPanelProps> = ({
 			anime: anime,
 			episodeIndex: indexEpisode,
 			seasonIndex: selectedSeasonIndex,
-			episodes: episodesData!,
 			seasons: animeSeasonData,
 			tmdbData: tmdbData,
 			averageColor: averageColor,

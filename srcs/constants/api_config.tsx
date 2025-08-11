@@ -1,5 +1,3 @@
-import Secrets from "./secrets";
-
 export const API_CONFIG = {
   ENDPOINTS: {
     GET_ALL_ANIME: "/api/get_all_anime",
@@ -12,6 +10,7 @@ export const API_CONFIG = {
     CHECK_TOKEN: "/api/check_token",
     LOGIN: "/api/login",
     GET_USERS: "/api/get_users",
+    GET_ANIME_EPISODES: "/api/get_anime_episodes",
   },
   TMDB: {
     BASE_IMAGE_URL: "https://image.tmdb.org/t/p/w1280",

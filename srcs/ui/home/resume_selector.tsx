@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from '../../constants/remote_controller';
 import { ProgressData, ProgressStatus } from '../../data/anime_api_service';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface ResumeSelectorProps {
 	visible: boolean;
@@ -97,52 +98,52 @@ export const ResumeSelector: FC<ResumeSelectorProps> = ({
 		setSelectedIndex(0);
 	}, [selectedFilter]);
 
-	useEffect(() => {
-		const handleRemoteControlEvent = (keyCode: number) => {
-			if (!visible) return;
-			if (keyCode === RemoteControlKey.DPAD_UP) {
-				if (!filterFocus) {
-					setFilterFocus(true);
-					setSelectedIndex(0);
-				}
-			} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
-				if (filterFocus) {
-					setSelectedIndex(0);
-					setFilterFocus(false);
-				}
-			} else if (keyCode === RemoteControlKey.DPAD_LEFT) {
-				if (filterFocus) {
-					setSelectedFilter(prev => (prev > 0 ? prev - 1 : filters.current.length - 1));
-				} else {
-					setSelectedIndex(prevIndex => Math.max(prevIndex - 1, 0));
-				}
-			} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
-				if (filterFocus) {
-					setSelectedFilter(prev => (prev < filters.current.length - 1 ? prev + 1 : 0));
-				} else {
-					setSelectedIndex(prevIndex => Math.min(prevIndex + 1, filteredProgress.length - 1));
-				}
-			} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-				if (filterFocus) {
-					setFilterFocus(false);
-				} else {
-					const selectedAnime = filteredProgress[selectedIndex]?.anime;
-					console.log('Selected Anime:', selectedAnime);
-					if (selectedAnime) {
-						navigation.navigate('Anime', { anime: selectedAnime });
+	useFocusEffect(
+		useCallback(() => {
+			const handleRemoteControlEvent = (keyCode: number) => {
+				if (!visible) return;
+				if (keyCode === RemoteControlKey.DPAD_UP) {
+					if (!filterFocus) {
+						setFilterFocus(true);
+						setSelectedIndex(0);
 					}
+				} else if (keyCode === RemoteControlKey.DPAD_DOWN) {
+					if (filterFocus) {
+						setSelectedIndex(0);
+						setFilterFocus(false);
+					}
+				} else if (keyCode === RemoteControlKey.DPAD_LEFT) {
+					if (filterFocus) {
+						setSelectedFilter(prev => (prev > 0 ? prev - 1 : filters.current.length - 1));
+					} else {
+						setSelectedIndex(prevIndex => Math.max(prevIndex - 1, 0));
+					}
+				} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+					if (filterFocus) {
+						setSelectedFilter(prev => (prev < filters.current.length - 1 ? prev + 1 : 0));
+					} else {
+						setSelectedIndex(prevIndex => Math.min(prevIndex + 1, filteredProgress.length - 1));
+					}
+				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+					if (filterFocus) {
+						setFilterFocus(false);
+					} else {
+						const selectedAnime = filteredProgress[selectedIndex]?.anime;
+						console.log('Selected Anime:', selectedAnime);
+						if (selectedAnime) {
+							navigation.navigate('Anime', { anime: selectedAnime });
+						}
+					}
+
+				} else if (keyCode === RemoteControlKey.BACK) {
+					close();
 				}
+			};
 
-			} else if (keyCode === RemoteControlKey.BACK) {
-				close();
-			}
-
-		};
-
-		const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
-		return () => subscription.remove();
-	}, [visible, selectedIndex, filterFocus, filteredProgress.length]);
-
+			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
+			return () => subscription.remove();
+		}, [visible, selectedIndex, filterFocus, filteredProgress.length])
+	);
 
 	return (
 		<View

@@ -50,7 +50,7 @@ export const LeftPanel: FC<LeftPanelProps> = ({
 			{anime.genres && anime.genres.length > 0 && (
 				<View style={styles.genresContainer}>
 					{anime.genres.map((genre, index) => {
-						if (genre === 'Vf' || genre === 'Vostfr' || genre === 'Anime' || genre === 'Film') {
+						if (genre === 'Vf' || genre === 'Vostfr' || genre === 'Anime' || genre === 'Film' || genre === 'Scans') {
 							return null;
 						}
 						return (
@@ -109,13 +109,14 @@ export function Progress({ progress, averageColor, focus, height = null }: { pro
 	let state = "";
 	let season = progress.season!.split('/')[0];
 
-	if (progress.status === ProgressStatus.IN_PROGRESS) {
+	console.log('Progress:', progress);
+	if (progress.status === ProgressStatus.IN_PROGRESS || progress.completed === ProgressStatus.IN_PROGRESS ) {
 		state = "En cours";
-	} else if (progress.status === ProgressStatus.UP_TO_DATE) {
+	} else if (progress.status === ProgressStatus.UP_TO_DATE || progress.completed === ProgressStatus.UP_TO_DATE) {
 		state = "À jour";
-	} else if (progress.status === ProgressStatus.NEW_EPISODE) {
+	} else if (progress.status === ProgressStatus.NEW_EPISODE || progress.completed === ProgressStatus.NEW_EPISODE) {
 		state = "Nouveau épisode";
-	} else if (progress.status === ProgressStatus.NEW_SEASON) {
+	} else if (progress.status === ProgressStatus.NEW_SEASON || progress.completed === ProgressStatus.NEW_SEASON) {
 		state = "Nouvelle saison";
 	}
 
@@ -135,7 +136,7 @@ export function Progress({ progress, averageColor, focus, height = null }: { pro
 		]}>
 			{progress.season?.includes('film') ?
 				<Text style={styles.buttonText}>Film {progress.episode}</Text> :
-				<Text style={styles.buttonText}>{type} {number} - Episode {number}</Text>
+				<Text style={styles.buttonText}>{type} {number} - Episode {progress.episode}</Text>
 			}
 			<View style={styles.progressBar}>
 				<View

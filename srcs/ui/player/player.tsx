@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, DeviceEventEmitter, Animated, ActivityIndicator
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
-import { AnimeApiService, Season } from "../../data/anime_api_service";
+import { AnimeApiService, AnimeEpisodesData, Season } from "../../data/anime_api_service";
 import Video, { VideoRef } from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from "../../constants/remote_controller";
@@ -31,7 +31,6 @@ export function Player(): JSX.Element {
 		anime,
 		episodeIndex,
 		seasonIndex,
-		episodes,
 		seasons,
 		tmdbData,
 		averageColor,
@@ -41,7 +40,7 @@ export function Player(): JSX.Element {
 	const apiService = new AnimeApiService();
 
 	const [typeSource, setTypeSource] = useState<string>('');
-	const [episodesState, setEpisodesState] = useState(episodes);
+	const [episodesState, setEpisodesState] = useState<AnimeEpisodesData | null>(null);
 	const [episodeIndexState, setEpisodeIndexState] = useState<number>(episodeIndex);
 	const [sourceIndex, setSourceIndex] = useState<number>(0);
 	const [seasonIndexState, setSeasonIndexState] = useState<number>(seasonIndex);
@@ -61,13 +60,20 @@ export function Player(): JSX.Element {
 	const animatedHeight = useRef(new Animated.Value(50)).current;
 	const videoRef = useRef<VideoRef>(null);
 	const timeoutInterfaceRef = useRef<NodeJS.Timeout | null>(null);
+	const currentProgressRef = useRef<number>(0);
+	const isManualSeekingRef = useRef<boolean>(false);
 	const [resolution, setResolution] = useState<string | null>(null);
 	const [aspectRatio, setAspectRatio] = useState<string | null>(null);
 
 	const [indexMenu, setIndexMenu] = useState<number>(0);
 
 	useEffect(() => {
-		if (!error) {
+		if (episodesState == null) {
+			if (timeoutInterfaceRef.current) {
+				clearTimeout(timeoutInterfaceRef.current);
+			}
+			setShowInterface(true);
+		} else if (!error) {
 			if (timeoutInterfaceRef.current) {
 				clearTimeout(timeoutInterfaceRef.current);
 			}
@@ -82,7 +88,17 @@ export function Player(): JSX.Element {
 				});
 			}, 3000);
 		}
-	}, []);
+	}, [episodesState, error]);
+
+	useEffect(() => {
+		apiService.fetchAnimeEpisodes(anime.url.toString(), seasons[seasonIndexState].url.toString())
+			.then((episodes) => {
+				setEpisodesState(episodes);
+			})
+			.catch((error) => {
+				setError(error.message);
+			});
+	}, [seasonIndexState]);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -104,13 +120,18 @@ export function Player(): JSX.Element {
 				}
 				if (keyCode === RemoteControlKey.DPAD_LEFT) {
 					if (!isPaused) {
-						setProgress((prev) => {
-							const time: number = Math.max(prev - timeSkip, 0);
-							if (videoRef.current) {
-								videoRef.current.seek(time);
-							}
-							return time;
-						});
+						isManualSeekingRef.current = true;
+						const newTime = Math.max(currentProgressRef.current - timeSkip, 0);
+						currentProgressRef.current = newTime;
+						setProgress(newTime);
+						
+						if (videoRef.current) {
+							videoRef.current.seek(newTime);
+						}
+						
+						setTimeout(() => {
+							isManualSeekingRef.current = false;
+						}, 1000);
 					} else {
 						setIndexMenu((prev) => {
 							return prev > 0 ? prev - 1 : 0;
@@ -118,16 +139,21 @@ export function Player(): JSX.Element {
 					}
 				} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
 					if (!isPaused) {
-						setProgress((prev) => {
-							const time: number = Math.min(prev + timeSkip, duration);
-							if (videoRef.current) {
-								videoRef.current.seek(time);
-							}
-							return time;
-						});
+						isManualSeekingRef.current = true;
+						const newTime = Math.min(currentProgressRef.current + timeSkip, duration);
+						currentProgressRef.current = newTime;
+						setProgress(newTime);
+						
+						if (videoRef.current) {
+							videoRef.current.seek(newTime);
+						}
+						
+						setTimeout(() => {
+							isManualSeekingRef.current = false;
+						}, 1000);
 					} else {
 						setIndexMenu((prev) => {
-							return (prev < (showSourceSelector ? Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length : 4)) ? prev + 1 : prev;
+							return (prev < (showSourceSelector ? (Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length) : 4)) ? prev + 1 : prev;
 						});
 					}
 				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
@@ -152,10 +178,10 @@ export function Player(): JSX.Element {
 									setIndexMenu(0);
 									setIsPaused(false);
 								} else if (indexMenu === MenuElement.NEXT_EPISODE) {
-									if (episodeIndexState >= Object.keys(episodesState.episodes).length - 1) {
+									if (!episodesState || episodeIndexState >= Object.keys(episodesState!.episodes).length - 1) {
 										return;
 									}
-									setEpisodeIndexState((prev) => Math.min(prev + 1, Object.keys(episodesState.episodes).length - 1));
+									setEpisodeIndexState((prev) => Math.min(prev + 1, episodesState && episodesState.episodes ? Object.keys(episodesState.episodes).length - 1 : prev));
 									setSourceIndex(0);
 									setIndexMenu(0);
 									setIsPaused(false);
@@ -164,7 +190,7 @@ export function Player(): JSX.Element {
 									return;
 								}
 							} else {
-								if (indexMenu === Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length) {
+								if (indexMenu === Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length) {
 									setIndexMenu(0);
 									setShowSourceSelector(false);
 								} else {
@@ -179,20 +205,22 @@ export function Player(): JSX.Element {
 						}
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
-					if (!isPaused) {
+					if (!isPaused || error) {
 						navigation.goBack();
 					} else if (showSourceSelector) {
 						setShowSourceSelector(false);
 						setIndexMenu(0);
 					} else {
-						setIsPaused(false);
-						setIndexMenu(0);
+						if (!error) {
+							setIsPaused(false);
+							setIndexMenu(0);
+						}
 					}
 				}
 			};
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
-		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState])
+		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState, error, duration])
 	);
 
 	useEffect(() => {
@@ -217,21 +245,18 @@ export function Player(): JSX.Element {
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			if (!videoRef.current || isPaused || error) {
+			if (!videoRef.current || isPaused || error || episodesState == null) {
 				return;
 			}
 			setProgress((value) => {
 				const percent = (value * 100) / duration;
 
-				if (percent > 85) {
-					return value;
-				}
 				apiService.updateProgress(
 					anime.id,
 					episodeIndexState + 1,
 					episodesState.number,
 					seasonIndexState,
-					seasons.map(s => s.url.toString()),
+					seasons,
 					percent,
 					getBetterPoster(tmdbData) ?? '',
 				).catch((err) => {
@@ -242,7 +267,7 @@ export function Player(): JSX.Element {
 		}, 10000);
 
 		return () => clearInterval(interval);
-	}, [duration, tmdbData, isPaused, error, videoRef]);
+	}, [duration, tmdbData, isPaused, error, videoRef, episodesState]);
 
 	useEffect(() => {
 		setAspectRatio(null);
@@ -252,12 +277,16 @@ export function Player(): JSX.Element {
 		setUrlVideo(null);
 		setVideoReady(false);
 
-		if (!episodes || !episodes.episodes || (Array.isArray(episodes.episodes) && episodes.episodes.length === 0)) {
+		if (episodesState === null) {
+			return;
+		}
+
+		if (!episodesState.episodes || (Array.isArray(episodesState.episodes) && episodesState.episodes.length === 0)) {
 			setError("Aucune source disponible pour cet épisode.");
 			return;
 		}
 
-		const episodesArray = Object.values(episodes.episodes);
+		const episodesArray = Object.values(episodesState.episodes);
 		if (episodeIndexState >= episodesArray.length || episodeIndexState < 0) {
 			setError(`Épisode ${episodeIndexState + 1} introuvable.`);
 			return;
@@ -303,7 +332,7 @@ export function Player(): JSX.Element {
 			.catch((error) => {
 				setError("Erreur réseau lors de la récupération de la source vidéo.");
 			});
-	}, [episodeIndexState, episodes, sourceIndex]);
+	}, [episodeIndexState, episodesState, sourceIndex]);
 
 
 	return (
@@ -336,11 +365,13 @@ export function Player(): JSX.Element {
 
 						if (initPercent > 0) {
 							const seekTime = (initPercent * data.duration) / 100;
+							currentProgressRef.current = seekTime;
 							setProgress(seekTime);
 							videoRef.current?.seek(seekTime);
 							setInitPercent(0);
 						} else {
 							const seekTime = timeToResume > 0 ? timeToResume : 0;
+							currentProgressRef.current = seekTime;
 							setProgress(seekTime);
 							videoRef.current?.seek(seekTime);
 						}
@@ -353,7 +384,10 @@ export function Player(): JSX.Element {
 						}
 					}}
 					onProgress={(data) => {
-						setProgress(data.currentTime);
+						if (!isManualSeekingRef.current) {
+							currentProgressRef.current = data.currentTime;
+							setProgress(data.currentTime);
+						}
 					}}
 					onBuffer={(stateData) => {
 						if (error)
@@ -415,7 +449,7 @@ export function Player(): JSX.Element {
 								style={[styles.episodeNumber, styles.textShadow]}
 								numberOfLines={1}
 								ellipsizeMode="tail"
-							>{getSeasonAndEpisodeTitle(seasons[seasonIndexState], episodeIndexState)}</Text>
+							>{getSeasonAndEpisodeTitle(seasons[seasonIndexState] || seasons[0], episodeIndexState)}</Text>
 						</View>
 					</View>
 					<View style={[styles.topContainer, { marginTop: 10, justifyContent: 'flex-end' }]}>
@@ -466,7 +500,7 @@ export function Player(): JSX.Element {
 													error && index == 0 ? { opacity: 0.4 } : { opacity: 1 },
 													indexMenu === index ? { backgroundColor: Colors.primary } : {},
 													index === 2 && episodeIndexState === 0 ? { opacity: 0.4 } : {},
-													index === 3 && episodeIndexState === Object.keys(episodesState.episodes).length - 1 ? { opacity: 0.4 } : {}
+													index === 3 && episodeIndexState === (Object.keys(episodesState?.episodes || {}).length - 1) ? { opacity: 0.4 } : {}
 												]}
 											>
 												<Icon name={icon} size={30} color="#FFFFFF" />
@@ -476,7 +510,7 @@ export function Player(): JSX.Element {
 									</View>
 								) : (
 									<View style={{ flex: 1, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-around' }}>
-										{Array.isArray(episodesState.episodes[`eps${episodeIndexState + 1}`]) &&
+										{Array.isArray(episodesState?.episodes[`eps${episodeIndexState + 1}`]) &&
 											episodesState.episodes[`eps${episodeIndexState + 1}`].map((element, index) => (
 												<View
 													key={`source-${index}`}
@@ -493,7 +527,7 @@ export function Player(): JSX.Element {
 										<View style={[
 											styles.buttonExtendedInterface,
 											{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
-											indexMenu === Object.keys(episodesState.episodes[`eps${episodeIndexState + 1}`]).length ? { backgroundColor: Colors.primary } : {}
+											indexMenu === Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length ? { backgroundColor: Colors.primary } : {}
 										]}>
 											<Icon name="exit-to-app" size={30} color="#FFFFFF" />
 											<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>Retour</Text>
@@ -516,7 +550,10 @@ export function Player(): JSX.Element {
 	);
 }
 
-function getSeasonAndEpisodeTitle(season: Season, episodeIndex: number): string {
+function getSeasonAndEpisodeTitle(season: Season | undefined, episodeIndex: number): string {
+	if (!season || !season.name) {
+		return `Episode ${episodeIndex + 1}`;
+	}
 	return `${season.name} - Episode ${episodeIndex + 1}`;
 }
 

@@ -1,6 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_CONFIG, createHeaders } from "../constants/api_config";
-import Secrets from "../constants/secrets";
 import AnimeItem from "../models/anime_item";
 
 export interface AnimeEpisodesData {
@@ -14,6 +13,7 @@ export interface ProgressDataAnime {
 	progress?: number;
 	season?: string;
 	status?: number;
+	completed?: number;
 }
 
 export enum ProgressStatus {
@@ -200,7 +200,7 @@ export class AnimeApiService {
 
 	async fetchAllAnime({ signal }: { signal?: AbortSignal } = {}): Promise<AnimeItem[]> {
 		try {
-			const response = await fetch(Secrets.API_URL + API_CONFIG.ENDPOINTS.GET_ALL_ANIME, {
+			const response = await fetch(AnimeApiService.baseUrl + API_CONFIG.ENDPOINTS.GET_ALL_ANIME, {
 				method: 'GET',
 				headers: createHeaders(AnimeApiService.token),
 				signal,
@@ -301,7 +301,7 @@ export class AnimeApiService {
 
 	async fetchAnimeEpisodes(animeUrl: string, season: string): Promise<AnimeEpisodesData> {
 		try {
-			const response = await fetch(`${AnimeApiService.baseUrl}/api/get_anime_episodes`, {
+			const response = await fetch(`${AnimeApiService.baseUrl}${API_CONFIG.ENDPOINTS.GET_ANIME_EPISODES}`, {
 				method: 'POST',
 				headers: createHeaders(AnimeApiService.token),
 				body: JSON.stringify({
@@ -567,7 +567,7 @@ export class AnimeApiService {
 		episode: number,
 		totalEpisodes: number,
 		seasonId: number,
-		allSeasons: String[],
+		allSeasons: Season[],
 		progress: number,
 		poster: String
 	): Promise<void> {

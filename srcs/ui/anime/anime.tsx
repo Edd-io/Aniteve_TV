@@ -72,7 +72,7 @@ export const Anime: FC = () => {
 				seasonsData.forEach((season, index) => {
 					const newSeason = {
 						name: season.name,
-						url: season.url,
+						url: season.url.replace('vostfr', 'vf'),
 						lang: 'vf'
 					};
 					vfSeasons.push(newSeason);
@@ -129,7 +129,6 @@ export const Anime: FC = () => {
 	};
 
 	const handleSeasonSelect = async (season: Season) => {
-		console.log(`Selected season: ${season}`);
 		const seasonIndex = animeSeasonData.findIndex(s => s.name.toString() === season.name.toString());
 		if (seasonIndex === selectedSeasonIndex) {
 			return;
@@ -164,11 +163,13 @@ export const Anime: FC = () => {
 						if (!episodesData) {
 							return;
 						}
+						const progressSeasonIndex = ProgressDataAnime?.find ? animeSeasonData.findIndex(s => s.url === ProgressDataAnime!.season!) : -1;
+						const validSeasonIndex = progressSeasonIndex >= 0 ? progressSeasonIndex : 0;
+						
 						navigation.navigate('Player', {
 							anime: anime,
 							episodeIndex: ProgressDataAnime?.find ? ProgressDataAnime!.episode! - 1 : 0,
-							seasonIndex: ProgressDataAnime?.find ? animeSeasonData.findIndex(s => s.name === ProgressDataAnime!.season!) : 0,
-							episodes: episodesData!,
+							seasonIndex: validSeasonIndex,
 							seasons: animeSeasonData,
 							tmdbData: tmdbData,
 							averageColor: averageColor,
