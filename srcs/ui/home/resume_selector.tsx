@@ -37,7 +37,6 @@ export const ResumeSelector: FC<ResumeSelectorProps> = ({
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [filterFocus, setFilterFocus] = useState(false);
 	const [selectedFilter, setSelectedFilter] = useState<number>(0);
-	const [error, setError] = useState<string | null>(null);
 
 	const filteredProgress = allProgress.filter(item => {
 		if (selectedFilter === 0) return true;
@@ -129,7 +128,6 @@ export const ResumeSelector: FC<ResumeSelectorProps> = ({
 						setFilterFocus(false);
 					} else {
 						const selectedAnime = filteredProgress[selectedIndex]?.anime;
-						console.log('Selected Anime:', selectedAnime);
 						if (selectedAnime) {
 							navigation.navigate('Anime', { anime: selectedAnime });
 						}
@@ -173,54 +171,48 @@ export const ResumeSelector: FC<ResumeSelectorProps> = ({
 						<Icon name="play-arrow" size={24} color="#ffffff" />
 						<Text style={styles.headerTitle}>Reprendre</Text>
 					</View>
-					{error ? (
-						<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
-							<Text style={{ color: '#fff', opacity: 0.7 }}>{error}</Text>
-						</View>
-					) : (
-						<View style={styles.scrollView}>
-							<View style={styles.filterContainer}>
-								<View style={{ borderRightWidth: 1, borderRightColor: 'rgba(255, 255, 255, 0.1)', paddingRight: 10, paddingLeft: 10, alignSelf: 'center', marginRight: 10 }}>
-									<Text style={{ color: '#fff', opacity: 0.7 }}>
-										Filtrer
-									</Text>
-								</View>
-								<FlatList
-									data={filters.current}
-									horizontal
-									renderItem={({ item, index }) => (
-										<TouchableOpacity
-											style={[
-												styles.filterItem,
-												selectedFilter === index ? styles.filterSelected : {},
-												filterFocus && selectedFilter === index ? { backgroundColor: 'rgba(255, 255, 255, 0.57)' } : {}
-											]}
-										>
-											<Text style={styles.filterText}>{item}</Text>
-										</TouchableOpacity>
-									)}
-									keyExtractor={(item) => item}
-									scrollEnabled={false}
-								/>
+					<View style={styles.scrollView}>
+						<View style={styles.filterContainer}>
+							<View style={{ borderRightWidth: 1, borderRightColor: 'rgba(255, 255, 255, 0.1)', paddingRight: 10, paddingLeft: 10, alignSelf: 'center', marginRight: 10 }}>
+								<Text style={{ color: '#fff', opacity: 0.7 }}>
+									Filtrer
+								</Text>
 							</View>
 							<FlatList
-								ref={flatListRef}
-								data={filteredProgress}
+								data={filters.current}
 								horizontal
-								keyExtractor={(item) => item.anime.id.toString()}
 								renderItem={({ item, index }) => (
-									<AnimeElement
-										progress={item}
-										isSelected={(selectedIndex === index) && !filterFocus}
-										isLast={index === filteredProgress.length - 1}
-									/>
+									<TouchableOpacity
+										style={[
+											styles.filterItem,
+											selectedFilter === index ? styles.filterSelected : {},
+											filterFocus && selectedFilter === index ? { backgroundColor: 'rgba(255, 255, 255, 0.57)' } : {}
+										]}
+									>
+										<Text style={styles.filterText}>{item}</Text>
+									</TouchableOpacity>
 								)}
-								showsHorizontalScrollIndicator={false}
-								style={{ flex: 1, padding: 10 }}
+								keyExtractor={(item) => item}
 								scrollEnabled={false}
 							/>
 						</View>
-					)}
+						<FlatList
+							ref={flatListRef}
+							data={filteredProgress}
+							horizontal
+							keyExtractor={(item) => item.anime.id.toString()}
+							renderItem={({ item, index }) => (
+								<AnimeElement
+									progress={item}
+									isSelected={(selectedIndex === index) && !filterFocus}
+									isLast={index === filteredProgress.length - 1}
+								/>
+							)}
+							showsHorizontalScrollIndicator={false}
+							style={{ flex: 1, padding: 10 }}
+							scrollEnabled={false}
+						/>
+					</View>
 					<View style={styles.footer}>
 						<Text style={styles.footerText}>
 							Appuyez sur "Retour" pour fermer la sélection, "OK" pour valider.
