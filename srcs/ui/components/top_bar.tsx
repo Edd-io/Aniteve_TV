@@ -10,12 +10,14 @@ export default function TopBar({
 	index,
 	searchInputRef,
 	setSearchValue,
-	setIsLoading
+	setIsLoading,
+	searchValue
 }: { selectedPart: SelectedPart,
 	index: number,
 	searchInputRef: React.RefObject<TextInput | null>,
 	setSearchValue: Dispatch<SetStateAction<string>>,
-	setIsLoading: Dispatch<SetStateAction<boolean>>
+	setIsLoading: Dispatch<SetStateAction<boolean>>,
+	searchValue: string
 }): React.JSX.Element {
 	const currentFocusedIndex = index;
 	const isSelected = selectedPart === SelectedPart.TOPBAR;
@@ -45,6 +47,7 @@ export default function TopBar({
 						editable={isSelected && currentFocusedIndex === 0}
 						placeholder="Rechercher un anime..."
 						onChangeText={setLocalSearchValue}
+						value={localSearchValue || searchValue}
 						onSubmitEditing={() => {
 							setIsLoading(true);
 							setSearchValue(localSearchValue);

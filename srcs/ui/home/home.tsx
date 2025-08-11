@@ -235,6 +235,7 @@ export function Home(): React.JSX.Element {
 				searchInputRef={searchInputRef}
 				setSearchValue={setSearchValue}
 				setIsLoading={setIsLoading}
+				searchValue={searchValue}
 			/>
 			<ListAnime
 				selectedPart={selectedPart}
@@ -255,7 +256,7 @@ export function Home(): React.JSX.Element {
 				navigation={navigation}
 				allProgress={allProgress}
 			/>
-			
+
 			{showLoadingOverlay && (
 				<Animated.View style={[styles.globalLoadingOverlay, { opacity: loadingOpacity }]}>
 					<View style={styles.globalLoadingContainer}>
@@ -278,7 +279,8 @@ function HomeTop({
 	indexTopBar,
 	searchInputRef,
 	setSearchValue,
-	setIsLoading
+	setIsLoading,
+	searchValue
 }: {
 	featuredAnime: FeaturedAnime | null;
 	selectedPart: SelectedPart;
@@ -286,6 +288,7 @@ function HomeTop({
 	searchInputRef: RefObject<TextInput | null>;
 	setSearchValue: Dispatch<SetStateAction<string>>;
 	setIsLoading: Dispatch<SetStateAction<boolean>>;
+	searchValue: string;
 }): React.JSX.Element {
 	const initialHeight = selectedPart === SelectedPart.ANIME_LIST ? height * 0.5 : height * 0.8;
 	const heightAnimation = useRef(new Animated.Value(initialHeight)).current;
@@ -316,6 +319,7 @@ function HomeTop({
 							searchInputRef={searchInputRef}
 							setSearchValue={setSearchValue}
 							setIsLoading={setIsLoading}
+							searchValue={searchValue}
 						/>
 						<View style={{ flex: 1 }} />
 						<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={false} />
@@ -345,6 +349,7 @@ function HomeTop({
 						searchInputRef={searchInputRef}
 						setSearchValue={setSearchValue}
 						setIsLoading={setIsLoading}
+						searchValue={searchValue}
 					/>
 					<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={true} />
 					<LinearGradient
