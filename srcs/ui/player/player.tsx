@@ -10,6 +10,8 @@ import { RemoteControlKey } from "../../constants/remote_controller";
 import { getBetterLogo } from "../../utils/get_better_logo";
 import { getBetterPoster } from "../../utils/get_better_poster";
 import { Colors } from "../../constants/colors";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SettingsData } from "../settings/settings_selector";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
@@ -21,8 +23,6 @@ enum MenuElement {
 	NEXT_EPISODE = 3,
 	EXIT = 4,
 }
-
-const timeSkip: number = 15;
 
 export function Player(): JSX.Element {
 	const route = useRoute<PlayerScreenRouteProp>();
@@ -66,6 +66,22 @@ export function Player(): JSX.Element {
 	const [aspectRatio, setAspectRatio] = useState<string | null>(null);
 	const [ended, setEnded] = useState<boolean>(false);
 	const [indexMenu, setIndexMenu] = useState<number>(0);
+	const [timeSkip, setTimeSkip] = useState<number>(15);
+
+	useEffect(() => {
+		const loadSettings = async () => {
+			try {
+				const savedSettings = await AsyncStorage.getItem('app_settings');
+				if (savedSettings) {
+					const settings: SettingsData = JSON.parse(savedSettings);
+					setTimeSkip(settings.timeSkip);
+				}
+			} catch (error) {
+				console.error('Error loading settings in player:', error);
+			}
+		};
+		loadSettings();
+	}, []);
 
 	useEffect(() => {
 		if (episodesState == null) {

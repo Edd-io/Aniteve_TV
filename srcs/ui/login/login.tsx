@@ -76,7 +76,7 @@ export const Login: React.FC = () => {
 
 		apiService.login(url, password)
 			.then(() => {
-				navigation.replace('Home');
+				navigation.replace('ChooseUser');
 			})
 			.catch((err) => {
 				setIsLoading(false);

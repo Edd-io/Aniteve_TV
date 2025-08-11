@@ -25,6 +25,7 @@ export default function BannerResume({ featuredAnime, selectedPart, disableButto
 						<TouchableOpacity
 							style={[
 								styles.playButton,
+								{ backgroundColor: Colors.getPrimaryColor() },
 								isSelected && styles.focusedButton,
 								!featuredAnime?.progress && { opacity: 0.5 }
 							]}
@@ -35,7 +36,7 @@ export default function BannerResume({ featuredAnime, selectedPart, disableButto
 							<View style={{ width: '100%', justifyContent: 'center' }}>
 								<Progress
 									progress={featuredAnime.progress}
-									averageColor={hexToRgb(Colors.primary)}
+									averageColor={hexToRgb(Colors.getPrimaryColor())}
 									focus={isSelected}
 									height={56}
 								/>
@@ -80,7 +81,6 @@ const styles = StyleSheet.create({
 		marginTop: 16,
 	},
 	playButton: {
-		backgroundColor: Colors.primary,
 		paddingHorizontal: 32,
 		paddingVertical: 16,
 		borderRadius: 8,

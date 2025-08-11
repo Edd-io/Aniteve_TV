@@ -69,7 +69,7 @@ export const LeftPanel: FC<LeftPanelProps> = ({
 					style={[
 						styles.button,
 						{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
-						indexLeftMenu === 0 && isSelected ? styles.focusedButton : {},
+						indexLeftMenu === 0 && isSelected ? [styles.focusedButton, { backgroundColor: Colors.getPrimaryColor() }] : {},
 						haveEpisodes ? {} : { opacity: 0.5 }
 					]}
 				>
@@ -80,7 +80,7 @@ export const LeftPanel: FC<LeftPanelProps> = ({
 					style={[
 						styles.button,
 						{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
-						indexLeftMenu === 1 && isSelected ? styles.focusedButton : {}
+						indexLeftMenu === 1 && isSelected ? [styles.focusedButton, { backgroundColor: Colors.getPrimaryColor() }] : {},
 					]}
 				>
 					<Icon name="list" size={20} color="#ffffff" />
@@ -90,7 +90,7 @@ export const LeftPanel: FC<LeftPanelProps> = ({
 					style={[
 						styles.button,
 						{ backgroundColor: `rgba(${averageColor.join(',')}, 0.8)` },
-						indexLeftMenu === 2 && isSelected ? styles.focusedButton : {}
+						indexLeftMenu === 2 && isSelected ? [styles.focusedButton, { backgroundColor: Colors.getPrimaryColor() }] : {},
 					]}
 				>
 					<Icon name="info" size={20} color="#ffffff" />
@@ -243,7 +243,6 @@ const styles = StyleSheet.create({
 	},
 	focusedButton: {
 		opacity: 1,
-		backgroundColor: Colors.primary,
 	},
 	progressContainer: {
 		flexDirection: 'row',

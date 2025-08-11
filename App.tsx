@@ -17,6 +17,8 @@ import { Animated } from 'react-native';
 import { Login } from './srcs/ui/login/login';
 import { AnimeApiService } from './srcs/data/anime_api_service';
 import { ChooseUser } from './srcs/ui/choose_user';
+import { Colors } from './srcs/constants/colors';
+import { SettingsData } from './srcs/ui/settings/settings_selector';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -37,11 +39,18 @@ function App(): React.JSX.Element {
 			const apiService = new AnimeApiService();
 
 			try {
+				const savedSettings = await AsyncStorage.getItem('app_settings');
+				if (savedSettings) {
+					const settings: SettingsData = JSON.parse(savedSettings);
+					if (settings.primaryColor) {
+						Colors.setPrimaryColor(settings.primaryColor);
+					}
+				}
+
 				const token = await AsyncStorage.getItem('token');
 				const addr = await AsyncStorage.getItem('addr');
 				const user = await AsyncStorage.getItem('user');
 
-				console.log('Checking login status:', { token, addr, user });
 				if (token && addr) {
 					apiService.checkTokenValidity(token, addr)
 						.then(isValid => {

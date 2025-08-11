@@ -36,7 +36,8 @@ export default function TopBar({
 			<View
 				style={[
 					styles.searchContainer,
-					isSelected && currentFocusedIndex === 0 && styles.focusedElement
+					isSelected && currentFocusedIndex === 0 && styles.focusedElement,
+					isSelected && currentFocusedIndex === 0 ? { backgroundColor: Colors.getPrimaryColor() } : {}
 				]}
 				isTVSelectable={false}
 			>
@@ -60,7 +61,8 @@ export default function TopBar({
 				<View
 					style={[
 						styles.button,
-						isSelected && currentFocusedIndex === 1 && styles.focusedElement
+						isSelected && currentFocusedIndex === 1 && styles.focusedElement,
+						isSelected && currentFocusedIndex === 1 ? { backgroundColor: Colors.getPrimaryColor() } : {}
 					]}
 					isTVSelectable={false}
 				>
@@ -69,7 +71,8 @@ export default function TopBar({
 				<View
 					style={[
 						styles.button,
-						isSelected && currentFocusedIndex === 2 && styles.focusedElement
+						isSelected && currentFocusedIndex === 2 && styles.focusedElement,
+						isSelected && currentFocusedIndex === 2 ? { backgroundColor: Colors.getPrimaryColor() } : {}
 					]}
 					isTVSelectable={false}
 				>
@@ -80,7 +83,8 @@ export default function TopBar({
 				<View
 					style={[
 						styles.button,
-						isSelected && currentFocusedIndex === 3 && styles.focusedElement
+						isSelected && currentFocusedIndex === 3 && styles.focusedElement,
+						isSelected && currentFocusedIndex === 3 ? { backgroundColor: Colors.getPrimaryColor() } : {}
 					]}
 					isTVSelectable={false}
 				>
@@ -135,7 +139,6 @@ const styles = StyleSheet.create({
 		padding: 3,
 	},
 	focusedElement: {
-		backgroundColor: Colors.primary,
 		borderRadius: 10,
 	},
 });

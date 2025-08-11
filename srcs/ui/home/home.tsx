@@ -13,6 +13,8 @@ import { RootStackParamList } from "../../constants/routes";
 import { ResumeSelector } from "./resume_selector";
 import { AnimeApiService, ProgressData, ProgressStatus } from "../../data/anime_api_service";
 import { Colors } from "../../constants/colors";
+import { SettingsSelector, SettingsData } from "../settings/settings_selector";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { height } = Dimensions.get('window');
 
@@ -46,10 +48,45 @@ export function Home(): React.JSX.Element {
 	const [isAnimeListLoaded, setIsAnimeListLoaded] = useState<boolean>(false);
 	const [showLoadingOverlay, setShowLoadingOverlay] = useState<boolean>(true);
 	const [animationCompleted, setAnimationCompleted] = useState<boolean>(false);
+	const [settingsVisible, setSettingsVisible] = useState<boolean>(false);
+	const [settings, setSettings] = useState<SettingsData>({
+		primaryColor: '#626262',
+		timeSkip: 15
+	});
 	const searchInputRef = useRef<TextInput>(null);
 	const loadingOpacity = useRef(new Animated.Value(1)).current;
 
 	const isGlobalLoading = !isProgressLoaded || !isAnimeListLoaded;
+
+	useEffect(() => {
+		const loadSettings = async () => {
+			try {
+				const savedSettings = await AsyncStorage.getItem('app_settings');
+				if (savedSettings) {
+					const parsedSettings = JSON.parse(savedSettings);
+					setSettings(parsedSettings);
+				}
+			} catch (error) {
+				console.error('Error loading settings:', error);
+			}
+		};
+		loadSettings();
+	}, []);
+
+	useEffect(() => {
+		if (settings.primaryColor) {
+			Colors.setPrimaryColor(settings.primaryColor);
+		}
+	}, [settings.primaryColor]);
+
+	const handleSettingsChange = async (newSettings: SettingsData) => {
+		try {
+            Colors.setPrimaryColor(newSettings.primaryColor);
+			await AsyncStorage.setItem('app_settings', JSON.stringify(newSettings));
+		} catch (error) {
+			console.error('Error saving settings:', error);
+		}
+	};
 
 	useEffect(() => {
 		if (!isGlobalLoading && !animationCompleted) {
@@ -121,7 +158,7 @@ export function Home(): React.JSX.Element {
 			if (isGlobalLoading) return;
 
 			const subscription = DeviceEventEmitter.addListener('keyPressed', (keyCode: number) => {
-				if (resumeVisible) return;
+				if (resumeVisible || settingsVisible) return;
 				if (keyCode === RemoteControlKey.DPAD_UP) {
 					setIndexItem(currentIndex => {
 						setSelectedPart(currentSelectedPart => {
@@ -196,6 +233,7 @@ export function Home(): React.JSX.Element {
 						} else if (indexTopBar === 2) {
 							navigation.replace('ChooseUser');
 						} else if (indexTopBar === 3) {
+							setSettingsVisible(true);
 						}
 
 					} else if (selectedPart === SelectedPart.BANNER) {
@@ -224,7 +262,7 @@ export function Home(): React.JSX.Element {
 			});
 
 			return () => subscription.remove();
-		}, [animeList, navigation, featuredAnime, selectedPart, resumeVisible, indexTopBar, animeListFiltered, isGlobalLoading, indexItem])
+		}, [animeList, navigation, featuredAnime, selectedPart, resumeVisible, settingsVisible, indexTopBar, animeListFiltered, isGlobalLoading, indexItem])
 	);
 
 	useEffect(() => {
@@ -272,11 +310,17 @@ export function Home(): React.JSX.Element {
 				navigation={navigation}
 				allProgress={allProgress}
 			/>
+			<SettingsSelector
+				visible={settingsVisible}
+				close={() => setSettingsVisible(false)}
+				settings={settings}
+				onSettingsChange={handleSettingsChange}
+			/>
 
 			{showLoadingOverlay && (
 				<Animated.View style={[styles.globalLoadingOverlay, { opacity: loadingOpacity }]}>
 					<View style={styles.globalLoadingContainer}>
-						<ActivityIndicator size="large" color={Colors.primary} />
+						<ActivityIndicator size="large" color={Colors.getPrimaryColor()} />
 						<Text style={styles.globalLoadingText}>Chargement en cours...</Text>
 						<Text style={styles.globalLoadingSubtext}>
 							Préparation de votre bibliothèque d'animes
