@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, DeviceEventEmitter, Animated, ActivityIndicator
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { JSX, use, useCallback, useEffect, useRef, useState } from "react";
-import { AnimeApiService, AnimeEpisodesData, Season } from "../../data/anime_api_service";
+import { AnimeApiService, AnimeEpisodesData, Season, TMDBData } from "../../data/anime_api_service";
 import Video, { SelectedVideoTrackType, VideoRef } from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from "../../constants/remote_controller";
@@ -12,6 +12,9 @@ import { getBetterPoster } from "../../utils/get_better_poster";
 import { Colors } from "../../constants/colors";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SettingsData } from "../settings/settings_selector";
+import { getAspectRatio, getResolutionFromHeight } from "../../utils/video";
+import { Interface } from "./interface";
+import { states } from "../../states/player";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
@@ -38,35 +41,38 @@ export function Player(): JSX.Element {
 	} = route.params;
 
 	const apiService = new AnimeApiService();
+	const {
+		typeSource, setTypeSource,
+		episodesState, setEpisodesState,
+		episodeIndexState, setEpisodeIndexState,
+		sourceIndex, setSourceIndex,
+		seasonIndexState, setSeasonIndexState,
+		urlVideo, setUrlVideo,
+		error, setError,
+		showInterface, setShowInterface,
+		showSourceSelector, setShowSourceSelector,
+		duration, setDuration,
+		progress, setProgress,
+		isPaused, setIsPaused,
+		onLoading, setOnLoading,
+		initPercent, setInitPercent,
+		timeToResume, setTimeToResume,
+		videoReady, setVideoReady,
+		videoRef,
+		timeoutInterfaceRef,
+		currentProgressRef,
+		isManualSeekingRef,
+		resolution, setResolution,
+		aspectRatio, setAspectRatio,
+		ended, setEnded,
+		indexMenu, setIndexMenu,
+		timeSkip, setTimeSkip,
+	} = states({
+		episodeIndex,
+		seasonIndex,
+		ProgressDataAnime
+	});
 
-	const [typeSource, setTypeSource] = useState<string>('');
-	const [episodesState, setEpisodesState] = useState<AnimeEpisodesData | null>(null);
-	const [episodeIndexState, setEpisodeIndexState] = useState<number>(episodeIndex);
-	const [sourceIndex, setSourceIndex] = useState<number>(0);
-	const [seasonIndexState, setSeasonIndexState] = useState<number>(seasonIndex);
-	const [urlVideo, setUrlVideo] = useState<string | null>();
-
-	const [error, setError] = useState<string | null>(null);
-
-	const [showInterface, setShowInterface] = useState<boolean>(true);
-	const [showSourceSelector, setShowSourceSelector] = useState<boolean>(false);
-	const [duration, setDuration] = useState<number>(0);
-	const [progress, setProgress] = useState<number>(0);
-	const [isPaused, setIsPaused] = useState<boolean>(false);
-	const [onLoading, setOnLoading] = useState<boolean>(false);
-	const [initPercent, setInitPercent] = useState<number>(ProgressDataAnime?.find ? ProgressDataAnime!.progress! : 0);
-	const [timeToResume, setTimeToResume] = useState<number>(0);
-	const [videoReady, setVideoReady] = useState<boolean>(false);
-	const animatedHeight = useRef(new Animated.Value(50)).current;
-	const videoRef = useRef<VideoRef>(null);
-	const timeoutInterfaceRef = useRef<NodeJS.Timeout | null>(null);
-	const currentProgressRef = useRef<number>(0);
-	const isManualSeekingRef = useRef<boolean>(false);
-	const [resolution, setResolution] = useState<string | null>(null);
-	const [aspectRatio, setAspectRatio] = useState<string | null>(null);
-	const [ended, setEnded] = useState<boolean>(false);
-	const [indexMenu, setIndexMenu] = useState<number>(0);
-	const [timeSkip, setTimeSkip] = useState<number>(15);
 
 	useEffect(() => {
 		const loadSettings = async () => {
@@ -173,57 +179,54 @@ export function Player(): JSX.Element {
 						});
 					}
 				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-					if (!error) {
-						if (isPaused) {
-							if (!showSourceSelector) {
-								if (indexMenu === MenuElement.RESUME) {
-									if (ended) {
-										setProgress(0);
-										setEnded(false);
-										return;
-									}
-									setIsPaused(false);
-									setShowInterface(true);
-									timeoutInterfaceRef.current = setTimeout(() => {
-										setShowInterface(false);
-									}, 3000);
-								} else if (indexMenu === MenuElement.CHANGE_SOURCE) {
-									setIndexMenu(0);
-									setShowSourceSelector(true);
-								} else if (indexMenu === MenuElement.PREVIOUS_EPISODE) {
-									if (episodeIndexState == 0) {
-										return;
-									}
-									setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
-									setSourceIndex(0);
-									setIndexMenu(0);
-									setIsPaused(false);
-								} else if (indexMenu === MenuElement.NEXT_EPISODE) {
-									if (!episodesState || episodeIndexState >= Object.keys(episodesState!.episodes).length - 1) {
-										return;
-									}
-									setEpisodeIndexState((prev) => Math.min(prev + 1, episodesState && episodesState.episodes ? Object.keys(episodesState.episodes).length - 1 : prev));
-									setSourceIndex(0);
-									setIndexMenu(0);
-									setIsPaused(false);
-								} else if (indexMenu === MenuElement.EXIT) {
-									navigation.goBack();
+					if (isPaused) {
+						if (!showSourceSelector) {
+							if (indexMenu === MenuElement.RESUME && !error) {
+								if (ended) {
+									setProgress(0);
+									setEnded(false);
 									return;
 								}
-							} else {
-								if (indexMenu === Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length) {
-									setIndexMenu(0);
-									setShowSourceSelector(false);
-								} else {
-									setTimeToResume(progress);
-									setSourceIndex(indexMenu);
-									setShowSourceSelector(false);
-								}
 								setIsPaused(false);
+								setShowInterface(true);
+								timeoutInterfaceRef.current = setTimeout(() => {
+									setShowInterface(false);
+								}, 3000);
+							} else if (indexMenu === MenuElement.CHANGE_SOURCE) {
+								setIndexMenu(0);
+								setShowSourceSelector(true);
+							} else if (indexMenu === MenuElement.PREVIOUS_EPISODE) {
+								if (episodeIndexState == 0) {
+									return;
+								}
+								setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
+								setSourceIndex(0);
+								setIndexMenu(0);
+								setIsPaused(false);
+							} else if (indexMenu === MenuElement.NEXT_EPISODE) {
+								if (!episodesState || episodeIndexState >= Object.keys(episodesState!.episodes).length - 1) {
+									return;
+								}
+								setEpisodeIndexState((prev) => Math.min(prev + 1, episodesState && episodesState.episodes ? Object.keys(episodesState.episodes).length - 1 : prev));
+								setSourceIndex(0);
+								setIndexMenu(0);
+								setIsPaused(false);
+							} else if (indexMenu === MenuElement.EXIT) {
+								navigation.goBack();
+								return;
 							}
 						} else {
-							setIsPaused(true);
+							if (indexMenu === Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length) {
+								setIndexMenu(0);
+								setShowSourceSelector(false);
+							} else {
+								setTimeToResume(progress);
+								setSourceIndex(indexMenu);
+								setShowSourceSelector(false);
+							}
 						}
+					} else {
+						setIsPaused(true);
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
 					if (!isPaused || error || ended) {
@@ -263,13 +266,7 @@ export function Player(): JSX.Element {
 		}
 	}, [error]);
 
-	useEffect(() => {
-		Animated.timing(animatedHeight, {
-			toValue: isPaused ? 100 : 0,
-			duration: 250,
-			useNativeDriver: false,
-		}).start();
-	}, [isPaused]);
+
 
 	useEffect(() => {
 		const interval = setInterval(() => {
@@ -366,12 +363,7 @@ export function Player(): JSX.Element {
 
 	return (
 		<View style={styles.container}>
-			{error && (
-				<View style={styles.errorContainer}>
-					<Icon name="error-outline" size={48} color={Colors.primary} />
-					<Text style={styles.errorText}>{error}</Text>
-				</View>
-			)}
+			<ErrorComponent error={error} />
 			{urlVideo && !error && (
 				<Video
 					style={[
@@ -433,178 +425,65 @@ export function Player(): JSX.Element {
 					}}
 				/>
 			)}
-			{onLoading && (
-				<View style={styles.loadingContainer}>
-					{tmdbData && (() => {
-						const betterLogo = getBetterLogo(tmdbData);
-						if (!betterLogo) {
-							return null;
-						}
-						return (
-							<Image
-								source={{ uri: betterLogo }}
-								style={styles.logoImage}
-								resizeMode="contain"
-							/>
-						);
-					})()}
-					<ActivityIndicator size={450} color="#FFFFFF" />
-				</View>
-			)}
-			{(showInterface || isPaused) && (
-				<View style={styles.interface}>
-					<View style={styles.topContainer}>
-						<View style={[styles.titleContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)` }]}>
-							<Text
-								style={[styles.title, styles.textShadow]}
-								numberOfLines={1}
-								ellipsizeMode="tail"
-							>{anime.title}</Text>
-						</View>
-						<View style={[styles.episodeNumberContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)` }]}>
-							<Text
-								style={[styles.episodeNumber, styles.textShadow]}
-								numberOfLines={1}
-								ellipsizeMode="tail"
-							>{getSeasonAndEpisodeTitle(seasons[seasonIndexState] || seasons[0], episodeIndexState)}</Text>
-						</View>
-					</View>
-					<View style={[styles.topContainer, { marginTop: 10, justifyContent: 'flex-end' }]}>
-						<View style={[styles.resolutionContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)`, marginRight: (resolution || aspectRatio ? 10 : 0) }]}>
-							<Text
-								style={[styles.resolutionText, styles.textShadow]}
-							>Source {sourceIndex + 1}</Text>
-						</View>
-						{
-							resolution && (
-								<View style={[styles.resolutionContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)`, marginRight: 10 }]}>
-									<Text
-										style={[styles.resolutionText, styles.textShadow]}
-									>{resolution}</Text>
-								</View>
-							)
-						}
-						{
-							aspectRatio && (
-								<View style={[styles.resolutionContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.9)` }]}>
-									<Text
-										style={[styles.resolutionText, styles.textShadow]}
-									>{aspectRatio}</Text>
-								</View>
-							)
-						}
-					</View>
-
-					<View style={{ flex: 1 }} />
-
-					<Animated.View style={[styles.completeMenuContainer, { backgroundColor: `rgba(${averageColor.join(',')}, 0.85)` }]}>
-						<Animated.View style={{ height: animatedHeight, overflow: 'hidden', width: '100%' }}>
-							{isPaused && (
-								!showSourceSelector ? (
-									<View style={{ flex: 1, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-around' }}>
-										{[
-											['play-arrow', ended ? 'Recommencer' : 'Reprendre'],
-											['source', 'Changer de Source'],
-											['skip-previous', 'Épisode précédent'],
-											['skip-next', 'Épisode suivant'],
-											['exit-to-app', 'Retour au menu']
-										].map(([icon, label], index) => (
-											<View
-												key={`button-${index}`}
-												style={[
-													styles.buttonExtendedInterface,
-													{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
-													error && index == 0 ? { opacity: 0.4 } : { opacity: 1 },
-													indexMenu === index ? { backgroundColor: Colors.primary } : {},
-													index === 2 && episodeIndexState === 0 ? { opacity: 0.4 } : {},
-													index === 3 && episodeIndexState === (Object.keys(episodesState?.episodes || {}).length - 1) ? { opacity: 0.4 } : {}
-												]}
-											>
-												<Icon name={icon} size={30} color="#FFFFFF" />
-												<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>{label}</Text>
-											</View>
-										))}
-									</View>
-								) : (
-									<View style={{ flex: 1, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-around' }}>
-										{Array.isArray(episodesState?.episodes[`eps${episodeIndexState + 1}`]) &&
-											episodesState.episodes[`eps${episodeIndexState + 1}`].map((element, index) => (
-												<View
-													key={`source-${index}`}
-													style={[
-														styles.buttonExtendedInterface,
-														{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
-														indexMenu === index ? { backgroundColor: Colors.primary } : {}
-													]}
-												>
-													<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>Source {index + 1}</Text>
-												</View>
-											))
-										}
-										<View style={[
-											styles.buttonExtendedInterface,
-											{ backgroundColor: `rgba(${averageColor.map(c => Math.floor(c * 0.7)).join(',')}, 0.9)` },
-											indexMenu === Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length ? { backgroundColor: Colors.primary } : {}
-										]}>
-											<Icon name="exit-to-app" size={30} color="#FFFFFF" />
-											<Text style={[styles.title, styles.textShadow, { textAlign: "center" }]}>Retour</Text>
-										</View>
-									</View>
-								)
-							)}
-						</Animated.View>
-						<View style={styles.bottomProgressContainer}>
-							<Text style={[styles.bottomText, styles.textShadow]}>{convertSecondsToTime(progress)}</Text>
-							<View style={styles.progressBar}>
-								<View
-									style={[
-										styles.progressFill,
-										{ 
-											width: duration > 0 ? `${progress * 100 / duration}%` : '0%',
-											backgroundColor: `rgb(${averageColor.map(c => 255 - c).join(',')})`
-										}
-									]}
-								/>
-							</View>
-							<Text style={[styles.bottomText, styles.textShadow]}>{convertSecondsToTime(duration)}</Text>
-						</View>
-					</Animated.View>
-				</View>
-			)}
+			<LoadingComponent tmdbData={tmdbData} onLoading={onLoading} />
+			<Interface
+				showInterface={showInterface}
+				isPaused={isPaused}
+				anime={anime}
+				averageColor={averageColor}
+				seasons={seasons}
+				seasonIndexState={seasonIndexState}
+				episodeIndex={episodeIndex}
+				episodeIndexState={episodeIndexState}
+				sourceIndex={sourceIndex}
+				episodesState={episodesState}
+				resolution={resolution}
+				aspectRatio={aspectRatio}
+				progress={progress}
+				duration={duration}
+				ended={ended}
+				error={error}
+				indexMenu={indexMenu}
+				showSourceSelector={showSourceSelector}
+			/>
 		</View>
 	);
 }
 
-function getSeasonAndEpisodeTitle(season: Season | undefined, episodeIndex: number): string {
-	if (!season || !season.name) {
-		return `Episode ${episodeIndex + 1}`;
+const ErrorComponent = ({ error }: { error: string | null }): JSX.Element | null => {
+	if (error == null) {
+		return null;
 	}
-	return `${season.name} - Episode ${episodeIndex + 1}`;
-}
+	return (
+		<View style={styles.errorContainer}>
+			<Icon name="error-outline" size={48} color={Colors.primary} />
+			<Text style={styles.errorText}>{error}</Text>
+		</View>
+	);
+};
 
-function convertSecondsToTime(seconds: number): string {
-	const hours = Math.floor(seconds / 3600);
-	const minutes = Math.floor((seconds % 3600) / 60);
-	const secs = Math.floor(seconds % 60);
-	return `${hours > 0 ? `${hours}:` : ''}${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
-function getAspectRatio(width: number, height: number): string {
-	const ratio = width / height;
-	if (Math.abs(ratio - 16 / 9) < 0.05) return "16:9";
-	if (Math.abs(ratio - 4 / 3) < 0.05) return "4:3";
-	if (Math.abs(ratio - 21 / 9) < 0.05) return "21:9";
-	if (Math.abs(ratio - 1) < 0.05) return "1:1";
-	return ratio.toFixed(2) + ":1";
-}
-
-function getResolutionFromHeight(height: number): string {
-	if (height >= 2160) return '4K';
-	if (height >= 1440) return '2K';
-	if (height >= 1080) return '1080p';
-	if (height >= 720) return '720p';
-	if (height >= 480) return '480p';
-	return `${height}p`;
+const LoadingComponent = ({ onLoading, tmdbData }: { onLoading: boolean; tmdbData?: TMDBData | null }): JSX.Element | null => {
+	if (!onLoading) {
+		return null;
+	}
+	return (
+		<View style={styles.loadingContainer}>
+			{tmdbData && (() => {
+				const betterLogo = getBetterLogo(tmdbData);
+				if (!betterLogo) {
+					return null;
+				}
+				return (
+					<Image
+						source={{ uri: betterLogo }}
+						style={styles.logoImage}
+						resizeMode="contain"
+					/>
+				);
+			})()}
+			<ActivityIndicator size={450} color="#FFFFFF" />
+		</View>
+	);
 }
 
 const styles = StyleSheet.create({
@@ -620,121 +499,6 @@ const styles = StyleSheet.create({
 	},
 	video: {
 		flex: 1,
-	},
-	interface: {
-		position: 'absolute',
-		width: '100%',
-		height: '100%',
-		top: 0,
-		left: 0,
-		padding: 15,
-	},
-
-	topContainer: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		zIndex: 5,
-	},
-	completeMenuContainer: {
-		borderRadius: 10,
-		paddingHorizontal: 10,
-		flexDirection: 'column',
-		zIndex: 5,
-	},
-	bottomProgressContainer: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		padding: 10,
-		borderRadius: 10,
-		alignItems: 'center',
-	},
-	extendedInterface: {
-		height: 250,
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderRadius: 10,
-	},
-
-	titleContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		borderRadius: 10,
-		maxWidth: '70%',
-		padding: 5,
-		overflow: 'hidden',
-		alignSelf: 'flex-start'
-	},
-	title: {
-		color: 'white',
-		fontSize: 18,
-		paddingHorizontal: 10,
-	},
-	episodeNumberContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		borderRadius: 10,
-		maxWidth: '30%',
-		padding: 5,
-		overflow: 'hidden',
-		paddingHorizontal: 10,
-		alignSelf: 'flex-end'
-	},
-	episodeNumber: {
-		color: 'white',
-		fontSize: 18,
-	},
-
-	resolutionContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		borderRadius: 10,
-		padding: 5,
-		overflow: 'hidden',
-		paddingHorizontal: 10,
-		alignSelf: 'flex-start'
-	},
-	resolutionText: {
-		color: 'white',
-		fontSize: 16,
-		fontWeight: 'bold',
-	},
-
-	progressBar: {
-		backgroundColor: 'rgba(255, 255, 255, 0.2)',
-		borderRadius: 5,
-		flex: 1,
-		height: 12,
-		marginHorizontal: 10,
-		alignSelf: 'center',
-		overflow: 'hidden',
-	},
-	progressFill: {
-		height: '100%',
-		width: '50%',
-		borderRadius: 5,
-	},
-	bottomText: {
-		color: 'white',
-		fontSize: 18,
-		fontWeight: '500',
-		textAlignVertical: 'center',
-		includeFontPadding: false,
-	},
-
-	buttonExtendedInterface: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		borderRadius: 10,
-		backgroundColor: Colors.primary,
-		margin: 5,
-		overflow: 'hidden',
-	},
-
-	textShadow: {
-		textShadowColor: 'rgba(0,0,0,0.5)',
-		textShadowOffset: { width: 0, height: 1 },
-		textShadowRadius: 2,
 	},
 
 	loadingContainer: {
