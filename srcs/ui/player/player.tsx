@@ -4,7 +4,7 @@ import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
 import { AnimeApiService, AnimeEpisodesData, Season } from "../../data/anime_api_service";
-import Video, { VideoRef } from 'react-native-video';
+import Video, { SelectedVideoTrackType, VideoRef } from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { getBetterLogo } from "../../utils/get_better_logo";
@@ -124,11 +124,11 @@ export function Player(): JSX.Element {
 						const newTime = Math.max(currentProgressRef.current - timeSkip, 0);
 						currentProgressRef.current = newTime;
 						setProgress(newTime);
-						
+
 						if (videoRef.current) {
 							videoRef.current.seek(newTime);
 						}
-						
+
 						setTimeout(() => {
 							isManualSeekingRef.current = false;
 						}, 1000);
@@ -143,11 +143,11 @@ export function Player(): JSX.Element {
 						const newTime = Math.min(currentProgressRef.current + timeSkip, duration);
 						currentProgressRef.current = newTime;
 						setProgress(newTime);
-						
+
 						if (videoRef.current) {
 							videoRef.current.seek(newTime);
 						}
-						
+
 						setTimeout(() => {
 							isManualSeekingRef.current = false;
 						}, 1000);
@@ -352,6 +352,10 @@ export function Player(): JSX.Element {
 					]}
 					source={{ uri: urlVideo, type: typeSource }}
 					resizeMode="contain"
+					selectedVideoTrack={{
+						type: SelectedVideoTrackType.RESOLUTION,
+						value: 1080,
+					}}
 					ref={videoRef}
 					controls={false}
 					paused={isPaused}
@@ -393,26 +397,6 @@ export function Player(): JSX.Element {
 						if (error)
 							return;
 						setOnLoading(stateData.isBuffering);
-					}}
-					onVideoTracks={(data) => {
-						if (data.videoTracks && data.videoTracks.length > 0) {
-							const activeTrack = data.videoTracks.find(track => track.selected);
-							if (activeTrack) {
-								const height = activeTrack.height;
-								const width = activeTrack.width;
-								if (height) {
-									setResolution(getResolutionFromHeight(height));
-									if (width) {
-										setAspectRatio(getAspectRatio(width, height));
-									}
-								}
-
-							}
-							else {
-								setResolution(null);
-								setAspectRatio(null);
-							}
-						}
 					}}
 				/>
 			)}
@@ -539,7 +523,15 @@ export function Player(): JSX.Element {
 						<View style={styles.bottomProgressContainer}>
 							<Text style={[styles.bottomText, styles.textShadow]}>{convertSecondsToTime(progress)}</Text>
 							<View style={styles.progressBar}>
-								<View style={[styles.progressFill, { width: duration > 0 ? `${progress * 100 / duration}%` : '0%' }]} />
+								<View
+									style={[
+										styles.progressFill,
+										{ 
+											width: duration > 0 ? `${progress * 100 / duration}%` : '0%',
+											backgroundColor: `rgb(${averageColor.map(c => 255 - c).join(',')})`
+										}
+									]}
+								/>
 							</View>
 							<Text style={[styles.bottomText, styles.textShadow]}>{convertSecondsToTime(duration)}</Text>
 						</View>
@@ -685,7 +677,6 @@ const styles = StyleSheet.create({
 	},
 	progressFill: {
 		height: '100%',
-		backgroundColor: Colors.primary,
 		width: '50%',
 		borderRadius: 5,
 	},
