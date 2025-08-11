@@ -115,7 +115,6 @@ export const Anime: FC = () => {
 	}, [tmdbData]);
 
 	const loadEpisodes = async (season: Season) => {
-		console.log(`Loading episodes for season: ${season}`);
 		try {
 			setLoadingEpisodes(true);
 			const episodes = await apiService.fetchAnimeEpisodes(anime.url.toString(), season.url.toString());

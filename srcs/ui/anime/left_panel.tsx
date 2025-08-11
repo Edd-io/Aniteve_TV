@@ -109,7 +109,6 @@ export function Progress({ progress, averageColor, focus, height = null }: { pro
 	let state = "";
 	let season = progress.season!.split('/')[0];
 
-	console.log('Progress:', progress);
 	if (progress.status === ProgressStatus.IN_PROGRESS || progress.completed === ProgressStatus.IN_PROGRESS ) {
 		state = "En cours";
 	} else if (progress.status === ProgressStatus.UP_TO_DATE || progress.completed === ProgressStatus.UP_TO_DATE) {

@@ -80,34 +80,41 @@ export function Home(): React.JSX.Element {
 		setIsLoading(false);
 	}, [searchValue, animeList]);
 
-	useEffect(() => {
-		apiService.fetchAllProgress()
-			.then(async progressData => {
-				if (!progressData || progressData.length === 0) {
-					return;
-				}
-				await Promise.all(
-					progressData.map(p =>
-						Image.prefetch(String(p.poster || p.anime.img))
-					)
-				);
-				setAllProgress(progressData);
-				for (const progress of progressData) {
-					if (progress.completed != ProgressStatus.UP_TO_DATE) {
-						console.log("Featured anime found:", progress.anime.title);
-						setFeaturedAnime({
-							anime: progress.anime,
-							progress: progress
-						});
-						break;
+	useFocusEffect(
+		useCallback(() => {
+			apiService.fetchAllProgress()
+				.then(async progressData => {
+					if (!progressData || progressData.length === 0) {
+						return;
 					}
-				}
-			})
-			.catch(error => {
-			}).finally(() => {
-				setIsProgressLoaded(true);
-			});
-	}, [resumeVisible]);
+					await Promise.all(
+						progressData.map(p =>
+							Image.prefetch(String(p.poster || p.anime.img))
+						)
+					);
+					setAllProgress(progressData);
+					for (const progress of progressData) {
+						if (progress.completed != ProgressStatus.UP_TO_DATE) {
+							setSelectedPart(value => {
+								if (value === SelectedPart.ANIME_LIST) {
+									return value;
+								}
+								setFeaturedAnime({
+									anime: progress.anime,
+									progress: progress
+								});
+								return value;
+							});
+							break;
+						}
+					}
+				})
+				.catch(error => {
+				}).finally(() => {
+					setIsProgressLoaded(true);
+				});
+		}, [resumeVisible])
+	);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -203,6 +210,15 @@ export function Home(): React.JSX.Element {
 								navigation.navigate('Anime', { anime: selectedAnime });
 							}
 						}
+					}
+				} else if (keyCode === RemoteControlKey.BACK) {
+					if (selectedPart === SelectedPart.ANIME_LIST) {
+						setSearchValue('');
+						setIndexItem(0);
+					} else if (selectedPart === SelectedPart.TOPBAR) {
+						navigation.goBack();
+					} else if (selectedPart === SelectedPart.BANNER) {
+						navigation.navigate('Home');
 					}
 				}
 			});
