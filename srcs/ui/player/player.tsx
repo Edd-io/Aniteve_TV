@@ -2,7 +2,7 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute, } from "@react-navi
 import { Text, View, StyleSheet, DeviceEventEmitter, Animated, ActivityIndicator, Image } from "react-native";
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
+import React, { JSX, use, useCallback, useEffect, useRef, useState } from "react";
 import { AnimeApiService, AnimeEpisodesData, Season } from "../../data/anime_api_service";
 import Video, { SelectedVideoTrackType, VideoRef } from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -64,7 +64,7 @@ export function Player(): JSX.Element {
 	const isManualSeekingRef = useRef<boolean>(false);
 	const [resolution, setResolution] = useState<string | null>(null);
 	const [aspectRatio, setAspectRatio] = useState<string | null>(null);
-
+	const [ended, setEnded] = useState<boolean>(false);
 	const [indexMenu, setIndexMenu] = useState<number>(0);
 
 	useEffect(() => {
@@ -161,6 +161,11 @@ export function Player(): JSX.Element {
 						if (isPaused) {
 							if (!showSourceSelector) {
 								if (indexMenu === MenuElement.RESUME) {
+									if (ended) {
+										setProgress(0);
+										setEnded(false);
+										return;
+									}
 									setIsPaused(false);
 									setShowInterface(true);
 									timeoutInterfaceRef.current = setTimeout(() => {
@@ -205,7 +210,7 @@ export function Player(): JSX.Element {
 						}
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {
-					if (!isPaused || error) {
+					if (!isPaused || error || ended) {
 						navigation.goBack();
 					} else if (showSourceSelector) {
 						setShowSourceSelector(false);
@@ -220,8 +225,15 @@ export function Player(): JSX.Element {
 			};
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
-		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState, error, duration])
+		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState, error, duration, ended])
 	);
+
+	useEffect(() => {
+		if (ended) {
+			setIsPaused(true);
+			setShowInterface(true);
+		}
+	}, [ended]);
 
 	useEffect(() => {
 		if (error) {
@@ -276,6 +288,7 @@ export function Player(): JSX.Element {
 		setOnLoading(true);
 		setUrlVideo(null);
 		setVideoReady(false);
+		setEnded(false);
 
 		if (episodesState === null) {
 			return;
@@ -398,6 +411,10 @@ export function Player(): JSX.Element {
 							return;
 						setOnLoading(stateData.isBuffering);
 					}}
+					onEnd={() => {
+						console.log('Video ended');
+						setEnded(true);
+					}}
 				/>
 			)}
 			{onLoading && (
@@ -470,7 +487,7 @@ export function Player(): JSX.Element {
 								!showSourceSelector ? (
 									<View style={{ flex: 1, paddingTop: 10, flexDirection: 'row', justifyContent: 'space-around' }}>
 										{[
-											['play-arrow', 'Reprendre'],
+											['play-arrow', ended ? 'Recommencer' : 'Reprendre'],
 											['source', 'Changer de Source'],
 											['skip-previous', 'Épisode précédent'],
 											['skip-next', 'Épisode suivant'],

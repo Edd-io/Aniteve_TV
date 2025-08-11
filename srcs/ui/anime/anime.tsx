@@ -164,7 +164,10 @@ export const Anime: FC = () => {
 						}
 						const progressSeasonIndex = ProgressDataAnime?.find ? animeSeasonData.findIndex(s => s.url === ProgressDataAnime!.season!) : -1;
 						const validSeasonIndex = progressSeasonIndex >= 0 ? progressSeasonIndex : 0;
-						
+
+						if (ProgressDataAnime?.find && ProgressDataAnime!.progress! === 100) {
+							ProgressDataAnime.progress = 0;
+						}
 						navigation.navigate('Player', {
 							anime: anime,
 							episodeIndex: ProgressDataAnime?.find ? ProgressDataAnime!.episode! - 1 : 0,
