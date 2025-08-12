@@ -100,8 +100,11 @@ export function Home(): React.JSX.Element {
 	useEffect(() => {
 		if (searchValue) {
 			const filtered = animeList.filter(anime =>
-				anime.title.toLowerCase().includes(searchValue.toLowerCase())
+				anime.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+				(anime.alternativeTitle &&
+					anime.alternativeTitle.toLowerCase().includes(searchValue.toLowerCase()))
 			);
+
 			setAnimeListFiltered(filtered);
 			if (filtered.length > 0) {
 				setSelectedPart(SelectedPart.ANIME_LIST);

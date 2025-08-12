@@ -145,10 +145,10 @@ export class AnimeApiService {
 	
 			const mapped: AnimeItem[] = (rawList as any[]).map((e: any, idx: number) => new AnimeItem({
 				id: Number(e?.id ?? idx + 1),
-				title: String(e?.title ?? e?.name ?? 'Untitled'),
-				alternativeTitle: e?.alternativeTitle ?? e?.altTitle ?? undefined,
-				img: String(e?.img ?? e?.image ?? e?.poster ?? ''),
-				url: String(e?.url ?? e?.link ?? ''),
+				title: String(e?.title ?? 'Untitled'),
+				alternativeTitle: e?.alternative_title ?? undefined,
+				img: String(e?.img ?? ''),
+				url: String(e?.url ?? ''),
 				genres: e?.genre ?? [],
 			}));
 	
