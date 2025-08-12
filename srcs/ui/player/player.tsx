@@ -314,6 +314,7 @@ export function Player(): JSX.Element {
 								}
 								setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
 								setSourceIndex(0);
+								setProgress(0);
 								setIndexMenu(0);
 								setIsPaused(false);
 							} else if (indexMenu === MenuElement.NEXT_EPISODE) {
@@ -322,6 +323,7 @@ export function Player(): JSX.Element {
 								}
 								setEpisodeIndexState((prev) => Math.min(prev + 1, episodesState && episodesState.episodes ? Object.keys(episodesState.episodes).length - 1 : prev));
 								setSourceIndex(0);
+								setProgress(0);
 								setIndexMenu(0);
 								setIsPaused(false);
 							} else if (indexMenu === MenuElement.EXIT) {
