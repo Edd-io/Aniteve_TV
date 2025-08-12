@@ -29,7 +29,7 @@ export function ListAnime({
 	setIsLoading?: React.Dispatch<React.SetStateAction<boolean>>
 }): React.JSX.Element {
 	const flatListRef = useRef<FlatList>(null);
-	const apiService = new AnimeApiService();
+	const apiService = AnimeApiService.getInstance();
 
 	const currentFocusedIndex = indexItem;
 	const isSelected = selectedPart === SelectedPart.ANIME_LIST;

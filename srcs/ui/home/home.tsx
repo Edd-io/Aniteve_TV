@@ -33,7 +33,7 @@ export interface FeaturedAnime {
 
 export function Home(): React.JSX.Element {
 	const navigation = useNavigation<HomeScreenNavigationProp>();
-	const apiService = new AnimeApiService();
+	const apiService = AnimeApiService.getInstance();
 	const [selectedPart, setSelectedPart] = useState<SelectedPart>(SelectedPart.BANNER);
 	const [indexTopBar, setIndexTopBar] = useState<number>(0);
 	const [indexItem, setIndexItem] = useState<number>(0);

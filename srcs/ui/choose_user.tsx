@@ -9,7 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const ChooseUser: React.FC = () => {
 	const navigation = useNavigation();
-	const apiService = new AnimeApiService();
+	const apiService = AnimeApiService.getInstance();
 	const flatListRef = useRef<FlatList>(null);
 
 	const [users, setUsers] = useState<User[]>([]);

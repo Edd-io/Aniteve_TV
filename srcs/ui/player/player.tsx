@@ -2,19 +2,19 @@ import { RouteProp, useFocusEffect, useNavigation, useRoute, } from "@react-navi
 import { Text, View, StyleSheet, DeviceEventEmitter, Animated, ActivityIndicator, Image } from "react-native";
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
-import React, { JSX, use, useCallback, useEffect, useRef, useState } from "react";
-import { AnimeApiService, AnimeEpisodesData, Season, TMDBData } from "../../data/anime_api_service";
-import Video, { SelectedVideoTrackType, VideoRef } from 'react-native-video';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
+import { AnimeApiService, AnimeEpisodesData, TMDBData } from "../../data/anime_api_service";
+import { VideoRef } from 'react-native-video';
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { getBetterLogo } from "../../utils/get_better_logo";
 import { getBetterPoster } from "../../utils/get_better_poster";
 import { Colors } from "../../constants/colors";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SettingsData } from "../settings/settings_selector";
-import { getAspectRatio, getResolutionFromHeight } from "../../utils/video";
 import { Interface } from "./interface";
-import { states } from "../../states/player";
+import { VideoPlayer } from "./video";
+import { LoadingComponent } from "./loading";
+import { ErrorComponent } from "./error";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
@@ -40,38 +40,38 @@ export function Player(): JSX.Element {
 		ProgressDataAnime
 	} = route.params;
 
-	const apiService = new AnimeApiService();
-	const {
-		typeSource, setTypeSource,
-		episodesState, setEpisodesState,
-		episodeIndexState, setEpisodeIndexState,
-		sourceIndex, setSourceIndex,
-		seasonIndexState, setSeasonIndexState,
-		urlVideo, setUrlVideo,
-		error, setError,
-		showInterface, setShowInterface,
-		showSourceSelector, setShowSourceSelector,
-		duration, setDuration,
-		progress, setProgress,
-		isPaused, setIsPaused,
-		onLoading, setOnLoading,
-		initPercent, setInitPercent,
-		timeToResume, setTimeToResume,
-		videoReady, setVideoReady,
-		videoRef,
-		timeoutInterfaceRef,
-		currentProgressRef,
-		isManualSeekingRef,
-		resolution, setResolution,
-		aspectRatio, setAspectRatio,
-		ended, setEnded,
-		indexMenu, setIndexMenu,
-		timeSkip, setTimeSkip,
-	} = states({
-		episodeIndex,
-		seasonIndex,
-		ProgressDataAnime
-	});
+	const apiService = AnimeApiService.getInstance();
+	const [typeSource, setTypeSource] = useState<string>('');
+	const [episodesState, setEpisodesState] = useState<AnimeEpisodesData | null>(null);
+	const [seasonIndexState, setSeasonIndexState] = useState<number>(seasonIndex);
+	const [episodeIndexState, setEpisodeIndexState] = useState<number>(episodeIndex);
+	const [sourceIndex, setSourceIndex] = useState<number>(0);
+
+	const [urlVideo, setUrlVideo] = useState<string | null>();
+	const [resolution, setResolution] = useState<string | null>(null);
+	const [aspectRatio, setAspectRatio] = useState<string | null>(null);
+
+	const [duration, setDuration] = useState<number>(0);
+	const [progress, setProgress] = useState<number>(0);
+	const [initPercent, setInitPercent] = useState<number>(ProgressDataAnime?.find ? ProgressDataAnime!.progress! : 0);
+	const [timeToResume, setTimeToResume] = useState<number>(0);
+
+	const [isPaused, setIsPaused] = useState<boolean>(false);
+	const [ended, setEnded] = useState<boolean>(false);
+	const [videoReady, setVideoReady] = useState<boolean>(false);
+	const [onLoading, setOnLoading] = useState<boolean>(false);
+
+	const [showInterface, setShowInterface] = useState<boolean>(true);
+	const [showSourceSelector, setShowSourceSelector] = useState<boolean>(false);
+	const [indexMenu, setIndexMenu] = useState<number>(0);
+
+	const [error, setError] = useState<string | null>(null);
+	const [timeSkip, setTimeSkip] = useState<number>(15);
+
+	const videoRef = useRef<VideoRef>(null);
+	const timeoutInterfaceRef = useRef<NodeJS.Timeout | null>(null);
+	const currentProgressRef = useRef<number>(0);
+	const isManualSeekingRef = useRef<boolean>(false);
 
 
 	useEffect(() => {
@@ -112,6 +112,33 @@ export function Player(): JSX.Element {
 		}
 	}, [episodesState, error]);
 
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			if (!videoRef.current || isPaused || error || episodesState == null) {
+				return;
+			}
+			setProgress((value) => {
+				const percent = (value * 100) / duration;
+
+				apiService.updateProgress(
+					anime.id,
+					episodeIndexState + 1,
+					episodesState.number,
+					seasonIndexState,
+					seasons,
+					percent,
+					getBetterPoster(tmdbData) ?? '',
+				).catch((err) => {
+					console.error('Error updating progress:', err);
+				});
+				return value;
+			});
+		}, 10000);
+
+		return () => clearInterval(interval);
+	}, [duration, tmdbData, isPaused, error, videoRef, episodesState]);
+
 	useEffect(() => {
 		apiService.fetchAnimeEpisodes(anime.url.toString(), seasons[seasonIndexState].url.toString())
 			.then((episodes) => {
@@ -121,6 +148,92 @@ export function Player(): JSX.Element {
 				setError(error.message);
 			});
 	}, [seasonIndexState]);
+
+
+	useEffect(() => {
+		if (ended) {
+			setIsPaused(true);
+			setShowInterface(true);
+		}
+	}, [ended]);
+
+	useEffect(() => {
+		if (error) {
+			if (timeoutInterfaceRef.current) {
+				clearTimeout(timeoutInterfaceRef.current);
+			}
+			setShowInterface(true);
+			setIsPaused(true);
+			setOnLoading(false);
+			return;
+		}
+	}, [error]);
+
+	useEffect(() => {
+		setAspectRatio(null);
+		setResolution(null);
+		setError(null);
+		setOnLoading(true);
+		setUrlVideo(null);
+		setVideoReady(false);
+		setEnded(false);
+
+		if (episodesState === null) {
+			return;
+		}
+
+		if (!episodesState.episodes || (Array.isArray(episodesState.episodes) && episodesState.episodes.length === 0)) {
+			setError("Aucune source disponible pour cet épisode.");
+			return;
+		}
+
+		const episodesArray = Object.values(episodesState.episodes);
+		if (episodeIndexState >= episodesArray.length || episodeIndexState < 0) {
+			setError(`Épisode ${episodeIndexState + 1} introuvable.`);
+			return;
+		}
+
+		const currentEpisode = episodesArray[episodeIndexState];
+		if (!currentEpisode || !Array.isArray(currentEpisode) || currentEpisode.length === 0) {
+			setError("Aucune source disponible pour cet épisode.");
+			return;
+		}
+
+		if (sourceIndex >= currentEpisode.length || sourceIndex < 0) {
+			setError("Source vidéo introuvable.");
+			return;
+		}
+
+		const videoSource = currentEpisode[sourceIndex];
+		if (!videoSource) {
+			setError("Source vidéo introuvable.");
+			return;
+		}
+
+		apiService.fetchVideoSource(videoSource)
+			.then((src) => {
+				try {
+					if (!src) {
+						setError("Impossible de récupérer la source vidéo.");
+						return;
+					}
+					if (src.includes('.mp4'))
+						setTypeSource('video/mp4');
+					else if (src.includes('.m3u8'))
+						setTypeSource('m3u8');
+					else
+						setTypeSource('mpd');
+					setUrlVideo(src);
+					setError(null);
+				}
+				catch (error) {
+					setError("Erreur lors de la récupération de la source vidéo.");
+				}
+			})
+			.catch((error) => {
+				setError("Erreur réseau lors de la récupération de la source vidéo.");
+			});
+	}, [episodeIndexState, episodesState, sourceIndex]);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -247,184 +360,31 @@ export function Player(): JSX.Element {
 		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState, error, duration, ended])
 	);
 
-	useEffect(() => {
-		if (ended) {
-			setIsPaused(true);
-			setShowInterface(true);
-		}
-	}, [ended]);
-
-	useEffect(() => {
-		if (error) {
-			if (timeoutInterfaceRef.current) {
-				clearTimeout(timeoutInterfaceRef.current);
-			}
-			setShowInterface(true);
-			setIsPaused(true);
-			setOnLoading(false);
-			return;
-		}
-	}, [error]);
-
-
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			if (!videoRef.current || isPaused || error || episodesState == null) {
-				return;
-			}
-			setProgress((value) => {
-				const percent = (value * 100) / duration;
-
-				apiService.updateProgress(
-					anime.id,
-					episodeIndexState + 1,
-					episodesState.number,
-					seasonIndexState,
-					seasons,
-					percent,
-					getBetterPoster(tmdbData) ?? '',
-				).catch((err) => {
-					console.error('Error updating progress:', err);
-				});
-				return value;
-			});
-		}, 10000);
-
-		return () => clearInterval(interval);
-	}, [duration, tmdbData, isPaused, error, videoRef, episodesState]);
-
-	useEffect(() => {
-		setAspectRatio(null);
-		setResolution(null);
-		setError(null);
-		setOnLoading(true);
-		setUrlVideo(null);
-		setVideoReady(false);
-		setEnded(false);
-
-		if (episodesState === null) {
-			return;
-		}
-
-		if (!episodesState.episodes || (Array.isArray(episodesState.episodes) && episodesState.episodes.length === 0)) {
-			setError("Aucune source disponible pour cet épisode.");
-			return;
-		}
-
-		const episodesArray = Object.values(episodesState.episodes);
-		if (episodeIndexState >= episodesArray.length || episodeIndexState < 0) {
-			setError(`Épisode ${episodeIndexState + 1} introuvable.`);
-			return;
-		}
-
-		const currentEpisode = episodesArray[episodeIndexState];
-		if (!currentEpisode || !Array.isArray(currentEpisode) || currentEpisode.length === 0) {
-			setError("Aucune source disponible pour cet épisode.");
-			return;
-		}
-
-		if (sourceIndex >= currentEpisode.length || sourceIndex < 0) {
-			setError("Source vidéo introuvable.");
-			return;
-		}
-
-		const videoSource = currentEpisode[sourceIndex];
-		if (!videoSource) {
-			setError("Source vidéo introuvable.");
-			return;
-		}
-
-		apiService.fetchVideoSource(videoSource)
-			.then((src) => {
-				try {
-					if (!src) {
-						setError("Impossible de récupérer la source vidéo.");
-						return;
-					}
-					if (src.includes('.mp4'))
-						setTypeSource('video/mp4');
-					else if (src.includes('.m3u8'))
-						setTypeSource('m3u8');
-					else
-						setTypeSource('mpd');
-					setUrlVideo(src);
-					setError(null);
-				}
-				catch (error) {
-					setError("Erreur lors de la récupération de la source vidéo.");
-				}
-			})
-			.catch((error) => {
-				setError("Erreur réseau lors de la récupération de la source vidéo.");
-			});
-	}, [episodeIndexState, episodesState, sourceIndex]);
-
-
 	return (
 		<View style={styles.container}>
 			<ErrorComponent error={error} />
-			{urlVideo && !error && (
-				<Video
-					style={[
-						styles.video,
-						{ opacity: isPaused ? 0.5 : 1 },
-						!videoReady && { opacity: 0 }
-					]}
-					source={{ uri: urlVideo, type: typeSource }}
-					resizeMode="contain"
-					selectedVideoTrack={{
-						type: SelectedVideoTrackType.RESOLUTION,
-						value: 1080,
-					}}
-					ref={videoRef}
-					controls={false}
-					paused={isPaused}
-					onError={(e) => {
-						setError("Erreur de lecture vidéo.");
-					}}
-					onLoad={(data) => {
-						setVideoReady(true);
-						setDuration(data.duration);
-						setOnLoading(false);
-
-						if (initPercent > 0) {
-							const seekTime = (initPercent * data.duration) / 100;
-							currentProgressRef.current = seekTime;
-							setProgress(seekTime);
-							videoRef.current?.seek(seekTime);
-							setInitPercent(0);
-						} else {
-							const seekTime = timeToResume > 0 ? timeToResume : 0;
-							currentProgressRef.current = seekTime;
-							setProgress(seekTime);
-							videoRef.current?.seek(seekTime);
-						}
-						setTimeToResume(0);
-
-						if (data.naturalSize && data.naturalSize.width && data.naturalSize.height) {
-							const { width, height } = data.naturalSize;
-							setAspectRatio(getAspectRatio(width, height));
-							setResolution(getResolutionFromHeight(height));
-						}
-					}}
-					onProgress={(data) => {
-						if (!isManualSeekingRef.current) {
-							currentProgressRef.current = data.currentTime;
-							setProgress(data.currentTime);
-						}
-					}}
-					onBuffer={(stateData) => {
-						if (error)
-							return;
-						setOnLoading(stateData.isBuffering);
-					}}
-					onEnd={() => {
-						console.log('Video ended');
-						setEnded(true);
-					}}
-				/>
-			)}
+			<VideoPlayer
+				urlVideo={urlVideo}
+				typeSource={typeSource}
+				isPaused={isPaused}
+				setError={setError}
+				videoRef={videoRef}
+				setVideoReady={setVideoReady}
+				setDuration={setDuration}
+				setOnLoading={setOnLoading}
+				setProgress={setProgress}
+				currentProgressRef={currentProgressRef}
+				isManualSeekingRef={isManualSeekingRef}
+				setAspectRatio={setAspectRatio}
+				setResolution={setResolution}
+				initPercent={initPercent}
+				timeToResume={timeToResume}
+				setInitPercent={setInitPercent}
+				setTimeToResume={setTimeToResume}
+				error={error}
+				setEnded={setEnded}
+				videoReady={videoReady}
+			/>
 			<LoadingComponent tmdbData={tmdbData} onLoading={onLoading} />
 			<Interface
 				showInterface={showInterface}
@@ -450,98 +410,9 @@ export function Player(): JSX.Element {
 	);
 }
 
-const ErrorComponent = ({ error }: { error: string | null }): JSX.Element | null => {
-	if (error == null) {
-		return null;
-	}
-	return (
-		<View style={styles.errorContainer}>
-			<Icon name="error-outline" size={48} color={Colors.primary} />
-			<Text style={styles.errorText}>{error}</Text>
-		</View>
-	);
-};
-
-const LoadingComponent = ({ onLoading, tmdbData }: { onLoading: boolean; tmdbData?: TMDBData | null }): JSX.Element | null => {
-	if (!onLoading) {
-		return null;
-	}
-	return (
-		<View style={styles.loadingContainer}>
-			{tmdbData && (() => {
-				const betterLogo = getBetterLogo(tmdbData);
-				if (!betterLogo) {
-					return null;
-				}
-				return (
-					<Image
-						source={{ uri: betterLogo }}
-						style={styles.logoImage}
-						resizeMode="contain"
-					/>
-				);
-			})()}
-			<ActivityIndicator size={450} color="#FFFFFF" />
-		</View>
-	);
-}
-
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: '#000000',
-	},
-	error: {
-		color: 'red',
-		fontSize: 16,
-		textAlign: 'center',
-		margin: 20,
-	},
-	video: {
-		flex: 1,
-	},
-
-	loadingContainer: {
-		position: 'absolute',
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		justifyContent: 'center',
-		alignItems: 'center',
-		zIndex: 2,
-	},
-	logoImage: {
-		position: 'absolute',
-		maxWidth: 400,
-		maxHeight: 400,
-		width: '100%',
-		height: '100%',
-		top: '50%',
-		left: '50%',
-		transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
-		justifyContent: 'center',
-		alignItems: 'center',
-		zIndex: 2,
-	},
-
-	errorContainer: {
-		position: 'absolute',
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		justifyContent: 'center',
-		alignItems: 'center',
-		zIndex: 4,
-		backgroundColor: 'rgba(0, 0, 0, 0.8)',
-	},
-	errorText: {
-		color: 'white',
-		fontSize: 20,
-		marginTop: 16,
-		textAlign: 'center',
-		paddingHorizontal: 24,
 	},
 });

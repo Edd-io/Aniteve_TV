@@ -66,7 +66,6 @@ export const Interface = ({
 				anime={anime}
 				seasons={seasons}
 				seasonIndexState={seasonIndexState}
-				episodeIndex={episodeIndex}
 				episodeIndexState={episodeIndexState}
 				sourceIndex={sourceIndex}
 				resolution={resolution}
@@ -128,7 +127,6 @@ const TopInterface = ({
 	anime,
 	seasons,
 	seasonIndexState,
-	episodeIndex,
 	episodeIndexState,
 	sourceIndex,
 	resolution,
@@ -138,7 +136,6 @@ const TopInterface = ({
 	anime: AnimeItem;
 	seasons: { name: string }[];
 	seasonIndexState: number;
-	episodeIndex: number;
 	episodeIndexState: number;
 	sourceIndex: number;
 	resolution?: string | null;
@@ -161,7 +158,7 @@ const TopInterface = ({
 						numberOfLines={1}
 						ellipsizeMode="tail"
 					>
-						{seasons[seasonIndexState].name} - Episode {episodeIndex + 1}
+						{seasons[seasonIndexState].name} - Episode {episodeIndexState + 1}
 					</Text>
 				</View>
 			</View>

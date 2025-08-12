@@ -40,7 +40,7 @@ export const Anime: FC = () => {
 	const navigation = useNavigation<AnimeScreenNavigationProp>();
 	const { anime } = route.params;
 
-	const apiService = new AnimeApiService();
+	const apiService = AnimeApiService.getInstance();
 
 	const [loading, setLoading] = useState(true);
 	const [loadingEpisodes, setLoadingEpisodes] = useState(false);

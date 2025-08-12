@@ -87,8 +87,16 @@ export class AnimeApiService {
 	private static token: string = '';
 	private static baseUrl: string = '';
 	private static user: User | null = null;
+	private static instance: AnimeApiService | null = null;
 
 	constructor() {
+	}
+
+	static getInstance(): AnimeApiService {
+		if (!AnimeApiService.instance) {
+			AnimeApiService.instance = new AnimeApiService();
+		}
+		return AnimeApiService.instance;
 	}
 
 	static setToken(token: string) {

@@ -36,7 +36,7 @@ function App(): React.JSX.Element {
 
 	useEffect(() => {
 		const checkLoginStatus = async () => {
-			const apiService = new AnimeApiService();
+			const apiService = AnimeApiService.getInstance();
 
 			try {
 				const savedSettings = await AsyncStorage.getItem('app_settings');

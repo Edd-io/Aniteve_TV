@@ -31,7 +31,7 @@ export const Login: React.FC = () => {
 	const fadeAnim = useRef(new Animated.Value(0)).current;
 	const scaleAnim = useRef(new Animated.Value(0.8)).current;
 	const slideAnim = useRef(new Animated.Value(30)).current;
-	const apiService = new AnimeApiService();
+	const apiService = AnimeApiService.getInstance();
 	const navigation = useNavigation<HomeScreenNavigationProp>();
 
 
