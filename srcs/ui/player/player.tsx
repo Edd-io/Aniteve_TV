@@ -1,14 +1,12 @@
 import { RouteProp, useFocusEffect, useNavigation, useRoute, } from "@react-navigation/native";
-import { Text, View, StyleSheet, DeviceEventEmitter, Animated, ActivityIndicator, Image } from "react-native";
+import { View, StyleSheet, DeviceEventEmitter } from "react-native";
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
 import { AnimeApiService, AnimeEpisodesData, TMDBData } from "../../data/anime_api_service";
 import { VideoRef } from 'react-native-video';
 import { RemoteControlKey } from "../../constants/remote_controller";
-import { getBetterLogo } from "../../utils/get_better_logo";
 import { getBetterPoster } from "../../utils/get_better_poster";
-import { Colors } from "../../constants/colors";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SettingsData } from "../settings/settings_selector";
 import { Interface } from "./interface";
@@ -253,10 +251,14 @@ export function Player(): JSX.Element {
 						});
 					}, 3000);
 				}
-				if (keyCode === RemoteControlKey.DPAD_LEFT) {
-					if (!isPaused) {
+
+				if (!isPaused && !error) {
+					if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+						setIsPaused(true);
+					} else if (keyCode === RemoteControlKey.DPAD_LEFT || keyCode === RemoteControlKey.DPAD_RIGHT) {
+						const time = keyCode === RemoteControlKey.DPAD_RIGHT ? timeSkip : -timeSkip;
 						isManualSeekingRef.current = true;
-						const newTime = Math.max(currentProgressRef.current - timeSkip, 0);
+						const newTime = Math.max(currentProgressRef.current + time, 0);
 						currentProgressRef.current = newTime;
 						setProgress(newTime);
 
@@ -267,96 +269,73 @@ export function Player(): JSX.Element {
 						setTimeout(() => {
 							isManualSeekingRef.current = false;
 						}, 1000);
-					} else {
-						setIndexMenu((prev) => {
-							return prev > 0 ? prev - 1 : 0;
-						});
+					} else if (keyCode === RemoteControlKey.BACK) {
+						navigation.goBack();
 					}
-				} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
-					if (!isPaused) {
-						isManualSeekingRef.current = true;
-						const newTime = Math.min(currentProgressRef.current + timeSkip, duration);
-						currentProgressRef.current = newTime;
-						setProgress(newTime);
-
-						if (videoRef.current) {
-							videoRef.current.seek(newTime);
-						}
-
-						setTimeout(() => {
-							isManualSeekingRef.current = false;
-						}, 1000);
-					} else {
-						setIndexMenu((prev) => {
-							return (prev < (showSourceSelector ? (Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length) : 4)) ? prev + 1 : prev;
-						});
-					}
-				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-					if (isPaused) {
-						if (!showSourceSelector) {
-							if (indexMenu === MenuElement.RESUME && !error) {
-								if (ended) {
-									setProgress(0);
-									setEnded(false);
-									return;
-								}
-								setIsPaused(false);
-								setShowInterface(true);
-								timeoutInterfaceRef.current = setTimeout(() => {
-									setShowInterface(false);
-								}, 3000);
-							} else if (indexMenu === MenuElement.CHANGE_SOURCE) {
-								setIndexMenu(0);
-								setShowSourceSelector(true);
-							} else if (indexMenu === MenuElement.PREVIOUS_EPISODE) {
-								if (episodeIndexState == 0) {
-									return;
-								}
-								setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
-								setSourceIndex(0);
+				} else if (isPaused && !showSourceSelector) {
+					if (keyCode === RemoteControlKey.DPAD_LEFT) {
+						setIndexMenu(Math.max(0, indexMenu - 1));
+					} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+						setIndexMenu(Math.min(4, indexMenu + 1));
+					} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+						if (indexMenu === MenuElement.RESUME && !error) {
+							if (ended) {
 								setProgress(0);
-								setIndexMenu(0);
-								setIsPaused(false);
-							} else if (indexMenu === MenuElement.NEXT_EPISODE) {
-								if (!episodesState || episodeIndexState >= Object.keys(episodesState!.episodes).length - 1) {
-									return;
-								}
-								setEpisodeIndexState((prev) => Math.min(prev + 1, episodesState && episodesState.episodes ? Object.keys(episodesState.episodes).length - 1 : prev));
-								setSourceIndex(0);
-								setProgress(0);
-								setIndexMenu(0);
-								setIsPaused(false);
-							} else if (indexMenu === MenuElement.EXIT) {
-								navigation.goBack();
+								setEnded(false);
 								return;
 							}
-						} else {
-							if (indexMenu === Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length) {
-								setIndexMenu(0);
-								setShowSourceSelector(false);
-							} else {
-								setTimeToResume(progress);
-								setSourceIndex(indexMenu);
-								setShowSourceSelector(false);
+							setShowInterface(true);
+							timeoutInterfaceRef.current = setTimeout(() => {
+								setShowInterface(false);
+							}, 3000);
+						} else if (indexMenu === MenuElement.CHANGE_SOURCE) {
+							setIndexMenu(0);
+							setShowSourceSelector(true);
+						} else if (indexMenu === MenuElement.PREVIOUS_EPISODE) {
+							if (episodeIndexState == 0) {
+								return;
 							}
+							setEpisodeIndexState((prev) => Math.max(prev - 1, 0));
+							setSourceIndex(0);
+							setProgress(0);
+							setIndexMenu(0);
+						} else if (indexMenu === MenuElement.NEXT_EPISODE) {
+							if (!episodesState || episodeIndexState >= Object.keys(episodesState!.episodes).length - 1) {
+								return;
+							}
+							setEpisodeIndexState((prev) => Math.min(prev + 1, episodesState && episodesState.episodes ? Object.keys(episodesState.episodes).length - 1 : prev));
+							setSourceIndex(0);
+							setProgress(0);
+							setIndexMenu(0);
+						} else if (indexMenu === MenuElement.EXIT) {
+							navigation.goBack();
+							return;
 						}
-					} else {
-						setIsPaused(true);
+						setIsPaused(indexMenu === MenuElement.CHANGE_SOURCE);
+					} else if (keyCode === RemoteControlKey.BACK) {
+						setIsPaused(false);
 					}
-				} else if (keyCode === RemoteControlKey.BACK) {
-					if (!isPaused || error || ended) {
-						navigation.goBack();
-					} else if (showSourceSelector) {
+				} else if (isPaused && showSourceSelector) {
+					if (keyCode === RemoteControlKey.DPAD_LEFT) {
+						setIndexMenu(Math.max(0, indexMenu - 1));
+					} else if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+						setIndexMenu(Math.min(Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length, indexMenu + 1));
+					} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
+						if (indexMenu === Object.keys(episodesState?.episodes[`eps${episodeIndexState + 1}`] || []).length) {
+							setIndexMenu(0);
+						} else {
+							setIsPaused(false);
+							setTimeToResume(progress);
+							setSourceIndex(indexMenu);
+						}
+						setShowSourceSelector(false);
+					} else if (keyCode === RemoteControlKey.BACK) {
 						setShowSourceSelector(false);
 						setIndexMenu(0);
-					} else {
-						if (!error) {
-							setIsPaused(false);
-							setIndexMenu(0);
-						}
 					}
 				}
 			};
+
 			const subscription = DeviceEventEmitter.addListener('keyPressed', handleRemoteControlEvent);
 			return () => subscription.remove();
 		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState, error, duration, ended])
