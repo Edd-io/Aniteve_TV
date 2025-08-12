@@ -1,7 +1,7 @@
 import { JSX } from "react";
-import { TMDBData } from "../../data/anime_api_service";
 import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
 import { getBetterLogo } from "../../utils/get_better_logo";
+import { TMDBData } from "../../types/tmdb";
 
 export const LoadingComponent = ({ onLoading, tmdbData }: { onLoading: boolean; tmdbData?: TMDBData | null }): JSX.Element | null => {
     if (!onLoading) {

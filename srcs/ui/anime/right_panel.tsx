@@ -1,28 +1,15 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { FC, useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, DeviceEventEmitter, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { AnimeScreenNavigationProp, AnimeScreenRouteProp, Side } from "./anime";
+import { AnimeScreenNavigationProp, AnimeScreenRouteProp } from "./anime";
 import { RemoteControlKey } from "../../constants/remote_controller";
-import { AnimeEpisodesData, Season, TMDBData } from "../../data/anime_api_service";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { Colors } from "../../constants/colors";
+import { Side, RightPanelProps } from "../../types/anime";
 
 const EPISODES_PER_PAGE = 5;
 
-interface RightPanelProps {
-	episodesData: AnimeEpisodesData | null;
-	loadingEpisodes: boolean;
-	selectedSeason: Season | null;
-	averageColor: number[];
-	focusMenu: Side;
-	setFocusMenu?: (side: Side) => void;
-	isMovie: boolean;
-	animeSeasonData: Season[];
-	selectedSeasonIndex: number;
-	tmdbData?: TMDBData | null;
-}
-
-export const RightPanel: React.FC<RightPanelProps> = ({
+export const RightPanel: FC<RightPanelProps> = ({
 	episodesData,
 	loadingEpisodes,
 	selectedSeason,

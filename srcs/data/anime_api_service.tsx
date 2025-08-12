@@ -1,87 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_CONFIG, createHeaders } from "../constants/api_config";
 import AnimeItem from "../models/anime_item";
-
-export interface AnimeEpisodesData {
-	episodes: Record<string, string[]>;
-	number: number;
-}
-
-export interface ProgressDataAnime {
-	episode?: number;
-	find: boolean;
-	progress?: number;
-	season?: string;
-	status?: number;
-	completed?: number;
-}
-
-export enum ProgressStatus {
-	IN_PROGRESS = 0,
-	UP_TO_DATE = 1,
-	NEW_EPISODE = 2,
-	NEW_SEASON = 3,
-}
-
-export interface ProgressData {
-	anime: AnimeItem;
-	completed: number;
-	episode: number;
-	poster: string;
-	progress: ProgressStatus;
-	season: string;
-	find: boolean;
-}
-
-export interface TMDBSearchResult {
-	id: number;
-	title?: string;
-	name?: string;
-	original_name?: string;
-	overview?: string;
-	poster_path?: string;
-	vote_average?: number;
-	vote_count?: number;
-	first_air_date?: string;
-	release_date?: string;
-	genre_ids?: number[];
-	popularity?: number;
-}
-
-export interface TMDBData {
-	title?: string;
-	overview?: string;
-	poster_path?: string;
-	vote_average?: number;
-	first_air_date?: string;
-	logos?: any[];
-	backdrops?: backdropImage[];
-	popularity?: number;
-	vote_count?: number;
-	posters?: any[];
-	original_name?: string | null;
-}
-
-export interface backdropImage {
-	aspect_ratio: number;
-	height: number;
-	iso_639_1: string | null;
-	file_path: string;
-	vote_average: number;
-	vote_count: number;
-	width: number;
-}
-
-export interface User {
-	id: number;
-	name: string;
-}
-
-export interface Season {
-	name: string;
-	url: string;
-	lang: string;
-}
+import { AnimeEpisodesData, ProgressDataAnime, ProgressStatus, ProgressData } from "../types/progress";
+import { TMDBSearchResult, TMDBData, backdropImage } from "../types/tmdb";
+import { User, Season } from "../types/user";
 
 export class AnimeApiService {
 	private static token: string = '';

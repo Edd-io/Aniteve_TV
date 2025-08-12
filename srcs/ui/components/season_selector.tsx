@@ -11,17 +11,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from '../../constants/remote_controller';
-import { Season } from '../../data/anime_api_service';
 import { useFocusEffect } from '@react-navigation/native';
-
-interface SeasonSelectorProps {
-	visible: boolean;
-	seasons: Season[];
-	currentSeason?: Season;
-	averageColor: number[];
-	closePopup: () => void;
-	onSeasonSelect: (season: Season) => void;
-}
+import { Season } from '../../types/user';
+import { SeasonSelectorProps } from '../../types/components';
 
 export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
 	visible,

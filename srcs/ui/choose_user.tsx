@@ -1,11 +1,12 @@
 import { DeviceEventEmitter, Text, View, StyleSheet, Pressable, TextInput, Alert, FlatList } from "react-native";
-import { AnimeApiService, User } from "../data/anime_api_service";
+import { AnimeApiService } from "../data/anime_api_service";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { RemoteControlKey } from "../constants/remote_controller";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Colors } from "../constants/colors";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { User } from "../types/user";
 
 export const ChooseUser: React.FC = () => {
 	const navigation = useNavigation();

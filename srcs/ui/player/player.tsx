@@ -3,27 +3,21 @@ import { View, StyleSheet, DeviceEventEmitter } from "react-native";
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
-import { AnimeApiService, AnimeEpisodesData, TMDBData } from "../../data/anime_api_service";
+import { AnimeApiService } from "../../data/anime_api_service";
 import { VideoRef } from 'react-native-video';
 import { RemoteControlKey } from "../../constants/remote_controller";
 import { getBetterPoster } from "../../utils/get_better_poster";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SettingsData } from "../settings/settings_selector";
 import { Interface } from "./interface";
 import { VideoPlayer } from "./video";
 import { LoadingComponent } from "./loading";
 import { ErrorComponent } from "./error";
+import { AnimeEpisodesData } from "../../types/progress";
+import { MenuElement } from '../../types/player';
+import { SettingsData } from "../../types/components";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
-
-enum MenuElement {
-	RESUME = 0,
-	CHANGE_SOURCE = 1,
-	PREVIOUS_EPISODE = 2,
-	NEXT_EPISODE = 3,
-	EXIT = 4,
-}
 
 export function Player(): JSX.Element {
 	const route = useRoute<PlayerScreenRouteProp>();

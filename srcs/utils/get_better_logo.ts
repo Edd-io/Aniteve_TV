@@ -1,4 +1,5 @@
-import { TMDBData } from "../data/anime_api_service";
+import { API_CONFIG } from "../constants/api_config";
+import { TMDBData } from "../types/tmdb";
 
 export function getBetterLogo(tmdbData: TMDBData | null): string | null {
 	let logos = [];
@@ -22,5 +23,5 @@ export function getBetterLogo(tmdbData: TMDBData | null): string | null {
 	if (logos.length === 0) {
 		return null;
 	}
-	return 'https://image.tmdb.org/t/p/original/' + logos[0].file_path;
+	return API_CONFIG.TMDB.BASE_URL_IMG + logos[0].file_path;
 }

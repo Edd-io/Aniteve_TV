@@ -9,29 +9,12 @@ import {
     DeviceEventEmitter,
     Alert,
 } from 'react-native';
+import { SettingsSelectorProps, SettingsIndex } from '../../types/components';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from '../../constants/remote_controller';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../../constants/colors';
-
-export interface SettingsData {
-    primaryColor: string;
-    timeSkip: number;
-}
-
-interface SettingsSelectorProps {
-    visible: boolean;
-    close: () => void;
-    settings: SettingsData;
-    onSettingsChange: (settings: SettingsData) => void;
-}
-
-enum SettingsIndex {
-    PRIMARY_COLOR = 0,
-    TIME_SKIP = 1,
-    DELETE_CONNECTION = 2,
-}
 
 const TIME_SKIP_OPTIONS = [5, 10, 15, 30, 60];
 

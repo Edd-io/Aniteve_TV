@@ -13,27 +13,21 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 import { RootStackParamList } from '../../constants/routes';
 import { RemoteControlKey } from '../../constants/remote_controller';
-import { AnimeApiService, AnimeEpisodesData, ProgressDataAnime, Season, TMDBData } from '../../data/anime_api_service';
+import { AnimeApiService } from '../../data/anime_api_service';
 import { RightPanel } from './right_panel';
 import { LeftPanel } from './left_panel';
 import { getBetterLogo } from '../../utils/get_better_logo';
 import { SeasonSelector } from '../components/season_selector';
 import { InfoPopup } from '../components/info_popup';
 import { Colors } from "../../constants/colors";
+import { Season } from '../../types/user';
+import { AnimeEpisodesData, ProgressDataAnime } from '../../types/progress';
+import { TMDBData } from '../../types/tmdb';
+import { Side, LeftMenuButtons } from '../../types/anime';
+import { API_CONFIG } from '../../constants/api_config';
 
 export type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
 export type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
-
-export enum Side {
-	LEFT = 0,
-	RIGHT = 1
-}
-
-enum LeftMenuButtons {
-	START = 0,
-	SEASONS = 1,
-	INFO = 2,
-}
 
 export const Anime: FC = () => {
 	const route = useRoute<AnimeScreenRouteProp>();
@@ -286,7 +280,7 @@ function getBetterBackdrop(tmdbData: TMDBData | null): string | null {
 	if (!better) {
 		return null;
 	}
-	return 'https://image.tmdb.org/t/p/original/' + better.file_path;
+	return API_CONFIG.TMDB.BASE_URL_IMG + better.file_path;
 };
 
 const styles = StyleSheet.create({

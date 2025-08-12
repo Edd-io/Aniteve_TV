@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, JSX } from 'react';
 import { View, FlatList, StyleSheet, Dimensions, Animated, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import AnimeItem from '../../models/anime_item';
-import { SelectedPart } from './home';
 import { AnimeApiService } from '../../data/anime_api_service';
 import { Colors } from '../../constants/colors';
+import { SelectedPart } from '../../types/home';
 
 const { width } = Dimensions.get('window');
 const itemsPerRow = 4;
@@ -11,23 +11,17 @@ const containerPadding = 16;
 const itemMargin = 8;
 const itemWidth = (width - containerPadding * 2 - itemMargin * 2 * itemsPerRow) / itemsPerRow;
 
+import { ListAnimeProps } from '../../types/components';
+
 export function ListAnime({ 
-	selectedPart, 
-	indexItem, 
-	animeList, 
-	setAnimeList,
-	isLoading = false,
-	isSearchActive = false,
-	setIsLoading = () => {}
-}: { 
-	selectedPart: SelectedPart, 
-	indexItem: number, 
-	animeList: AnimeItem[], 
-	setAnimeList: React.Dispatch<React.SetStateAction<AnimeItem[]>>,
-	isLoading?: boolean,
-	isSearchActive?: boolean,
-	setIsLoading?: React.Dispatch<React.SetStateAction<boolean>>
-}): React.JSX.Element {
+   selectedPart, 
+   indexItem, 
+   animeList, 
+   setAnimeList,
+   isLoading = false,
+   isSearchActive = false,
+   setIsLoading = () => {}
+}: ListAnimeProps): JSX.Element {
 	const flatListRef = useRef<FlatList>(null);
 	const apiService = AnimeApiService.getInstance();
 

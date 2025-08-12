@@ -1,50 +1,32 @@
 import { JSX, useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { Colors } from "../../constants/colors";
-import { convertSecondsToTime } from "../../utils/video";
+import { convertSecondsToTime } from "../../utils/video_utils";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AnimeItem from "../../models/anime_item";
-import { AnimeEpisodesData } from "../../data/anime_api_service";
+import { AnimeEpisodesData } from "../../types/progress";
+import { InterfaceProps } from '../../types/components';
 
 export const Interface = ({
-	showInterface,
-	isPaused,
-	anime,
-	averageColor,
-	seasons,
-	seasonIndexState,
-	episodeIndex,
-	episodeIndexState,
-	sourceIndex,
-	episodesState,
-	resolution,
-	aspectRatio,
-	progress,
-	duration,
-	ended,
-	error,
-	indexMenu,
-	showSourceSelector,
-}: {
-	showInterface: boolean;
-	isPaused: boolean;
-	anime: AnimeItem;
-	averageColor: number[];
-	seasons: { name: string }[];
-	seasonIndexState: number;
-	episodeIndex: number;
-	episodeIndexState: number;
-	sourceIndex: number;
-	episodesState: AnimeEpisodesData | null;
-	resolution?: string | null;
-	aspectRatio?: string | null;
-	progress: number;
-	duration: number;
-	ended: boolean;
-	error: string | null;
-	indexMenu: number;
-	showSourceSelector: boolean;
-}): JSX.Element => {
+   showInterface,
+   isPaused,
+   anime,
+   averageColor,
+   seasons,
+   seasonIndexState,
+   episodeIndex,
+   episodeIndexState,
+   sourceIndex,
+   episodesState,
+   resolution,
+   aspectRatio,
+   progress,
+   duration,
+   ended,
+   error,
+   indexMenu,
+   showSourceSelector,
+}: InterfaceProps): JSX.Element => {
 	const animatedHeight = useRef(new Animated.Value(50)).current;
 
 	useEffect(() => {

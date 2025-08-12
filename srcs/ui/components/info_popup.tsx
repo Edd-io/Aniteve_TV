@@ -245,9 +245,6 @@ const styles = StyleSheet.create({
 		flex: 1,
 		marginLeft: 10,
 	},
-	closeButton: {
-		padding: 5,
-	},
 	scrollView: {
 		flex: 1,
 	},

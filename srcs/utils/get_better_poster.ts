@@ -1,4 +1,5 @@
-import { TMDBData } from "../data/anime_api_service";
+import { API_CONFIG } from "../constants/api_config";
+import { TMDBData } from "../types/tmdb";
 
 export function getBetterPoster(tmdbData?: TMDBData | null): string | null {
 	let posters = [];
@@ -23,5 +24,5 @@ export function getBetterPoster(tmdbData?: TMDBData | null): string | null {
 	if (posters.length === 0) {
 		return null;
 	}
-	return 'https://image.tmdb.org/t/p/original/' + posters[0].file_path;
+	return API_CONFIG.TMDB.BASE_URL_IMG + posters[0].file_path;
 }

@@ -11,25 +11,17 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from "../../constants/routes";
 import { ResumeSelector } from "./resume_selector";
-import { AnimeApiService, ProgressData, ProgressStatus } from "../../data/anime_api_service";
+import { AnimeApiService } from "../../data/anime_api_service";
 import { Colors } from "../../constants/colors";
-import { SettingsSelector, SettingsData } from "../settings/settings_selector";
+import { SettingsSelector } from "../settings/settings_selector";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ProgressData, ProgressStatus } from "../../types/progress";
+import { SelectedPart, FeaturedAnime } from "../../types/home";
+import { SettingsData } from "../../types/components";
 
 const { height } = Dimensions.get('window');
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
-
-export enum SelectedPart {
-	TOPBAR = -1,
-	BANNER = 0,
-	ANIME_LIST = 1,
-}
-
-export interface FeaturedAnime {
-	anime: AnimeItem;
-	progress: ProgressData | null;
-}
 
 export function Home(): React.JSX.Element {
 	const navigation = useNavigation<HomeScreenNavigationProp>();
@@ -81,7 +73,7 @@ export function Home(): React.JSX.Element {
 
 	const handleSettingsChange = async (newSettings: SettingsData) => {
 		try {
-            Colors.setPrimaryColor(newSettings.primaryColor);
+			Colors.setPrimaryColor(newSettings.primaryColor);
 			await AsyncStorage.setItem('app_settings', JSON.stringify(newSettings));
 		} catch (error) {
 			console.error('Error saving settings:', error);
@@ -98,8 +90,12 @@ export function Home(): React.JSX.Element {
 				setShowLoadingOverlay(false);
 				setAnimationCompleted(true);
 			});
+		} else if (isGlobalLoading && !showLoadingOverlay) {
+			setShowLoadingOverlay(true);
+			loadingOpacity.setValue(1);
+			setAnimationCompleted(false);
 		}
-	}, [isGlobalLoading, loadingOpacity, animationCompleted]);
+	}, [isGlobalLoading, loadingOpacity, animationCompleted, showLoadingOverlay]);
 
 	useEffect(() => {
 		if (searchValue) {

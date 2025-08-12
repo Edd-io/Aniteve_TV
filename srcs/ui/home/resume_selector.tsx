@@ -12,15 +12,10 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { RemoteControlKey } from '../../constants/remote_controller';
-import { ProgressData, ProgressStatus } from '../../data/anime_api_service';
 import { useFocusEffect } from '@react-navigation/native';
 
-interface ResumeSelectorProps {
-	visible: boolean;
-	close: () => void;
-	navigation: any;
-	allProgress: ProgressData[];
-}
+import { ResumeSelectorProps } from '../../types/components';
+import { ProgressData, ProgressStatus } from '../../types/progress';
 
 export const ResumeSelector: FC<ResumeSelectorProps> = ({
 	visible,

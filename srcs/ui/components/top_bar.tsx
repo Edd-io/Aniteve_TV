@@ -1,9 +1,10 @@
 import React, { Dispatch, SetStateAction, useState } from "react";
 import { View, StyleSheet, Text, TextInput } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { SelectedPart } from "../home/home";
 import { Colors } from '../../constants/colors';
 import { AnimeApiService } from "../../data/anime_api_service";
+import { TopBarProps } from "../../types/components";
+import { SelectedPart } from "../../types/home";
 
 export default function TopBar({
 	selectedPart,
@@ -12,13 +13,7 @@ export default function TopBar({
 	setSearchValue,
 	setIsLoading,
 	searchValue
-}: { selectedPart: SelectedPart,
-	index: number,
-	searchInputRef: React.RefObject<TextInput | null>,
-	setSearchValue: Dispatch<SetStateAction<string>>,
-	setIsLoading: Dispatch<SetStateAction<boolean>>,
-	searchValue: string
-}): React.JSX.Element {
+}: TopBarProps): React.JSX.Element {
 	const currentFocusedIndex = index;
 	const isSelected = selectedPart === SelectedPart.TOPBAR;
 	const [localSearchValue, setLocalSearchValue] = useState('');

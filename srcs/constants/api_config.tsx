@@ -13,8 +13,7 @@ export const API_CONFIG = {
     GET_ANIME_EPISODES: "/api/get_anime_episodes",
   },
   TMDB: {
-    BASE_IMAGE_URL: "https://image.tmdb.org/t/p/w1280",
-    POSTER_BASE_URL: "https://image.tmdb.org/t/p/w500",
+    BASE_URL_IMG: "https://image.tmdb.org/t/p/original/",
   }
 };
 

@@ -1,7 +1,9 @@
 import { JSX } from "react";
 import Video, { SelectedVideoTrackType, VideoRef } from "react-native-video";
-import { getAspectRatio, getResolutionFromHeight } from "../../utils/video";
+import { getAspectRatio, getResolutionFromHeight } from "../../utils/video_utils";
 import { StyleSheet } from "react-native";
+
+import { VideoPlayerProps } from '../../types/components';
 
 export const VideoPlayer = ({
     urlVideo,
@@ -24,28 +26,7 @@ export const VideoPlayer = ({
     error,
     setEnded,
     videoReady
-}: {
-    urlVideo: string | null | undefined;
-    typeSource: string;
-    isPaused: boolean;
-    setError: (value: string | null) => void;
-    videoRef: React.RefObject<VideoRef | null>;
-    setVideoReady: (value: boolean) => void;
-    setDuration: (value: number) => void;
-    setOnLoading: (value: boolean) => void;
-    setProgress: (value: number) => void;
-    currentProgressRef: React.MutableRefObject<number>;
-    isManualSeekingRef: React.MutableRefObject<boolean>;
-    setAspectRatio: (value: string | null) => void;
-    setResolution: (value: string | null) => void;
-    initPercent: number;
-    timeToResume: number;
-    setInitPercent: (value: number) => void;
-    setTimeToResume: (value: number) => void;
-    error: string | null;
-    setEnded: (value: boolean) => void;
-    videoReady: boolean;
-    }): JSX.Element => {
+}: VideoPlayerProps): JSX.Element => {
     if (!(urlVideo && !error)) {
         return (<></>)
     }
@@ -105,7 +86,6 @@ export const VideoPlayer = ({
                 setOnLoading(stateData.isBuffering);
             }}
             onEnd={() => {
-                console.log('Video ended');
                 setEnded(true);
             }}
         />
@@ -113,7 +93,7 @@ export const VideoPlayer = ({
 }
 
 const styles = StyleSheet.create({
-	video: {
-		flex: 1,
-	},
+    video: {
+        flex: 1,
+    },
 });

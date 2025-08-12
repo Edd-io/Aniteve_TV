@@ -1,10 +1,10 @@
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { FeaturedAnime, SelectedPart } from "../home/home";
 import { Progress } from "../anime/left_panel";
 import { Colors } from "../../constants/colors";
 import { hexToRgb } from "../../utils/hexa_to_rgb";
+import { FeaturedAnime, SelectedPart } from "../../types/home";
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function BannerResume({ featuredAnime, selectedPart, disableButtons }: { featuredAnime: FeaturedAnime | null, selectedPart: SelectedPart, disableButtons: boolean }): React.JSX.Element {
 	const isSelected = selectedPart === SelectedPart.BANNER;

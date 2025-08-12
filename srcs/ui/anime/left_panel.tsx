@@ -1,21 +1,10 @@
 import React, { FC, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AnimeItem from "../../models/anime_item";
-import { ProgressDataAnime, ProgressStatus, TMDBData } from "../../data/anime_api_service";
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Side } from "./anime";
 import { Colors } from "../../constants/colors";
-
-interface LeftPanelProps {
-	anime: AnimeItem,
-	logo: string | null;
-	tmdbData: TMDBData | null;
-	ProgressDataAnime: ProgressDataAnime | null;
-	averageColor: number[];
-	indexLeftMenu: number;
-	focusMenu: Side;
-	haveEpisodes?: boolean;
-}
+import { ProgressDataAnime, ProgressStatus } from "../../types/progress";
+import { Side, LeftPanelProps } from "../../types/anime";
 
 export const LeftPanel: FC<LeftPanelProps> = ({
 	anime,
