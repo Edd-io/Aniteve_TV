@@ -1,97 +1,140 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Aniteve TV
 
-# Getting Started
+Une application React Native pour Android TV permettant de regarder des animes en streaming.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Description
 
-## Step 1: Start Metro
+Aniteve TV est une application de streaming d'animes conçue spécifiquement pour Android TV. Elle offre une interface utilisateur optimisée pour la navigation avec une télécommande et permet aux utilisateurs de parcourir, rechercher et regarder des animes avec une expérience adaptée aux grands écrans.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Fonctionnalités principales
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- 🎬 Interface optimisée pour Android TV avec navigation télécommande
+- 👥 Support multi-utilisateurs
+- 📺 Lecteur vidéo intégré avec support de multiples sources
+- 🎨 Interface personnalisable avec choix de couleurs
+- 💾 Sauvegarde de la progression de visionnage et reprise sur un autre appareil
+- 🔐 Système d'authentification sécurisé
+- ⚙️ Paramètres configurables
 
-```sh
-# Using npm
+## Prérequis
+
+- Node.js (version 18 ou supérieure)
+- npm
+- Android Studio avec SDK Android
+- Java Development Kit (JDK 17 ou supérieure)
+- Un appareil Android TV ou un émulateur Android TV
+- [Serveur Aniteve](https://github.com/Edd-io/Aniteve)
+
+## Installation pour le développement
+
+### 1. Cloner le projet
+
+```bash
+git clone https://github.com/Edd-io/Aniteve_TV
+cd Aniteve_TV
+```
+
+### 2. Installer les dépendances
+
+```bash
+npm install
+```
+
+### 3. Configuration Android
+
+Assurez-vous que les variables d'environnement suivantes sont configurées :
+
+```bash
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+
+### 4. Préparer l'environnement Metro
+
+```bash
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
+### 6. Lancer l'application
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Dans un nouveau terminal :
 
-### Android
-
-```sh
-# Using npm
+```bash
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
+## Structure du projet
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```
+├── android/               # Code natif Android
+├── srcs/
+│   ├── constants/         # Constantes de l'application
+│   ├── data/              # Services API et gestion des données
+│   ├── models/            # Modèles de données
+│   ├── types/             # Définitions TypeScript
+│   ├── ui/                # Composants d'interface utilisateur
+│   │   ├── anime/         # Écrans liés aux animes
+│   │   ├── components/    # Composants réutilisables
+│   │   ├── home/          # Écran d'accueil
+│   │   ├── player/        # Lecteur vidéo
+│   │   └── settings/      # Paramètres
+│   └── utils/             # Utilitaires
+├── App.tsx                # Point d'entrée principal
+└── index.js               # Point d'entrée React Native
 ```
 
-Then, and every time you update your native dependencies, run:
+## Installation de l'APK de release sur Android TV
 
-```sh
-bundle exec pod install
+### 1. Activer le mode développeur
+
+Sur votre Android TV :
+1. Allez dans **Paramètres** > **Préférences de l'appareil** > **À propos**
+2. Appuyez 7 fois sur **Version** pour activer le mode développeur
+3. Retournez dans **Préférences de l'appareil** > **Options pour les développeurs**
+4. Activez **Débogage USB**
+
+### 2. Téléchager l'APK de release
+
+```bash
+wget https://github.com/Edd-io/Aniteve_TV/releases/download/V1/Aniteve_1.0.0.apk
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Ou depuis la page des [releases](https://github.com/Edd-io/Aniteve_TV/releases/tag/V1)
 
-```sh
-# Using npm
-npm run ios
+### 3. Installer via ADB
 
-# OR using Yarn
-yarn ios
+```bash
+# Connecter votre Android TV via USB ou réseau
+adb connect <IP_DE_VOTRE_TV>:5555
+
+# Installer l'APK
+adb install Aniteve_1.0.0.apk
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+Bravo, vous avez installé l'application !
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## Technologies utilisées
 
-## Step 3: Modify your app
+- **React Native** - Framework principal
+- **TypeScript** - Typage statique
+- **React Navigation** - Navigation entre écrans
+- **AsyncStorage** - Stockage local
+- **Linear Gradient** - Gradients d'interface
+- **Vector Icons** - Icônes vectorielles
 
-Now that you have successfully run the app, let's make changes!
+## Contribution
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+1. Fork le projet
+2. Créez votre branche de fonctionnalité (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Committez vos changements (`git commit -am 'Ajout nouvelle fonctionnalité'`)
+4. Poussez vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Ouvrez une Pull Request
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+## Auteurs
+- [Edd-io](https://github.com/Edd-io) - App
+- [Nnaik0](https://github.com/Nnaik0) - Logo 
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Pour toute question ou support, ouvrez un ticket sur GitHub.
