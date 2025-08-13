@@ -63,7 +63,7 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 npm start
 ```
 
-### 6. Lancer l'application
+### 5. Lancer l'application
 
 Dans un nouveau terminal :
 
