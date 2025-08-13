@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { RouteProp, useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-
 import { RootStackParamList } from '../../constants/routes';
 import { RemoteControlKey } from '../../constants/remote_controller';
 import { AnimeApiService } from '../../data/anime_api_service';

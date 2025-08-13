@@ -1,5 +1,7 @@
-import { AnimeEpisodesData, ProgressDataAnime, Season, TMDBData } from "../data/anime_api_service";
 import AnimeItem from "../models/anime_item";
+import { ProgressDataAnime } from "../types/progress";
+import { TMDBData } from "../types/tmdb";
+import { Season } from "../types/user";
 
 export type RootStackParamList = {
   Home: undefined;

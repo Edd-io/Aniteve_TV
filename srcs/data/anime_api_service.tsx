@@ -1,8 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_CONFIG, createHeaders } from "../constants/api_config";
 import AnimeItem from "../models/anime_item";
-import { AnimeEpisodesData, ProgressDataAnime, ProgressStatus, ProgressData } from "../types/progress";
-import { TMDBSearchResult, TMDBData, backdropImage } from "../types/tmdb";
+import { AnimeEpisodesData, ProgressDataAnime, ProgressData } from "../types/progress";
+import { TMDBSearchResult, TMDBData } from "../types/tmdb";
 import { User, Season } from "../types/user";
 
 export class AnimeApiService {

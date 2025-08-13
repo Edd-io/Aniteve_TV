@@ -1,6 +1,5 @@
-import React, { FC, useState } from "react";
+import React, { FC } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import AnimeItem from "../../models/anime_item";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Colors } from "../../constants/colors";
 import { ProgressDataAnime, ProgressStatus } from "../../types/progress";

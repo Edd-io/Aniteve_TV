@@ -1,5 +1,5 @@
 import { JSX } from "react";
-import Video, { SelectedVideoTrackType, VideoRef } from "react-native-video";
+import Video, { SelectedVideoTrackType } from "react-native-video";
 import { getAspectRatio, getResolutionFromHeight } from "../../utils/video_utils";
 import { StyleSheet } from "react-native";
 

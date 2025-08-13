@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, Text, TextInput } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Colors } from '../../constants/colors';
