@@ -136,18 +136,18 @@ Bravo, vous avez installé l'application !
   <table>
     <tr>
       <td>
-        <img width="480" height="270" alt="resume" src="https://github.com/user-attachments/assets/f68159cb-3814-4bbf-884a-1bc97b2c58cd" />
+        <img width="480" height="270" alt="resume" src="https://github.com/user-attachments/assets/39a3f37d-85af-4dd7-8e84-ea549b0219f6" />
       </td>
       <td>
-        <img width="480" height="270" alt="player" src="https://github.com/user-attachments/assets/090665a7-4fe4-433a-9bc4-0d62b8e1cac5" />
+        <img width="480" height="270" alt="player" src="https://github.com/user-attachments/assets/f68159cb-3814-4bbf-884a-1bc97b2c58cd" />
       </td>
     </tr>
     <tr>
       <td>
-        <img width="480" height="270" alt="home" src="https://github.com/user-attachments/assets/39a3f37d-85af-4dd7-8e84-ea549b0219f6" />
+        <img width="480" height="270" alt="home" src="https://github.com/user-attachments/assets/be81f4ac-06ed-4f08-a8c0-373b602c26b2" />
       </td>
       <td>
-        <img width="480" height="270" alt="anime" src="https://github.com/user-attachments/assets/be81f4ac-06ed-4f08-a8c0-373b602c26b2" />
+        <img width="480" height="270" alt="anime" src="https://github.com/user-attachments/assets/090665a7-4fe4-433a-9bc4-0d62b8e1cac5" />
       </td>
     </tr>
   </table>
