@@ -250,9 +250,14 @@ export function Player(): JSX.Element {
 					if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
 						setIsPaused(true);
 					} else if (keyCode === RemoteControlKey.DPAD_LEFT || keyCode === RemoteControlKey.DPAD_RIGHT) {
-						const time = keyCode === RemoteControlKey.DPAD_RIGHT ? timeSkip : -timeSkip;
 						isManualSeekingRef.current = true;
-						const newTime = Math.max(currentProgressRef.current + time, 0);
+						let newTime ;
+
+						if (keyCode === RemoteControlKey.DPAD_RIGHT) {
+							newTime = Math.max(currentProgressRef.current + timeSkip, 0);
+						} else {
+							newTime = Math.min(currentProgressRef.current - timeSkip, duration);
+						}
 						currentProgressRef.current = newTime;
 						setProgress(newTime);
 
@@ -275,7 +280,10 @@ export function Player(): JSX.Element {
 						if (indexMenu === MenuElement.RESUME && !error) {
 							if (ended) {
 								setProgress(0);
+								currentProgressRef.current = 0;
 								setEnded(false);
+								videoRef.current?.seek(0);
+								setIsPaused(false);
 								return;
 							}
 							setShowInterface(true);
@@ -368,7 +376,6 @@ export function Player(): JSX.Element {
 				averageColor={averageColor}
 				seasons={seasons}
 				seasonIndexState={seasonIndexState}
-				episodeIndex={episodeIndex}
 				episodeIndexState={episodeIndexState}
 				sourceIndex={sourceIndex}
 				episodesState={episodesState}

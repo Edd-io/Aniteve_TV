@@ -14,7 +14,6 @@ export interface InterfaceProps {
 	averageColor: number[];
 	seasons: { name: string }[];
 	seasonIndexState: number;
-	episodeIndex: number;
 	episodeIndexState: number;
 	sourceIndex: number;
 	episodesState: AnimeEpisodesData | null;

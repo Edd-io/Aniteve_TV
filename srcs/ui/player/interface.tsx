@@ -14,7 +14,6 @@ export const Interface = ({
    averageColor,
    seasons,
    seasonIndexState,
-   episodeIndex,
    episodeIndexState,
    sourceIndex,
    episodesState,
@@ -98,11 +97,6 @@ export const Interface = ({
 		</View >
 	);
 };
-
-// const ExtentedInterface = ({ }: {}): JSX.Element => {
-// 	return (
-//     );
-// }
 
 const TopInterface = ({
 	averageColor,

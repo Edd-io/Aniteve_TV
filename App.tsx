@@ -12,13 +12,12 @@ import { Player } from './srcs/ui/player/player';
 import { SplashScreen } from './srcs/ui/splash_screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 import { Animated } from 'react-native';
 import { Login } from './srcs/ui/login/login';
 import { AnimeApiService } from './srcs/data/anime_api_service';
 import { ChooseUser } from './srcs/ui/choose_user';
 import { Colors } from './srcs/constants/colors';
-import { SettingsData } from './srcs/ui/settings/settings_selector';
+import { SettingsData } from './srcs/types/components';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
