@@ -1,8 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-	StyleSheet,
-	View,
-} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Home } from './srcs/ui/home/home';
@@ -18,6 +14,7 @@ import { AnimeApiService } from './srcs/data/anime_api_service';
 import { ChooseUser } from './srcs/ui/choose_user/choose_user';
 import { Colors } from './srcs/constants/colors';
 import { SettingsData } from './srcs/types/components';
+import { ResumeScreen } from './srcs/ui/home/resume_screen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -113,6 +110,7 @@ function App(): React.JSX.Element {
 							<Stack.Screen name="Home" component={Home} />
 							<Stack.Screen name="Anime" component={Anime} />
 							<Stack.Screen name="Player" component={Player} />
+							<Stack.Screen name="Resume" component={ResumeScreen} />
 							<Stack.Screen name="Login" component={Login} />
 							<Stack.Screen name="ChooseUser" component={ChooseUser} />
 						</Stack.Navigator>

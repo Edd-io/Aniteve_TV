@@ -1,5 +1,5 @@
 import AnimeItem from "../models/anime_item";
-import { ProgressDataAnime } from "../types/progress";
+import { ProgressDataAnime, ProgressData } from "../types/progress";
 import { TMDBData } from "../types/tmdb";
 import { Season } from "../types/user";
 
@@ -15,6 +15,7 @@ export type RootStackParamList = {
     averageColor: number[];
     ProgressDataAnime?: ProgressDataAnime | null;
   };
+  Resume: { progressList: ProgressData[] };
   Login: undefined;
   ChooseUser: undefined;
 };

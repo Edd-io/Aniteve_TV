@@ -29,4 +29,6 @@ export interface ProgressData {
 	progress: ProgressStatus;
 	season: string;
 	find: boolean;
+	season_name: string | null;
+	lang: string | null;
 }

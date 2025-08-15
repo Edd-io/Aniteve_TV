@@ -3,7 +3,7 @@ import { AnimeEpisodesData } from "./progress";
 import { ProgressData } from "./progress";
 import { Season } from "./user";
 import { Dispatch, SetStateAction } from "react";
-import { TextInput } from "react-native";
+import { GestureResponderEvent, TextInput } from "react-native";
 import { SelectedPart } from "./home";
 import AnimeItem from "../models/anime_item";
 
@@ -100,4 +100,23 @@ export enum SettingsIndex {
 	PRIMARY_COLOR = 0,
 	TIME_SKIP = 1,
 	DELETE_CONNECTION = 2,
+}
+
+export interface TopBarPhoneProps {
+	onResume?: () => void;
+	onChooseUser?: () => void;
+	onSettings?: () => void;
+}
+
+export interface TopBarButtonProps {
+	icon: string;
+	label?: string;
+	onPress?: (e: GestureResponderEvent) => void;
+	accessibilityLabel?: string;
+	size?: number;
+}
+
+export interface SectionHeaderPhoneProps {
+	title: string;
+	onSeeAll?: () => void;
 }

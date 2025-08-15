@@ -551,6 +551,8 @@ export class AnimeApiService {
 				progress: item.progress,
 				season: item.season,
 				find: true,
+				season_name: item.season_name ?? null,
+				lang: item.lang ?? null,
 			} as ProgressData));
 		} catch (error) {
 			console.error('Error fetching all progress:', error);
