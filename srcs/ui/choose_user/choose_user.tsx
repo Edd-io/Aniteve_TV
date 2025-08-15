@@ -1,12 +1,13 @@
-import { DeviceEventEmitter, Text, View, StyleSheet, Pressable, TextInput, Alert, FlatList } from "react-native";
-import { AnimeApiService } from "../data/anime_api_service";
+import { DeviceEventEmitter, Text, View, StyleSheet, Pressable, TextInput, Alert, FlatList, Platform } from "react-native";
+import { AnimeApiService } from "../../data/anime_api_service";
 import { useCallback, useEffect, useState, useRef } from "react";
-import { RemoteControlKey } from "../constants/remote_controller";
+import { RemoteControlKey } from "../../constants/remote_controller";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { Colors } from "../constants/colors";
+import { Colors } from "../../constants/colors";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { User } from "../types/user";
+import { User } from "../../types/user";
+import { ChooseUserPhone } from "./choose_user.phone";
 
 export const ChooseUser: React.FC = () => {
 	const navigation = useNavigation();
@@ -135,7 +136,6 @@ export const ChooseUser: React.FC = () => {
 						styles.addUserItem,
 						isSelected && styles.selectedItem
 					]}
-					onPress={() => setShowAddForm(true)}
 				>
 					<View style={[styles.userAvatar, styles.addUserAvatar]}>
 						<Icon name="add" size={32} color="#fff" />
@@ -223,6 +223,21 @@ export const ChooseUser: React.FC = () => {
 					<View style={styles.loadingSpinner} />
 				</View>
 			</View>
+		);
+	}
+
+	if (!Platform.isTV) {
+		return (
+			<ChooseUserPhone
+				users={users}
+				isLoadingUsers={isLoadingUsers}
+				selectUser={selectUser}
+				fetchUsers={fetchUsers}
+				onAddUserPress={() => {
+					setShowAddForm(true);
+					setNewUserName('');
+				}}
+			/>
 		);
 	}
 
