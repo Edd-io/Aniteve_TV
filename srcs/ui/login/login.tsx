@@ -8,6 +8,7 @@ import {
 	Animated,
 	Image,
 	DeviceEventEmitter,
+	Platform,
 } from 'react-native';
 import { Colors } from '../../constants/colors';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -16,6 +17,8 @@ import { AnimeApiService } from '../../data/anime_api_service';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../constants/routes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LoginPhone } from './login.phone';
+import { isValidUrl } from '../../utils/is_valid_url';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -67,6 +70,11 @@ export const Login: React.FC = () => {
 			return;
 		}
 
+		if (!isValidUrl(url)) {
+			setError('Veuillez saisir une URL valide');
+			return;
+		}
+
 		if (!password.trim()) {
 			setError('Veuillez saisir un mot de passe');
 			return;
@@ -105,6 +113,20 @@ export const Login: React.FC = () => {
 			return () => subscription.remove();
 		}, [indexFocused])
 	);
+
+	if (!Platform.isTV) {
+		return (
+			<LoginPhone 
+				handleLogin={handleLogin}
+				url={url}
+				password={password}
+				error={error}
+				setError={setError}
+				setUrl={setUrl}
+				setPassword={setPassword}
+			/>
+		)
+	}
 
 	return (
 		<View style={styles.container}>
