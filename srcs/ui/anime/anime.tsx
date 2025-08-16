@@ -6,7 +6,8 @@ import {
 	ActivityIndicator,
 	DeviceEventEmitter,
 	SafeAreaView,
-	ImageBackground
+	ImageBackground,
+	Platform
 } from 'react-native';
 import { RouteProp, useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -24,6 +25,7 @@ import { AnimeEpisodesData, ProgressDataAnime } from '../../types/progress';
 import { TMDBData } from '../../types/tmdb';
 import { Side, LeftMenuButtons } from '../../types/anime';
 import { API_CONFIG } from '../../constants/api_config';
+import { AnimePhone } from './anime.phone';
 
 export type AnimeScreenRouteProp = RouteProp<RootStackParamList, 'Anime'>;
 export type AnimeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Anime'>;
@@ -204,6 +206,44 @@ export const Anime: FC = () => {
 				<Text style={styles.loadingText}>Chargement...</Text>
 			</SafeAreaView>
 		);
+	}
+
+	if (!Platform.isTV) {
+		return (
+			<AnimePhone 
+				anime={anime}
+				loading={loading}
+				loadingEpisodes={loadingEpisodes}
+				animeSeasonData={animeSeasonData}
+				episodesData={episodesData}
+				progressDataAnime={ProgressDataAnime}
+				tmdbData={tmdbData}
+				selectedSeasonIndex={selectedSeasonIndex}
+				backdropImage={backdropImage}
+				averageColor={averageColor}
+				handleSeasonSelect={handleSeasonSelect}
+				handlePlayAnime={() => {
+					if (!episodesData) {
+						return;
+					}
+					const progressSeasonIndex = ProgressDataAnime?.find ? animeSeasonData.findIndex(s => s.url === ProgressDataAnime!.season!) : -1;
+					const validSeasonIndex = progressSeasonIndex >= 0 ? progressSeasonIndex : 0;
+
+					if (ProgressDataAnime?.find && ProgressDataAnime!.progress! === 100) {
+						ProgressDataAnime.progress = 0;
+					}
+					navigation.navigate('Player', {
+						anime: anime,
+						episodeIndex: ProgressDataAnime?.find ? ProgressDataAnime!.episode! - 1 : 0,
+						seasonIndex: validSeasonIndex,
+						seasons: animeSeasonData,
+						tmdbData: tmdbData,
+						averageColor: averageColor,
+						ProgressDataAnime: ProgressDataAnime
+					});
+				}}
+			/>
+		)
 	}
 
 	return (

@@ -540,7 +540,7 @@ export class AnimeApiService {
 				anime: new AnimeItem({
 					id: item.anime.id,
 					title: item.anime.title,
-					alternativeTitle: item.anime.alternativeTitle,
+					alternativeTitle: item.anime.alternative_title,
 					img: item.anime.img,
 					url: item.anime.url,
 					genres: item.anime.genres ?? item.anime.genre ?? [],

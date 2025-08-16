@@ -37,3 +37,18 @@ export interface RightPanelProps {
     selectedSeasonIndex: number;
     tmdbData?: TMDBData | null;
 }
+
+export interface AnimePhoneProps {
+	anime: AnimeItem;
+	loading: boolean;
+	loadingEpisodes: boolean;
+	animeSeasonData: Season[];
+	episodesData: AnimeEpisodesData | null;
+	progressDataAnime: ProgressDataAnime | null;
+	tmdbData: TMDBData | null;
+	selectedSeasonIndex: number;
+	backdropImage: string | null;
+	averageColor: number[];
+	handleSeasonSelect: (season: Season) => Promise<void>;
+	handlePlayAnime: () => void;
+}

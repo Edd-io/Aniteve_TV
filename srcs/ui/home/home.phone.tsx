@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ImageBackground, FlatList, Pressable, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
 import { Colors } from '../../constants/colors';
 import TopBarPhone from '../components/topbar.phone';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-import AnimeItem from '../../models/anime_item';
-import { ProgressData } from '../../types/progress';
 import { AnimeCardPhone } from '../components/anime_card.phone';
 import { SectionHeaderPhone } from '../components/section_header.phone';
 import { HomeMobileProps } from '../../types/home';
@@ -144,37 +142,6 @@ const styles = StyleSheet.create({
         color: '#fff',
         flex: 1,
         fontSize: 14
-    },
-    featured: {
-        height: 160,
-        marginBottom: 12
-    },
-    featuredBg: {
-        flex: 1,
-        justifyContent: 'flex-end',
-        padding: 12
-    },
-    featuredOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.35)'
-    },
-    featuredContent: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    playButton: {
-        backgroundColor: '#fff',
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    featuredTitle: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '700'
     },
     animeCard: {
         flexDirection: 'row',

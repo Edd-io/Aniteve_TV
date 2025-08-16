@@ -1,4 +1,4 @@
-import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image, TextInput, Text, ActivityIndicator, Platform } from "react-native";
+import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image, TextInput, Text, ActivityIndicator, Platform, SafeAreaView, StatusBar } from "react-native";
 import AnimeItem from "../../models/anime_item";
 import TopBar from "../components/top_bar";
 import BannerResume from "../components/banner_resume";
@@ -314,36 +314,39 @@ export function Home(): React.JSX.Element {
 
 	if (!Platform.isTV) {
 		return (
-			<HomePhone
-				animeList={animeListFiltered}
-				allProgress={allProgress}
-				isLoading={isLoading}
-				isGlobalLoading={isGlobalLoading}
-				searchValue={searchValue}
-				setSearchValue={setSearchValue}
-				onRefresh={async () => {
-					try {
-						setIsAnimeListLoaded(false);
-						setIsProgressLoaded(false);
-						const [anime, progress] = await Promise.all([
-							apiService.fetchAllAnime(),
-							apiService.fetchAllProgress()
-						]);
-						setAnimeList(anime);
-						setAllProgress(progress);
-					} catch (err) {
-						console.error('Error refreshing home data:', err);
-					} finally {
-						setIsAnimeListLoaded(true);
-						setIsProgressLoaded(true);
-						setIsLoading(false);
-					}
-				}}
-				onSelectAnime={(anime) => navigation.navigate('Anime', { anime })}
-				onOpenSettings={() => setSettingsVisible(true)}
-				onOpenChooseUser={() => navigation.navigate('ChooseUser')}
-				onOpenResume={() => setResumeVisible(true)}
-			/>
+			<SafeAreaView style={{ flex: 1, backgroundColor: Colors.getPrimaryColor() }}>
+				<HomePhone
+					animeList={animeListFiltered}
+					allProgress={allProgress}
+					isLoading={isLoading}
+					isGlobalLoading={isGlobalLoading}
+					searchValue={searchValue}
+					setSearchValue={setSearchValue}
+					onRefresh={async () => {
+						try {
+							setIsAnimeListLoaded(false);
+							setIsProgressLoaded(false);
+							const [anime, progress] = await Promise.all([
+								apiService.fetchAllAnime(),
+								apiService.fetchAllProgress()
+							]);
+							setAnimeList(anime);
+							setAllProgress(progress);
+						} catch (err) {
+							console.error('Error refreshing home data:', err);
+						} finally {
+							setIsAnimeListLoaded(true);
+							setIsProgressLoaded(true);
+							setIsLoading(false);
+						}
+					}}
+					onSelectAnime={(anime) => navigation.navigate('Anime', { anime })}
+					onOpenSettings={() => setSettingsVisible(true)}
+					onOpenChooseUser={() => navigation.navigate('ChooseUser')}
+					onOpenResume={() => setResumeVisible(true)}
+				/>
+
+			</SafeAreaView>
 		);
 	}
 

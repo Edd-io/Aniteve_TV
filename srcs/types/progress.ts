@@ -12,6 +12,8 @@ export interface ProgressDataAnime {
 	season?: string;
 	status?: number;
 	completed?: number;
+	season_name: string | null;
+	lang: string | null;
 }
 
 export enum ProgressStatus {
