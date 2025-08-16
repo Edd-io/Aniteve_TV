@@ -30,6 +30,13 @@ Aniteve TV est une application de streaming d'animes conçue spécifiquement pou
 - Un appareil Android TV ou un émulateur Android TV
 - [Serveur Aniteve](https://github.com/Edd-io/Aniteve)
 
+## Serveur requis
+
+⚠️ **Important** : Cette application nécessite un serveur Aniteve fonctionnel pour accéder au contenu.
+
+Aniteve TV est une application client qui se connecte au serveur Aniteve pour récupérer les données des animes, gérer l'authentification et la synchronisation entre appareils.
+
+
 ## Installation pour le développement
 
 ### 1. Cloner le projet
