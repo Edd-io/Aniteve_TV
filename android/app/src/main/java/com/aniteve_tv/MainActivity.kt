@@ -5,10 +5,37 @@ import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import android.view.KeyEvent
+import android.net.wifi.WifiManager
+import android.content.Context
+import android.os.Bundle
 
 import com.aniteve_tv.KeyEventModule
 
 class MainActivity : ReactActivity() {
+
+    private var multicastLock: WifiManager.MulticastLock? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        try {
+            val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            multicastLock = wifi.createMulticastLock("aniteve_multicast_lock")
+            multicastLock?.setReferenceCounted(true)
+            multicastLock?.acquire()
+        } catch (e: Exception) {
+            // ignore - not critical
+        }
+    }
+
+    override fun onDestroy() {
+        try {
+            multicastLock?.release()
+            multicastLock = null
+        } catch (e: Exception) {
+            // ignore
+        }
+        super.onDestroy()
+    }
 
   /**
    * Returns the name of the main component registered from JavaScript. This is used to schedule

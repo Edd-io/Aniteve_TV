@@ -315,6 +315,7 @@ export function Home(): React.JSX.Element {
 	if (!Platform.isTV) {
 		return (
 			<SafeAreaView style={{ flex: 1, backgroundColor: Colors.getPrimaryColor() }}>
+				<StatusBar barStyle="light-content" backgroundColor={Colors.getPrimaryColor()} />
 				<HomePhone
 					animeList={animeListFiltered}
 					allProgress={allProgress}
