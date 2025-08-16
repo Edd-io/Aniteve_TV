@@ -54,9 +54,11 @@ const ResumeItem: React.FC<{ item: ProgressData; onPress?: (a: AnimeItem) => voi
 			<View style={styles.info}>
 				<Text style={styles.title} numberOfLines={2}>{String(item.anime.title)}</Text>
 				<Text style={styles.meta}>{seasonName} • Ep {String(item.episode)} ({lang})</Text>
-				<View style={styles.progressRow}>
-					<View style={[styles.progressBar, { width: `${Math.min(100, (item.progress))}%` }]} />
-				</View>
+				{item.completed === 0 && (
+					<View style={styles.progressRow}>
+						<View style={[styles.progressBar, { width: `${Math.min(100, (item.progress))}%` }]} />
+					</View>
+				)}
 			</View>
 			<Icon name="chevron-right" size={26} color="#8a8a8a" />
 		</Pressable>
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
 	progressRow: {
 		marginTop: 4,
 		height: 15,
-		backgroundColor: '#4c4c4cff',
+		backgroundColor: '#2d2d2dff',
 		borderRadius: 6,
 		overflow: 'hidden',
 		flexDirection: 'row',
