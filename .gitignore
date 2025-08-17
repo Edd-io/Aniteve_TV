@@ -75,3 +75,5 @@ yarn-error.log
 
 secrets.tsx
 screen.png
+
+*.env

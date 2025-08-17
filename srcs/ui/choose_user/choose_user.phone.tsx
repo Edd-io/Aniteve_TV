@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, TextInput, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, TextInput, RefreshControl, ActivityIndicator, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { User } from '../../types/user';
 import { Colors } from '../../constants/colors';
@@ -33,61 +33,63 @@ export const ChooseUserPhone: React.FC<Props> = ({ users, isLoadingUsers, select
     );
 
     return (
-        <View style={styles.container}>
-            <View style={styles.headerRow}>
-                <View>
-                    <Text style={styles.title}>Choisir un utilisateur</Text>
-                    <Text style={styles.subtitle}>{users.length} utilisateur(s)</Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
+            <View style={styles.container}>
+                <View style={styles.headerRow}>
+                    <View>
+                        <Text style={styles.title}>Choisir un utilisateur</Text>
+                        <Text style={styles.subtitle}>{users.length} utilisateur(s)</Text>
+                    </View>
+
+                    <Pressable style={styles.addButton} onPress={onAddUserPress}>
+                        <Icon name="person-add" size={20} color="#fff" />
+                    </Pressable>
                 </View>
 
-                <Pressable style={styles.addButton} onPress={onAddUserPress}>
-                    <Icon name="person-add" size={20} color="#fff" />
-                </Pressable>
-            </View>
-
-            <View style={styles.searchRow}>
-                <Icon name="search" size={20} color="#999" style={{ marginRight: 8 }} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Rechercher un utilisateur"
-                    placeholderTextColor="#999"
-                    value={query}
-                    onChangeText={setQuery}
-                />
-            </View>
-
-            {isLoadingUsers && users.length === 0 ? (
-                <View style={{ paddingTop: 20 }}>
-                    <ActivityIndicator size="large" color={Colors.getPrimaryColor()} />
+                <View style={styles.searchRow}>
+                    <Icon name="search" size={20} color="#999" style={{ marginRight: 8 }} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Rechercher un utilisateur"
+                        placeholderTextColor="#999"
+                        value={query}
+                        onChangeText={setQuery}
+                    />
                 </View>
-            ) : (
-                filtered.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>Aucun utilisateur trouvé</Text>
-                        <Pressable style={styles.emptyAdd} onPress={onAddUserPress}>
-                            <Text style={styles.emptyAddText}>Ajouter un utilisateur</Text>
-                        </Pressable>
+
+                {isLoadingUsers && users.length === 0 ? (
+                    <View style={{ paddingTop: 20 }}>
+                        <ActivityIndicator size="large" color={Colors.getPrimaryColor()} />
                     </View>
                 ) : (
-                    <FlatList
-                        data={filtered}
-                        keyExtractor={(it) => it.id.toString()}
-                        renderItem={renderItem}
-                        numColumns={2}
-                        columnWrapperStyle={styles.column}
-                        contentContainerStyle={styles.listContent}
-                        refreshControl={<RefreshControl refreshing={isLoadingUsers} onRefresh={fetchUsers} tintColor={Colors.getPrimaryColor()} />}
-                    />
-                )
-            )}
-        </View>
+                    filtered.length === 0 ? (
+                        <View style={styles.emptyContainer}>
+                            <Text style={styles.emptyText}>Aucun utilisateur trouvé</Text>
+                            <Pressable style={styles.emptyAdd} onPress={onAddUserPress}>
+                                <Text style={styles.emptyAddText}>Ajouter un utilisateur</Text>
+                            </Pressable>
+                        </View>
+                    ) : (
+                        <FlatList
+                            data={filtered}
+                            keyExtractor={(it) => it.id.toString()}
+                            renderItem={renderItem}
+                            numColumns={2}
+                            columnWrapperStyle={styles.column}
+                            contentContainerStyle={styles.listContent}
+                            refreshControl={<RefreshControl refreshing={isLoadingUsers} onRefresh={fetchUsers} tintColor={Colors.getPrimaryColor()} />}
+                        />
+                    )
+                )}
+            </View>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-		backgroundColor: Colors.background,
+        backgroundColor: Colors.background,
         padding: 18,
     },
     headerRow: {

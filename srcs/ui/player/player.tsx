@@ -348,11 +348,12 @@ export function Player(): JSX.Element {
 		return (
 			<PlayerPhone
 				anime={anime}
-				episodeIndex={episodeIndex}
-				seasonIndex={seasonIndex}
+				episodeIndex={episodeIndexState}
+				seasonIndex={seasonIndexState}
 				seasons={seasons}
 				tmdbData={tmdbData}
 				averageColor={averageColor}
+				nbSources={episodesState ? Object.values(episodesState.episodes)[episodeIndexState].length : 0}
 				ProgressDataAnime={ProgressDataAnime}
 				typeSource={typeSource}
 				episodesState={episodesState}
@@ -373,6 +374,7 @@ export function Player(): JSX.Element {
 				showInterface={showInterface}
 				showSourceSelector={showSourceSelector}
 				indexMenu={indexMenu}
+				isLoading={onLoading}
 				error={error}
 				timeSkip={timeSkip}
 				videoRef={videoRef}
