@@ -60,7 +60,7 @@ export const Anime: FC = () => {
 
 			let seasonsData: Season[] = await apiService.fetchAnimeSeasons(anime.url.toString());
 
-			if (anime.genres.includes('Vf')) {
+			if (anime?.genres.some((g) => g.toLowerCase() === "vf")) {
 				let vfSeasons: Season[] = [];
 				seasonsData.forEach((season, index) => {
 					const newSeason = {
@@ -120,15 +120,10 @@ export const Anime: FC = () => {
 		}
 	};
 
-	const handleSeasonSelect = async (season: Season) => {
-		const seasonIndex = animeSeasonData.findIndex(s => s.name.toString() === season.name.toString());
-		if (seasonIndex === selectedSeasonIndex) {
-			return;
-		}
-		if (seasonIndex !== -1) {
-			setSelectedSeasonIndex(seasonIndex);
-			await loadEpisodes(season);
-		}
+	const handleSeasonSelect = async (index: number) => {
+		const season = animeSeasonData[index];
+		setSelectedSeasonIndex(index);
+		await loadEpisodes(season);
 	};
 
 	useFocusEffect(

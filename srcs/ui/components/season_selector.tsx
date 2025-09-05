@@ -98,9 +98,8 @@ export const SeasonSelector: React.FC<SeasonSelectorProps> = ({
 						return newIndex;
 					});
 				} else if (keyCode === RemoteControlKey.DPAD_CONFIRM) {
-					const selectedSeason = seasons[selectedIndex];
-					if (selectedSeason) {
-						onSeasonSelect(selectedSeason);
+					if (seasons[selectedIndex]) {
+						onSeasonSelect(selectedIndex);
 						closePopup();
 					}
 				} else if (keyCode === RemoteControlKey.BACK) {

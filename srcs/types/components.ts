@@ -43,7 +43,7 @@ export interface SeasonSelectorProps {
 	currentSeason?: Season;
 	averageColor: number[];
 	closePopup: () => void;
-	onSeasonSelect: (season: Season) => void;
+	onSeasonSelect: (index: number) => void;
 }
 
 export interface TopBarProps {
