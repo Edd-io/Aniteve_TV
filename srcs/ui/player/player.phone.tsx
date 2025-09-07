@@ -369,7 +369,7 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 								>
 									{anime.title}
 								</Text>
-								<Text style={styles.animeEpisode}>
+								<Text style={styles.animeEpisode} numberOfLines={1} ellipsizeMode="tail">
 									{seasons[seasonIndexState]?.name} - Episode {episodeIndexState + 1}
 								</Text>
 							</View>
@@ -381,7 +381,6 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 						{ opacity: uiVisible ? 1 : 0, pointerEvents: uiVisible ? 'auto' : 'none' },
 					]}>
 						{error ? (
-							// show error center UI
 							<View style={styles.errorContainer} pointerEvents="auto">
 								<Text style={styles.errorTitle}>Erreur</Text>
 								<Text style={styles.errorMessage} numberOfLines={3}>{error}</Text>
@@ -500,11 +499,13 @@ const styles = StyleSheet.create({
 		includeFontPadding: false,
 		marginBottom: 2,
 		marginLeft: 16,
+		flex: 1,
+		minWidth: 0,
 	},
 	animeTitle: {
 		color: '#fff',
-		flex: 1,
 		fontSize: 18,
+		fontWeight: '600',
 	},
 	animeEpisode: {
 		color: '#bababaff',
