@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, TextInput, RefreshControl, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, TextInput, RefreshControl, ActivityIndicator, SafeAreaView, StatusBar, Platform } from 'react-native';
 import { Colors } from '../../constants/colors';
 import TopBarPhone from '../components/topbar.phone';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -7,6 +7,9 @@ import { useNavigation } from '@react-navigation/native';
 import { AnimeCardPhone } from '../components/anime_card.phone';
 import { SectionHeaderPhone } from '../components/section_header.phone';
 import { HomeMobileProps } from '../../types/home';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const insets = useSafeAreaInsets();
 
 export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, isLoading, isGlobalLoading, searchValue, setSearchValue, onRefresh, onSelectAnime, onOpenSettings, onOpenChooseUser, onOpenResume }) => {
     const navigation: any = useNavigation();
@@ -30,8 +33,8 @@ export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, i
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
-            <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: Colors.background }]}>
+            <SafeAreaView>
                 <TopBarPhone onResume={onOpenResume} onChooseUser={onOpenChooseUser} onSettings={onOpenSettings} />
 
                 {isLoading && animeList.length === 0 ? (
@@ -40,6 +43,7 @@ export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, i
                     </View>
                 ) : (
                     <FlatList
+                        style={{ marginBottom: insets.bottom != 0 ? insets.bottom + 20 : 0 }}
                         data={paginatedAnimes}
                         keyExtractor={(it) => it.id.toString()}
                         renderItem={({ item }) => <AnimeCardPhone item={item} onPress={onSelectAnime} list />}
@@ -97,15 +101,14 @@ export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, i
                         }
                     />
                 )}
-            </View>
-        </SafeAreaView>
+            </SafeAreaView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.background,
         padding: 14
     },
     header: {

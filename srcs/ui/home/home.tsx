@@ -87,7 +87,6 @@ export function Home(): React.JSX.Element {
 			if (!isMounted) return;
 			setAnimeList(anime as AnimeItem[]);
 			setAllProgress(progress as ProgressData[]);
-			ToastAndroid.show('Données mises à jour !', ToastAndroid.SHORT);
 		}).catch(err => {
 			console.error('Error fetching initial home data', err);
 		}).finally(() => {
@@ -314,7 +313,7 @@ export function Home(): React.JSX.Element {
 
 	if (!Platform.isTV) {
 		return (
-			<SafeAreaView style={{ flex: 1, backgroundColor: Colors.getPrimaryColor() }}>
+			<View style={{ flex: 1, backgroundColor: Colors.getPrimaryColor() }}>
 				<StatusBar barStyle="light-content" backgroundColor={Colors.getPrimaryColor()} />
 				<HomePhone
 					animeList={animeListFiltered}
@@ -347,7 +346,7 @@ export function Home(): React.JSX.Element {
 					onOpenResume={() => setResumeVisible(true)}
 				/>
 
-			</SafeAreaView>
+			</View>
 		);
 	}
 

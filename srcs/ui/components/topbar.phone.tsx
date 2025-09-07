@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 12,
+        marginTop: 6,
     },
     logo: {
         color: '#fff',
