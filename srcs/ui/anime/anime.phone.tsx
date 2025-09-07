@@ -66,9 +66,6 @@ export const AnimePhone: FC<AnimePhoneProps> = ({
 	);
 
 	const renderEpisodeItem = (index: number) => {
-		const isWatched = progressDataAnime?.find && progressDataAnime.episode! > index + 1;
-		const isCurrentlyWatching = progressDataAnime?.find && progressDataAnime.episode! === index + 1;
-		const progressPercent = isCurrentlyWatching ? (progressDataAnime?.progress || 0) : 0;
 		const isMovie = animeSeasonData[selectedSeasonIndex]?.url.includes('film');
 
 		return (
@@ -76,8 +73,6 @@ export const AnimePhone: FC<AnimePhoneProps> = ({
 				key={index}
 				style={[
 					styles.episodeCard,
-					isWatched && styles.watchedEpisode,
-					isCurrentlyWatching && styles.currentEpisode
 				]}
 				onPress={() => {
 					navigation.navigate('Player', {
@@ -102,19 +97,16 @@ export const AnimePhone: FC<AnimePhoneProps> = ({
 					</Text>
 				</View>
 
-				{isCurrentlyWatching && progressPercent > 0 && (
-					<View style={styles.progressIndicator}>
-						<View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
-					</View>
-				)}
-
-				{isWatched && (
-					<View style={styles.watchedIndicator}>
-						<Icon name="check" size={15} color="#fff" />
-					</View>
-				)}
-
-				<TouchableOpacity style={styles.playButton} onPress={handlePlayAnime}>
+				<TouchableOpacity style={styles.playButton} onPress={() => {
+					navigation.navigate('Player', {
+						anime: anime,
+						episodeIndex: index,
+						seasonIndex: selectedSeasonIndex,
+						seasons: animeSeasonData,
+						tmdbData: tmdbData,
+						averageColor: averageColor,
+					});
+				}}>
 					<Icon name="play-arrow" size={24} color="#fff" />
 				</TouchableOpacity>
 			</TouchableOpacity>
