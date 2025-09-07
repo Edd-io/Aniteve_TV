@@ -173,6 +173,9 @@ export class AnimeApiService {
 			}
 			const data = await response.json();
 			const averageColor = data?.average_color;
+			if (averageColor.length === 4) {
+				averageColor.pop();
+			}
 			if (!averageColor || averageColor.length !== 3) {
 				throw new Error('Invalid average color data received');
 			}

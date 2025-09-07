@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef, Dispatch, SetStateAction } from 'react';
+import React, { useEffect, useState, useRef, Dispatch, SetStateAction } from 'react';
 import {
 	View,
 	Text,
@@ -7,13 +7,10 @@ import {
 	Dimensions,
 	StatusBar,
 	ActivityIndicator,
-	Image,
 } from 'react-native';
 import { SafeAreaView, Pressable } from 'react-native';
 import { VideoRef } from 'react-native-video';
 import Slider from '@react-native-community/slider';
-import RNGoogleCast, { CastButton, useRemoteMediaClient, useCastSession } from 'react-native-google-cast';
-import { PermissionsAndroid, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AnimeItem from '../../models/anime_item';
 import { Season } from '../../types/user';
@@ -22,7 +19,6 @@ import { ProgressDataAnime, AnimeEpisodesData } from '../../types/progress';
 import SystemNavigationBar from 'react-native-system-navigation-bar';
 import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
-import { getBetterLogo } from '../../utils/get_better_logo';
 import { convertSecondsToTime } from '../../utils/video_utils';
 import { VideoPlayer } from './video';
 
@@ -177,12 +173,29 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 			setProgress(0);
 			setInitPercent(0);
 			setIsPaused(false);
+			isPausedRef.current = false;
 		}
 	};
 
+	const handleRetry = () => {
+		setError(null);
+		setVideoReady(false);
+		setProgress(0);
+		setInitPercent(0);
+		setTimeToResume(0);
+		setIsPaused(false);
+		isPausedRef.current = false;
+		if (videoRef?.current && typeof videoRef.current.seek === 'function') {
+			try { videoRef.current.seek(0); } catch (e) { /* ignore */ }
+		}
+		showControlsOnce(true);
+	};
+
 	const togglePlay = () => {
-		showControlsOnce();
-		setIsPaused(!isPaused);
+		showControlsOnce(true);
+		const newPaused = !isPaused;
+		setIsPaused(newPaused);
+		isPausedRef.current = newPaused;
 	};
 
 	const goNext = () => {
@@ -192,6 +205,7 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 			setProgress(0);
 			setInitPercent(0);
 			setIsPaused(false);
+			isPausedRef.current = false;
 		}
 	};
 
@@ -203,9 +217,31 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 		return height >= width;
 	});
 
-	// controls auto-hide
 	const [controlsVisible, setControlsVisible] = useState<boolean>(true);
 	const hideTimeoutRef = useRef<number | null>(null);
+
+	const isPausedRef = useRef<boolean>(isPaused);
+	useEffect(() => {
+		isPausedRef.current = isPaused;
+		if (isPaused) {
+			clearHideTimeout();
+			setControlsVisible(true);
+		} else {
+			scheduleHide(3000);
+		}
+	}, [isPaused]);
+
+	useEffect(() => {
+		if (showInterface || isPausedRef.current) {
+			setControlsVisible(true);
+			if (showInterface && !isPausedRef.current) {
+				scheduleHide(3000);
+			}
+		} else {
+			clearHideTimeout();
+			setControlsVisible(false);
+		}
+	}, [showInterface]);
 
 	const clearHideTimeout = () => {
 		if (hideTimeoutRef.current) {
@@ -216,6 +252,7 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 
 	const scheduleHide = (delay = 3000) => {
 		clearHideTimeout();
+		if (isPausedRef.current) return;
 		hideTimeoutRef.current = setTimeout(() => {
 			setControlsVisible(false);
 			hideTimeoutRef.current = null;
@@ -224,11 +261,11 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 
 	const showControlsOnce = (keep = false) => {
 		setControlsVisible(true);
-		if (!keep) scheduleHide(3000);
+		if (!keep && !isPausedRef.current) scheduleHide(3000);
 	};
 
 	useEffect(() => {
-		scheduleHide(3000);
+		if (!isPausedRef.current) scheduleHide(3000);
 		return () => clearHideTimeout();
 	}, []);
 
@@ -253,6 +290,8 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 			}
 		};
 	}, []);
+
+	const uiVisible = controlsVisible || isPaused;
 
 	return (
 		<View style={styles.container}>
@@ -282,36 +321,27 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 			<View style={styles.controls}>
 				{isLoading && (
 					<View style={styles.loadingContainer} pointerEvents="auto">
-						{tmdbData && (() => {
-							const betterLogo = getBetterLogo(tmdbData);
-							if (betterLogo) {
-								return (
-									<Image source={{ uri: betterLogo }} style={styles.logoImagePhone} resizeMode="contain" />
-								);
-							}
-							return null;
-						})()}
-						<ActivityIndicator size={250} color="#ffffff" />
+						<ActivityIndicator size={'large'} color="#ffffff" />
 					</View>
 				)}
-				{!controlsVisible && (
+				{!uiVisible && (
 					<Pressable
 						style={styles.fullscreenTouchable}
 						onPress={() => {
-						showControlsOnce();
-					}}
+							showControlsOnce();
+						}}
 					/>
 				)}
 				<LinearGradient
 					colors={["rgba(0,0,0,0.95)", "transparent"]}
-					style={[styles.topGradient, { opacity: controlsVisible ? 1 : 0 }]}
-					pointerEvents={controlsVisible ? 'auto' : 'none'}
+					style={[styles.topGradient, { opacity: uiVisible ? 1 : 0 }]}
+					pointerEvents={uiVisible ? 'auto' : 'none'}
 				/>
 
 				<LinearGradient
 					colors={["transparent", "rgba(0,0,0,0.95)"]}
-					style={[styles.bottomGradient, { opacity: controlsVisible ? 1 : 0 }]}
-					pointerEvents={controlsVisible ? 'auto' : 'none'}
+					style={[styles.bottomGradient, { opacity: uiVisible ? 1 : 0 }]}
+					pointerEvents={uiVisible ? 'auto' : 'none'}
 				/>
 
 				<SafeAreaView style={{ flex: 1, zIndex: 3 }}>
@@ -319,7 +349,7 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 						style={[
 							styles.topContainer,
 							{ paddingTop: isPortrait ? (StatusBar.currentHeight || 10) : 10 },
-							{ opacity: controlsVisible ? 1 : 0, pointerEvents: controlsVisible ? 'auto' : 'none' },
+							{ opacity: uiVisible ? 1 : 0, pointerEvents: uiVisible ? 'auto' : 'none' },
 						]}
 					>
 						<View style={styles.topLeftContainer}>
@@ -344,45 +374,49 @@ export function PlayerPhone(props: PlayerPhoneProps): React.JSX.Element {
 								</Text>
 							</View>
 						</View>
-
-						<Icon
-							name='cast'
-							size={30}
-							color="#fff"
-							style={{ marginRight: 16 }}
-							onPress={() => {
-							}}
-						/>
 					</View>
 
 					<View style={[
 						styles.centerControls,
-						{ opacity: controlsVisible ? 1 : 0, pointerEvents: controlsVisible ? 'auto' : 'none' },
+						{ opacity: uiVisible ? 1 : 0, pointerEvents: uiVisible ? 'auto' : 'none' },
 					]}>
-						<TouchableOpacity
-							style={[styles.controlButton, !canPrev && styles.controlDisabled]}
-							onPress={goPrev}
-							disabled={!canPrev}
-						>
-							<Icon name="skip-previous" size={30} color={canPrev ? '#fff' : 'rgba(255,255,255,0.28)'} />
-						</TouchableOpacity>
+						{error ? (
+							// show error center UI
+							<View style={styles.errorContainer} pointerEvents="auto">
+								<Text style={styles.errorTitle}>Erreur</Text>
+								<Text style={styles.errorMessage} numberOfLines={3}>{error}</Text>
+								<TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+									<Text style={styles.retryText}>Réessayer</Text>
+								</TouchableOpacity>
+							</View>
+						) : (
+							<>
+								<TouchableOpacity
+									style={[styles.controlButton, !canPrev && styles.controlDisabled]}
+									onPress={goPrev}
+									disabled={!canPrev}
+								>
+									<Icon name="skip-previous" size={30} color={canPrev ? '#fff' : 'rgba(255,255,255,0.28)'} />
+								</TouchableOpacity>
 
-						<TouchableOpacity style={[styles.controlButton, styles.mainControl]} onPress={togglePlay}>
-							<Icon name={isPaused ? 'play-arrow' : 'pause'} size={36} color="#fff" />
-						</TouchableOpacity>
+								<TouchableOpacity style={[styles.controlButton, styles.mainControl]} onPress={togglePlay}>
+									<Icon name={isPaused ? 'play-arrow' : 'pause'} size={36} color="#fff" />
+								</TouchableOpacity>
 
-						<TouchableOpacity
-							style={[styles.controlButton, !canNext && styles.controlDisabled]}
-							onPress={goNext}
-							disabled={!canNext}
-						>
-							<Icon name="skip-next" size={30} color={canNext ? '#fff' : 'rgba(255,255,255,0.28)'} />
-						</TouchableOpacity>
+								<TouchableOpacity
+									style={[styles.controlButton, !canNext && styles.controlDisabled]}
+									onPress={goNext}
+									disabled={!canNext}
+								>
+									<Icon name="skip-next" size={30} color={canNext ? '#fff' : 'rgba(255,255,255,0.28)'} />
+								</TouchableOpacity>
+							</>
+						)}
 					</View>
 
 					<View style={[
 						styles.bottomContainer,
-						{ opacity: controlsVisible ? 1 : 0, pointerEvents: controlsVisible ? 'auto' : 'none' },
+						{ opacity: uiVisible ? 1 : 0, pointerEvents: uiVisible ? 'auto' : 'none' },
 					]}>
 						<View style={styles.progressBar}>
 							<View style={styles.sliderBackground}>
@@ -586,7 +620,7 @@ const styles = StyleSheet.create({
 		bottom: 0,
 		justifyContent: 'center',
 		alignItems: 'center',
-		zIndex: 12,
+		zIndex: 2,
 	},
 	logoImagePhone: {
 		position: 'absolute',
@@ -594,5 +628,35 @@ const styles = StyleSheet.create({
 		height: 200,
 		zIndex: 13,
 		opacity: 0.9,
+	},
+	errorContainer: {
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: 24,
+		width: '100%',
+		zIndex: 5,
+	},
+	errorTitle: {
+		color: '#fff',
+		fontSize: 18,
+		marginBottom: 8,
+		fontWeight: '700',
+	},
+	errorMessage: {
+		color: '#ffdddd',
+		fontSize: 14,
+		textAlign: 'center',
+		marginBottom: 12,
+	},
+	retryButton: {
+		backgroundColor: 'rgba(255,255,255,0.12)',
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		borderRadius: 8,
+	},
+	retryText: {
+		color: '#fff',
+		fontSize: 14,
+		fontWeight: '600',
 	},
 });

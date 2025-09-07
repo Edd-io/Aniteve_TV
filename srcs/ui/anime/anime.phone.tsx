@@ -98,7 +98,7 @@ export const AnimePhone: FC<AnimePhoneProps> = ({
 
 				<View style={styles.episodeContent}>
 					<Text style={styles.episodeTitle} numberOfLines={1}>
-						{`${isMovie ? 'Film' : 'Épisodsde'} ${index + 1}`}
+						{`${isMovie ? 'Film' : 'Épisode'} ${index + 1}`}
 					</Text>
 				</View>
 

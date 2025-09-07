@@ -5,8 +5,11 @@ import AnimeItem from '../../models/anime_item';
 import { Colors } from '../../constants/colors';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ResumePhoneProps } from '../../types/home';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const ResumePhone: React.FC<ResumePhoneProps> = ({ progressList, onSelectAnime }) => {
+	const insets = useSafeAreaInsets();
+	
 	const inProgress = progressList.filter(p => p.completed === ProgressStatus.IN_PROGRESS);
 	const newEpisode = progressList.filter(p => p.completed === ProgressStatus.NEW_EPISODE);
 	const newSeason = progressList.filter(p => p.completed === ProgressStatus.NEW_SEASON);
@@ -31,16 +34,19 @@ export const ResumePhone: React.FC<ResumePhoneProps> = ({ progressList, onSelect
 	);
 
 	return (
-		<SectionList
-			style={styles.container}
-			sections={sections}
-			keyExtractor={(item) => `${item.anime.id}`}
-			renderItem={renderItem}
-			renderSectionHeader={renderSectionHeader}
-			stickySectionHeadersEnabled={false}
-			ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-			ListEmptyComponent={() => <View style={{ padding: 16 }}><Text style={styles.emptyText}>Aucun élément</Text></View>}
-		/>
+		<>
+			<SectionList
+				style={[styles.container]}
+				sections={sections}
+				keyExtractor={(item) => `${item.anime.id}`}
+				renderItem={renderItem}
+				renderSectionHeader={renderSectionHeader}
+				stickySectionHeadersEnabled={false}
+				ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+				ListEmptyComponent={() => <View style={{ padding: 16 }}><Text style={styles.emptyText}>Aucun élément</Text></View>}
+			/>
+			<View style={{ height: insets.bottom, backgroundColor: Colors.background }} />
+		</>
 	);
 };
 

@@ -9,10 +9,9 @@ import { SectionHeaderPhone } from '../components/section_header.phone';
 import { HomeMobileProps } from '../../types/home';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const insets = useSafeAreaInsets();
-
 export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, isLoading, isGlobalLoading, searchValue, setSearchValue, onRefresh, onSelectAnime, onOpenSettings, onOpenChooseUser, onOpenResume }) => {
     const navigation: any = useNavigation();
+    const insets = useSafeAreaInsets();
     const [page, setPage] = useState<number>(1);
     const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
     const pageSize = 50;
@@ -42,64 +41,66 @@ export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, i
                         <ActivityIndicator size="large" color={Colors.getPrimaryColor()} />
                     </View>
                 ) : (
-                    <FlatList
-                        style={{ marginBottom: insets.bottom != 0 ? insets.bottom + 20 : 0 }}
-                        data={paginatedAnimes}
-                        keyExtractor={(it) => it.id.toString()}
-                        renderItem={({ item }) => <AnimeCardPhone item={item} onPress={onSelectAnime} list />}
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{ paddingVertical: 8, paddingBottom: 120 }}
-                        refreshControl={<RefreshControl refreshing={isGlobalLoading} onRefresh={onRefresh} tintColor={Colors.getPrimaryColor()} />}
-                        onEndReached={handleEndReached}
-                        onEndReachedThreshold={0.5}
-                        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-                        ListFooterComponent={isLoadingMore ? <ActivityIndicator color={Colors.getPrimaryColor()} style={{ marginVertical: 12 }} /> : null}
-                        ListHeaderComponent={() => (
-                            <>
-                                <View style={styles.searchRow}>
-                                    <Icon name="search" size={20} color="#999" style={{ marginRight: 8 }} />
-                                    <TextInput
-                                        placeholder="Rechercher un anime"
-                                        placeholderTextColor="#999"
-                                        style={styles.searchInput}
-                                        value={searchValue}
-                                        onChangeText={(text) => {
-                                            setSearchValue(text);
-                                        }}
-                                        clearButtonMode="while-editing"
-                                        returnKeyType="search"
-                                    />
-                                </View>
+                    <>
+                        <View style={styles.searchRow}>
+                            <Icon name="search" size={20} color="#999" style={{ marginRight: 8 }} />
+                            <TextInput
+                                placeholder="Rechercher un anime"
+                                placeholderTextColor="#999"
+                                style={styles.searchInput}
+                                value={searchValue}
+                                onChangeText={setSearchValue}
+                                clearButtonMode="while-editing"
+                                returnKeyType="search"
+                            />
+                        </View>
+                        <FlatList
+                            style={{ marginBottom: insets.bottom != 0 ? insets.bottom + 20 : 0 }}
+                            keyboardShouldPersistTaps="handled"
+                            data={paginatedAnimes}
+                            keyExtractor={(it) => it.id.toString()}
+                            renderItem={({ item }) => <AnimeCardPhone item={item} onPress={onSelectAnime} list />}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingVertical: 8, paddingBottom: 120 }}
+                            refreshControl={<RefreshControl refreshing={isGlobalLoading} onRefresh={onRefresh} tintColor={Colors.getPrimaryColor()} />}
+                            onEndReached={handleEndReached}
+                            onEndReachedThreshold={0.5}
+                            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+                            ListFooterComponent={isLoadingMore ? <ActivityIndicator color={Colors.getPrimaryColor()} style={{ marginVertical: 12 }} /> : null}
+                            ListHeaderComponent={() => (
+                                <>
+                                    {searchValue.length == 0 && allProgress && allProgress.length > 0 ? (
+                                        <>
+                                            <SectionHeaderPhone title="Continuer" onSeeAll={() => {
+                                                navigation && navigation.navigate && navigation.navigate('Resume', {
+                                                    progressList: allProgress,
+                                                });
+                                            }} />
+                                            <FlatList
+                                                data={allProgress.filter(item => item.completed !== 1)}
+                                                keyExtractor={(it) => `${it.anime.id}`}
+                                                horizontal
+                                                showsHorizontalScrollIndicator={false}
+                                                renderItem={({ item }) => <AnimeCardPhone item={item} onPress={() => onSelectAnime(item.anime)} />}
+                                                contentContainerStyle={{ paddingVertical: 8, paddingHorizontal: 4 }}
+                                            />
+                                        </>
+                                    ) : null}
 
-                                {allProgress && allProgress.length > 0 ? (
-                                    <>
-                                        <SectionHeaderPhone title="Continuer" onSeeAll={() => {
-                                            navigation && navigation.navigate && navigation.navigate('Resume', {
-                                                progressList: allProgress,
-                                            });
-                                        }} />
-                                        <FlatList
-                                            data={allProgress.filter(item => item.completed !== 1)}
-                                            keyExtractor={(it) => `${it.anime.id}`}
-                                            horizontal
-                                            showsHorizontalScrollIndicator={false}
-                                            renderItem={({ item }) => <AnimeCardPhone item={item} onPress={() => onSelectAnime(item.anime)} />}
-                                            contentContainerStyle={{ paddingVertical: 8, paddingHorizontal: 4 }}
-                                        />
-                                    </>
-                                ) : null}
-
-                                <SectionHeaderPhone title="Tous les animes" onSeeAll={undefined} />
-                            </>
-                        )}
-                        ListEmptyComponent={
-                            !isLoading ? (
-                                <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-                                    <Text style={{ color: '#9b9b9b' }}>Aucun anime disponible.</Text>
-                                </View>
-                            ) : null
-                        }
-                    />
+                                    {searchValue.length == 0 && (
+                                        <SectionHeaderPhone title="Tous les animes" onSeeAll={undefined} />
+                                    )}
+                                </>
+                            )}
+                            ListEmptyComponent={
+                                !isLoading ? (
+                                    <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+                                        <Text style={{ color: '#9b9b9b' }}>Aucun anime disponible.</Text>
+                                    </View>
+                                ) : null
+                            }
+                        />
+                    </>
                 )}
             </SafeAreaView>
         </View>

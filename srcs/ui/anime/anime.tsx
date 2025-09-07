@@ -82,8 +82,12 @@ export const Anime: FC = () => {
 			const tmdbInfo = await apiService.fetchTMDBData(anime.title.toString(), anime.genres.includes('Film'));
 			setTmdbData(tmdbInfo);
 
-			const averageColor = await apiService.fetchAverageColor({ imgUrl: getBetterBackdrop(tmdbData) ?? anime.img.toString() });
-			setAverageColor(averageColor);
+			try {
+				const averageColor = await apiService.fetchAverageColor({ imgUrl: getBetterBackdrop(tmdbData) ?? anime.img.toString() });
+				setAverageColor(averageColor);
+			} catch (error) {
+				setAverageColor([0, 0, 0]);
+			}
 
 			if (seasonsData.length > 0) {
 				const firstSeason = seasonsData[0];

@@ -15,6 +15,7 @@ import { ChooseUser } from './srcs/ui/choose_user/choose_user';
 import { Colors } from './srcs/constants/colors';
 import { SettingsData } from './srcs/types/components';
 import { ResumeScreen } from './srcs/ui/home/resume_screen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -93,7 +94,7 @@ function App(): React.JSX.Element {
 	}, [showMain, fadeAnim]);
 
 	return (
-		<>
+		<SafeAreaProvider>
 			{showSplash && (
 				<SplashScreen />
 			)}
@@ -117,7 +118,7 @@ function App(): React.JSX.Element {
 					</NavigationContainer>
 				</Animated.View>
 			)}
-		</>
+		</SafeAreaProvider>
 	);
 }
 
