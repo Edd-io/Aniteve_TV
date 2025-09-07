@@ -173,6 +173,9 @@ export class AnimeApiService {
 			}
 			const data = await response.json();
 			const averageColor = data?.average_color;
+			if (averageColor.length === 4) {
+				averageColor.pop();
+			}
 			if (!averageColor || averageColor.length !== 3) {
 				throw new Error('Invalid average color data received');
 			}
@@ -540,7 +543,7 @@ export class AnimeApiService {
 				anime: new AnimeItem({
 					id: item.anime.id,
 					title: item.anime.title,
-					alternativeTitle: item.anime.alternativeTitle,
+					alternativeTitle: item.anime.alternative_title,
 					img: item.anime.img,
 					url: item.anime.url,
 					genres: item.anime.genres ?? item.anime.genre ?? [],
@@ -551,6 +554,8 @@ export class AnimeApiService {
 				progress: item.progress,
 				season: item.season,
 				find: true,
+				season_name: item.season_name ?? null,
+				lang: item.lang ?? null,
 			} as ProgressData));
 		} catch (error) {
 			console.error('Error fetching all progress:', error);

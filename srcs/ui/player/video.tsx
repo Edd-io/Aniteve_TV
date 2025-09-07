@@ -1,7 +1,7 @@
 import { JSX } from "react";
 import Video, { SelectedVideoTrackType } from "react-native-video";
 import { getAspectRatio, getResolutionFromHeight } from "../../utils/video_utils";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 
 import { VideoPlayerProps } from '../../types/components';
 
@@ -44,6 +44,7 @@ export const VideoPlayer = ({
                 value: 1080,
             }}
             ref={videoRef}
+            playInBackground={!Platform.isTV}
             controls={false}
             paused={isPaused}
             onError={(e) => {

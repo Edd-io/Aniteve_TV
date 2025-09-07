@@ -1,5 +1,5 @@
 import { RouteProp, useFocusEffect, useNavigation, useRoute, } from "@react-navigation/native";
-import { View, StyleSheet, DeviceEventEmitter } from "react-native";
+import { View, StyleSheet, DeviceEventEmitter, Platform } from "react-native";
 import { RootStackParamList } from "../../constants/routes";
 import { StackNavigationProp } from "@react-navigation/stack";
 import React, { JSX, useCallback, useEffect, useRef, useState } from "react";
@@ -15,6 +15,7 @@ import { ErrorComponent } from "./error";
 import { AnimeEpisodesData } from "../../types/progress";
 import { MenuElement } from '../../types/player';
 import { SettingsData } from "../../types/components";
+import { PlayerPhone } from "./player.phone";
 
 export type PlayerScreenRouteProp = RouteProp<RootStackParamList, 'Player'>;
 export type PlayerScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Player'>;
@@ -342,6 +343,69 @@ export function Player(): JSX.Element {
 			return () => subscription.remove();
 		}, [videoRef, isPaused, episodesState, showSourceSelector, indexMenu, episodeIndexState, error, duration, ended])
 	);
+
+	if (!Platform.isTV) {
+		return (
+			<PlayerPhone
+				anime={anime}
+				episodeIndex={episodeIndexState}
+				seasonIndex={seasonIndexState}
+				seasons={seasons}
+				tmdbData={tmdbData}
+				averageColor={averageColor}
+				nbSources={episodesState ? Object.values(episodesState.episodes)[episodeIndexState].length : 0}
+				ProgressDataAnime={ProgressDataAnime}
+				typeSource={typeSource}
+				episodesState={episodesState}
+				seasonIndexState={seasonIndexState}
+				episodeIndexState={episodeIndexState}
+				sourceIndex={sourceIndex}
+				urlVideo={urlVideo}
+				resolution={resolution}
+				aspectRatio={aspectRatio}
+				duration={duration}
+				progress={progress}
+				initPercent={initPercent}
+				timeToResume={timeToResume}
+				isPaused={isPaused}
+				ended={ended}
+				videoReady={videoReady}
+				onLoading={onLoading}
+				showInterface={showInterface}
+				showSourceSelector={showSourceSelector}
+				indexMenu={indexMenu}
+				isLoading={onLoading}
+				error={error}
+				timeSkip={timeSkip}
+				videoRef={videoRef}
+				currentProgressRef={currentProgressRef}
+				isManualSeekingRef={isManualSeekingRef}
+				setTypeSource={setTypeSource}
+				setEpisodesState={setEpisodesState}
+				setSeasonIndexState={setSeasonIndexState}
+				setEpisodeIndexState={setEpisodeIndexState}
+				setSourceIndex={setSourceIndex}
+				setUrlVideo={setUrlVideo}
+				setResolution={setResolution}
+				setAspectRatio={setAspectRatio}
+				setDuration={setDuration}
+				setProgress={setProgress}
+				setInitPercent={setInitPercent}
+				setTimeToResume={setTimeToResume}
+				setIsPaused={setIsPaused}
+				setEnded={setEnded}
+				setVideoReady={setVideoReady}
+				setOnLoading={setOnLoading}
+				setShowInterface={setShowInterface}
+				setShowSourceSelector={setShowSourceSelector}
+				setIndexMenu={setIndexMenu}
+				setError={setError}
+				setTimeSkip={setTimeSkip}
+				setEpisodeIndex={setEpisodeIndexState}
+				setSeasonIndex={setSeasonIndexState}
+			/>
+		);
+	}
 
 	return (
 		<View style={styles.container}>

@@ -1,4 +1,4 @@
-import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image, TextInput, Text, ActivityIndicator } from "react-native";
+import { Dimensions, ImageBackground, StyleSheet, View, Animated, Image, TextInput, Text, ActivityIndicator, Platform, SafeAreaView, StatusBar } from "react-native";
 import AnimeItem from "../../models/anime_item";
 import TopBar from "../components/top_bar";
 import BannerResume from "../components/banner_resume";
@@ -18,6 +18,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProgressData, ProgressStatus } from "../../types/progress";
 import { SelectedPart, FeaturedAnime } from "../../types/home";
 import { SettingsData } from "../../types/components";
+import { HomePhone } from "./home.phone";
+import { ToastAndroid } from "react-native";
 
 const { height } = Dimensions.get('window');
 
@@ -70,6 +72,36 @@ export function Home(): React.JSX.Element {
 			Colors.setPrimaryColor(settings.primaryColor);
 		}
 	}, [settings.primaryColor]);
+
+	useEffect(() => {
+		if (Platform.isTV) return;
+
+		let isMounted = true;
+		const controller = new AbortController();
+
+		setIsLoading(true);
+		Promise.all([
+			apiService.fetchAllAnime({ signal: controller.signal }).catch(err => { console.error('fetchAllAnime error', err); return []; }),
+			apiService.fetchAllProgress().catch(err => { console.error('fetchAllProgress error', err); return []; })
+		]).then(([anime, progress]) => {
+			if (!isMounted) return;
+			setAnimeList(anime as AnimeItem[]);
+			setAllProgress(progress as ProgressData[]);
+		}).catch(err => {
+			console.error('Error fetching initial home data', err);
+		}).finally(() => {
+			if (!isMounted) return;
+			setIsLoading(false);
+			setIsAnimeListLoaded(true);
+			setIsProgressLoaded(true);
+
+		});
+
+		return () => {
+			isMounted = false;
+			controller.abort();
+		};
+	}, []);
 
 	const handleSettingsChange = async (newSettings: SettingsData) => {
 		try {
@@ -278,6 +310,45 @@ export function Home(): React.JSX.Element {
 			setFeaturedAnime(getFeaturedAnime(allProgress));
 		}
 	}, [indexItem, selectedPart, allProgress, animeListFiltered]);
+
+	if (!Platform.isTV) {
+		return (
+			<View style={{ flex: 1, backgroundColor: Colors.getPrimaryColor() }}>
+				<StatusBar barStyle="light-content" backgroundColor={Colors.getPrimaryColor()} />
+				<HomePhone
+					animeList={animeListFiltered}
+					allProgress={allProgress}
+					isLoading={isLoading}
+					isGlobalLoading={isGlobalLoading}
+					searchValue={searchValue}
+					setSearchValue={setSearchValue}
+					onRefresh={async () => {
+						try {
+							setIsAnimeListLoaded(false);
+							setIsProgressLoaded(false);
+							const [anime, progress] = await Promise.all([
+								apiService.fetchAllAnime(),
+								apiService.fetchAllProgress()
+							]);
+							setAnimeList(anime);
+							setAllProgress(progress);
+						} catch (err) {
+							console.error('Error refreshing home data:', err);
+						} finally {
+							setIsAnimeListLoaded(true);
+							setIsProgressLoaded(true);
+							setIsLoading(false);
+						}
+					}}
+					onSelectAnime={(anime) => navigation.navigate('Anime', { anime })}
+					onOpenSettings={() => setSettingsVisible(true)}
+					onOpenChooseUser={() => navigation.navigate('ChooseUser')}
+					onOpenResume={() => setResumeVisible(true)}
+				/>
+
+			</View>
+		);
+	}
 
 	return (
 		<View style={styles.column}>

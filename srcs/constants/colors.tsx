@@ -1,5 +1,6 @@
 export class Colors {
 	static primary = '#626262';
+	static background = '#222222';
 
 	static setPrimaryColor(color: string) {
 		if (/^#[0-9A-F]{6}$/i.test(color)) {
