@@ -231,11 +231,17 @@ const AnimeElement = React.memo(function AnimeElement({ progress, isSelected, is
 				isSelected ? { transform: [{ scale: 1.02 }] } : { opacity: 0.7 },
 			]}
 		>
-			<Image
-				source={{ uri: String(progress.poster || progress.anime.img), cache: 'force-cache' }}
-				style={styles.elementImage}
-				resizeMode="cover"
-			/>
+			{(progress.poster || progress.anime.img) && String(progress.poster || progress.anime.img) !== 'null' ? (
+				<Image
+					source={{ uri: String(progress.poster || progress.anime.img), cache: 'force-cache' }}
+					style={styles.elementImage}
+					resizeMode="cover"
+				/>
+			) : (
+				<View style={[styles.elementImage, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
+					<Text style={{ color: '#666' }}>No Image</Text>
+				</View>
+			)}
 		</TouchableOpacity>
 	);
 });

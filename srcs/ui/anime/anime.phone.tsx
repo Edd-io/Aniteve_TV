@@ -298,7 +298,7 @@ const TopHero: FC<{
 }> = ({ title, genres, backdropImage }) => {
 	return (
 		<View style={styles.topSection}>
-			<ImageBackground source={{ uri: backdropImage ?? '' }} style={styles.topImage} imageStyle={styles.topImageStyle}>
+			<ImageBackground source={backdropImage ? { uri: backdropImage } : undefined} style={styles.topImage} imageStyle={styles.topImageStyle}>
 				<LinearGradient colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']} locations={[0, 0.3, 0.7, 1]} style={styles.topGradient} />
 
 				<View style={styles.topContent}>

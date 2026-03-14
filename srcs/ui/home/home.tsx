@@ -435,14 +435,68 @@ function HomeTop({
 	if (selectedPart === SelectedPart.ANIME_LIST && featuredAnime != null) {
 		return (
 			<Animated.View style={{ height: heightAnimation }}>
+				{featuredAnime?.anime?.img && String(featuredAnime.anime.img) !== "null" ? (
+					<ImageBackground
+						source={{ uri: String(featuredAnime.anime.img) }}
+						style={styles.featuredBackgroundFull}
+						imageStyle={styles.featuredBackgroundImage}
+						resizeMode="cover"
+					>
+						<View style={{ zIndex: 1, flex: 1, flexDirection: 'column' }}>
+
+							<TopBar
+								selectedPart={selectedPart}
+								index={indexTopBar}
+								searchInputRef={searchInputRef}
+								setSearchValue={setSearchValue}
+								setIsLoading={setIsLoading}
+								searchValue={searchValue}
+							/>
+							<View style={{ flex: 1 }} />
+							<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={false} />
+						</View>
+						<LinearGradient
+							colors={["transparent", "#222222ff"]}
+							style={styles.gradient}
+							start={{ x: 0.5, y: 0 }}
+							end={{ x: 0.5, y: 1 }}
+						/>
+					</ImageBackground>
+				) : (
+					<View style={[styles.featuredBackgroundFull, { backgroundColor: '#1a1a1a' }]}>
+						<View style={{ zIndex: 1, flex: 1, flexDirection: 'column' }}>
+							<TopBar
+								selectedPart={selectedPart}
+								index={indexTopBar}
+								searchInputRef={searchInputRef}
+								setSearchValue={setSearchValue}
+								setIsLoading={setIsLoading}
+								searchValue={searchValue}
+							/>
+							<View style={{ flex: 1 }} />
+							<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={false} />
+						</View>
+						<LinearGradient
+							colors={["transparent", "#222222ff"]}
+							style={styles.gradient}
+							start={{ x: 0.5, y: 0 }}
+							end={{ x: 0.5, y: 1 }}
+						/>
+					</View>
+				)}
+			</Animated.View>
+		);
+	}
+	return (
+		<Animated.View style={{ height: heightAnimation }}>
+			{featuredAnime?.anime?.img && String(featuredAnime.anime.img) !== "null" ? (
 				<ImageBackground
-					source={{ uri: String(featuredAnime.anime.img) }}
+					source={{ uri: String(featuredAnime.anime.img) as string }}
 					style={styles.featuredBackgroundFull}
 					imageStyle={styles.featuredBackgroundImage}
 					resizeMode="cover"
 				>
-					<View style={{ zIndex: 1, flex: 1, flexDirection: 'column' }}>
-
+					<View style={styles.featuredBackgroundFull}>
 						<TopBar
 							selectedPart={selectedPart}
 							index={indexTopBar}
@@ -451,28 +505,17 @@ function HomeTop({
 							setIsLoading={setIsLoading}
 							searchValue={searchValue}
 						/>
-						<View style={{ flex: 1 }} />
-						<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={false} />
+						<BannerResume featuredAnime={featuredAnime} selectedPart={selectedPart} disableButtons={true} />
+						<LinearGradient
+							colors={["transparent", "#222222"]}
+							style={styles.gradient}
+							start={{ x: 0.5, y: 0 }}
+							end={{ x: 0.5, y: 1 }}
+						/>
 					</View>
-					<LinearGradient
-						colors={["transparent", "#222222ff"]}
-						style={styles.gradient}
-						start={{ x: 0.5, y: 0 }}
-						end={{ x: 0.5, y: 1 }}
-					/>
 				</ImageBackground>
-			</Animated.View>
-		);
-	}
-	return (
-		<Animated.View style={{ height: heightAnimation }}>
-			<ImageBackground
-				source={featuredAnime?.anime.img ? { uri: String(featuredAnime.anime.img) as string } : undefined}
-				style={styles.featuredBackgroundFull}
-				imageStyle={styles.featuredBackgroundImage}
-				resizeMode="cover"
-			>
-				<View style={styles.featuredBackgroundFull}>
+			) : (
+				<View style={[styles.featuredBackgroundFull, { backgroundColor: '#1a1a1a' }]}>
 					<TopBar
 						selectedPart={selectedPart}
 						index={indexTopBar}
@@ -489,7 +532,7 @@ function HomeTop({
 						end={{ x: 0.5, y: 1 }}
 					/>
 				</View>
-			</ImageBackground>
+			)}
 		</Animated.View>
 	);
 }

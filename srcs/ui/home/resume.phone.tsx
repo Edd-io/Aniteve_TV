@@ -56,7 +56,13 @@ const ResumeItem: React.FC<{ item: ProgressData; onPress?: (a: AnimeItem) => voi
 
 	return (
 		<Pressable onPress={() => onPress && onPress(item.anime)} style={styles.item} android_ripple={{ color: '#222' }}>
-			<Image source={{ uri: String(item.poster) }} style={styles.poster} />
+			{item.poster && String(item.poster) !== 'null' ? (
+				<Image source={{ uri: String(item.poster) }} style={styles.poster} />
+			) : (
+				<View style={[styles.poster, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
+					<Icon name="image-not-supported" size={24} color="#666" />
+				</View>
+			)}
 			<View style={styles.info}>
 				<Text style={styles.title} numberOfLines={2}>{String(item.anime.title)}</Text>
 				<Text style={styles.meta}>{seasonName} • Ep {String(item.episode)} ({lang})</Text>

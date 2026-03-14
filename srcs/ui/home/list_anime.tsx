@@ -192,18 +192,24 @@ const AnimeItemComponent = React.memo(({
 					</View>
 				)}
 				{shouldLoadImage && (
-					<Animated.Image
-						source={{ uri: item.img.toString(), cache: 'force-cache' }}
-						style={[
-							styles.animeImage,
-							{
-								opacity: imageLoaded ? imageOpacity : 0,
-							}
-						]}
-						onLoad={() => setImageLoaded(true)}
-						fadeDuration={300}
-						resizeMode="cover"
-					/>
+					item.img && String(item.img) !== "null" ? (
+						<Animated.Image
+							source={{ uri: item.img.toString(), cache: 'force-cache' }}
+							style={[
+								styles.animeImage,
+								{
+									opacity: imageLoaded ? imageOpacity : 0,
+								}
+							]}
+							onLoad={() => setImageLoaded(true)}
+							fadeDuration={300}
+							resizeMode="cover"
+						/>
+					) : (
+						<View style={[styles.animeImage, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
+							<Text style={{ color: '#666', textAlign: 'center', fontSize: 10, padding: 5 }}>No image</Text>
+						</View>
+					)
 				)}
 			</Animated.View>
 		</TouchableOpacity>

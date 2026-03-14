@@ -14,7 +14,13 @@ export const AnimeCardPhone: React.FC<AnimeCardProps> = ({ item, onPress, list =
         return (
             <Pressable onPress={() => onPress && onPress(anime)} style={styles.rowContainer} android_ripple={{ color: '#222' }}>
                 <View style={styles.rowImageWrapper}>
-                    <Image source={{ uri: String(img) }} style={styles.rowImage} />
+                    {img && String(img) !== 'null' ? (
+                        <Image source={{ uri: String(img) }} style={styles.rowImage} />
+                    ) : (
+                        <View style={[styles.rowImage, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
+                            <Icon name="image-not-supported" size={24} color="#666" />
+                        </View>
+                    )}
                 </View>
                 <View style={styles.rowInfo} pointerEvents="none">
                     <Text style={styles.rowTitle} numberOfLines={2}>{String(anime.title)}</Text>
@@ -28,7 +34,13 @@ export const AnimeCardPhone: React.FC<AnimeCardProps> = ({ item, onPress, list =
 
     return (
         <Pressable onPress={() => onPress && onPress(anime)} style={[styles.container, styles.large]} android_ripple={{ color: '#222' }}>
-            <Image source={{ uri: String(img) }} style={styles.image} />
+            {img && String(img) !== 'null' ? (
+                <Image source={{ uri: String(img) }} style={styles.image} />
+            ) : (
+                <View style={[styles.image, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
+                    <Icon name="image-not-supported" size={32} color="#666" />
+                </View>
+            )}
             <LinearGradient colors={["transparent", "rgba(0,0,0,0.9)"]} style={styles.gradient} />
             <View style={styles.info} pointerEvents="none">
                 <Text style={styles.title} numberOfLines={2}>{String(anime.title)}</Text>

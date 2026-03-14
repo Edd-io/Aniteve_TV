@@ -248,9 +248,9 @@ export const Anime: FC = () => {
 	return (
 		<SafeAreaView style={styles.container}>
 			<ImageBackground
-				source={{
+				source={(backdropImage || anime?.img) ? {
 					uri: backdropImage ?? String(anime.img)
-				}}
+				} : undefined}
 				style={styles.bgStyleFull}
 				imageStyle={styles.bgStyleImage}
 				resizeMode="cover"
