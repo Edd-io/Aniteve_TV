@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SectionList, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, SectionList, Image, Pressable, Vibration } from 'react-native';
 import { ProgressData, ProgressStatus } from '../../types/progress';
 import AnimeItem from '../../models/anime_item';
 import { Colors } from '../../constants/colors';
@@ -55,7 +55,7 @@ const ResumeItem: React.FC<{ item: ProgressData; onPress?: (a: AnimeItem) => voi
 	const lang = (item.lang ?? item.season.split('/')[1]).toUpperCase();
 
 	return (
-		<Pressable onPress={() => onPress && onPress(item.anime)} style={styles.item} android_ripple={{ color: '#222' }}>
+		<Pressable onPress={() => { Vibration.vibrate(40); onPress && onPress(item.anime) }} style={styles.item} android_ripple={{ color: '#222' }}>
 			{item.poster && String(item.poster) !== 'null' ? (
 				<Image source={{ uri: String(item.poster) }} style={styles.poster} />
 			) : (

@@ -68,14 +68,35 @@ export function ListAnime({
 		}
 	}, [indexItem, isSelected]);
 
+	const SkeletonItem = () => {
+		const anim = useRef(new Animated.Value(0.3)).current;
+
+		useEffect(() => {
+			Animated.loop(
+				Animated.sequence([
+					Animated.timing(anim, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+					Animated.timing(anim, { toValue: 0.3, duration: 800, useNativeDriver: true })
+				])
+			).start();
+		}, []);
+
+		return (
+			<Animated.View style={[styles.animeItem, { opacity: anim, backgroundColor: '#333' }]} />
+		);
+	};
+
 	return (
 		<View style={styles.container}>
 			{
 				isLoading ? (
-					<View style={styles.centerContainer}>
-						<ActivityIndicator size="large" color={Colors.primary} />
-						<Text style={styles.loadingText}>Chargement des animes...</Text>
-					</View>
+					<FlatList
+						data={Array(12).fill(0)}
+						renderItem={() => <SkeletonItem />}
+						keyExtractor={(_, i) => `skeleton-${i}`}
+						contentContainerStyle={styles.flatListContent}
+						numColumns={4}
+						scrollEnabled={false}
+					/>
 				) : 
 				isSearchActive && animeList.length === 0 ? (
 					<View style={styles.centerContainer}>
