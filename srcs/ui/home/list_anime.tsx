@@ -125,10 +125,19 @@ export function ListAnime({
 						showsHorizontalScrollIndicator={false}
 						numColumns={4}
 						scrollEnabled={true}
-						initialNumToRender={16}
-						maxToRenderPerBatch={16}
-						windowSize={10}
+						initialNumToRender={12}
+						maxToRenderPerBatch={8}
+						windowSize={5}
+						removeClippedSubviews={true}
 						updateCellsBatchingPeriod={50}
+						getItemLayout={(data, index) => {
+							const itemHeight = (itemWidth * 0.6) + 16;
+							return {
+								length: itemHeight,
+								offset: itemHeight * Math.floor(index / itemsPerRow),
+								index,
+							};
+						}}
 					/>
 				)
 			}
@@ -148,16 +157,6 @@ const AnimeItemComponent = React.memo(({
 	const scaleValue = useRef(new Animated.Value(1)).current;
 	const imageOpacity = useRef(new Animated.Value(0.7)).current;
 	const [imageLoaded, setImageLoaded] = useState(false);
-	const [shouldLoadImage, setShouldLoadImage] = useState(index < 12);
-
-	useEffect(() => {
-		if (!shouldLoadImage && index >= 12) {
-			const timer = setTimeout(() => {
-				setShouldLoadImage(true);
-			}, index * 50);
-			return () => clearTimeout(timer);
-		}
-	}, [index, shouldLoadImage]);
 
 	useEffect(() => {
 		if (isFocused) {
@@ -212,25 +211,23 @@ const AnimeItemComponent = React.memo(({
 						<ActivityIndicator size="small" color={Colors.primary} />
 					</View>
 				)}
-				{shouldLoadImage && (
-					item.img && String(item.img) !== "null" ? (
-						<Animated.Image
-							source={{ uri: item.img.toString(), cache: 'force-cache' }}
-							style={[
-								styles.animeImage,
-								{
-									opacity: imageLoaded ? imageOpacity : 0,
-								}
-							]}
-							onLoad={() => setImageLoaded(true)}
-							fadeDuration={300}
-							resizeMode="cover"
-						/>
-					) : (
-						<View style={[styles.animeImage, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
-							<Text style={{ color: '#666', textAlign: 'center', fontSize: 10, padding: 5 }}>No image</Text>
-						</View>
-					)
+				{item.img && String(item.img) !== "null" ? (
+					<Animated.Image
+						source={{ uri: item.img.toString(), cache: 'force-cache' }}
+						style={[
+							styles.animeImage,
+							{
+								opacity: imageLoaded ? imageOpacity : 0,
+							}
+						]}
+						onLoad={() => setImageLoaded(true)}
+						fadeDuration={300}
+						resizeMode="cover"
+					/>
+				) : (
+					<View style={[styles.animeImage, { backgroundColor: '#333', justifyContent: 'center', alignItems: 'center' }]}>
+						<Text style={{ color: '#666', textAlign: 'center', fontSize: 10, padding: 5 }}>No image</Text>
+					</View>
 				)}
 			</Animated.View>
 		</TouchableOpacity>

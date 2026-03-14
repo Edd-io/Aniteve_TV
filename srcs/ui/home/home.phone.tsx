@@ -31,6 +31,14 @@ export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, i
         }
     };
 
+    const renderListItem = React.useCallback(({ item }: { item: any }) => (
+        <AnimeCardPhone item={item} onPress={onSelectAnime} list />
+    ), [onSelectAnime]);
+
+    const renderHeaderItem = React.useCallback(({ item }: { item: any }) => (
+        <AnimeCardPhone item={item} onPress={() => onSelectAnime(item.anime)} />
+    ), [onSelectAnime]);
+
     return (
         <View style={[styles.container, { backgroundColor: Colors.background }]}>
             <SafeAreaView>
@@ -59,12 +67,16 @@ export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, i
                             keyboardShouldPersistTaps="handled"
                             data={paginatedAnimes}
                             keyExtractor={(it) => it.id.toString()}
-                            renderItem={({ item }) => <AnimeCardPhone item={item} onPress={onSelectAnime} list />}
+                            renderItem={renderListItem}
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={{ paddingVertical: 8, paddingBottom: 120 }}
                             refreshControl={<RefreshControl refreshing={isGlobalLoading} onRefresh={onRefresh} tintColor={Colors.getPrimaryColor()} />}
                             onEndReached={handleEndReached}
                             onEndReachedThreshold={0.5}
+                            initialNumToRender={10}
+                            maxToRenderPerBatch={10}
+                            windowSize={5}
+                            removeClippedSubviews={true}
                             ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
                             ListFooterComponent={isLoadingMore ? <ActivityIndicator color={Colors.getPrimaryColor()} style={{ marginVertical: 12 }} /> : null}
                             ListHeaderComponent={() => (
@@ -81,8 +93,11 @@ export const HomePhone: React.FC<HomeMobileProps> = ({ animeList, allProgress, i
                                                 keyExtractor={(it) => `${it.anime.id}`}
                                                 horizontal
                                                 showsHorizontalScrollIndicator={false}
-                                                renderItem={({ item }) => <AnimeCardPhone item={item} onPress={() => onSelectAnime(item.anime)} />}
+                                                renderItem={renderHeaderItem}
                                                 contentContainerStyle={{ paddingVertical: 8, paddingHorizontal: 4 }}
+                                                initialNumToRender={5}
+                                                windowSize={3}
+                                                removeClippedSubviews={true}
                                             />
                                         </>
                                     ) : null}

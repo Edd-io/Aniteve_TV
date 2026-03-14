@@ -5,7 +5,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import AnimeItem from '../../models/anime_item';
 import { AnimeCardProps } from '../../types/home';
 
-export const AnimeCardPhone: React.FC<AnimeCardProps> = ({ item, onPress, list = false }) => {
+export const AnimeCardPhone: React.FC<AnimeCardProps> = React.memo(({ item, onPress, list = false }) => {
     const anime: AnimeItem = 'anime' in item ? item.anime : item;
     const img: String | undefined = 'poster' in item ? item.poster : anime.img;
     const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -80,7 +80,7 @@ export const AnimeCardPhone: React.FC<AnimeCardProps> = ({ item, onPress, list =
             </Pressable>
         </Animated.View>
     );
-};
+});
 
 const styles = StyleSheet.create({
     container: {
