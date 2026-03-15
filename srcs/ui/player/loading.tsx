@@ -45,11 +45,6 @@ const styles = StyleSheet.create({
 		maxHeight: 400,
 		width: '100%',
 		height: '100%',
-		top: '50%',
-		left: '50%',
-		transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
-		justifyContent: 'center',
-		alignItems: 'center',
 		zIndex: 2,
 	},
 });
